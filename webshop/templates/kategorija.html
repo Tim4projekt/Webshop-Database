@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Proizvodi u kategoriji: {{ kategorija }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+    <h2>Proizvodi u kategoriji: {{ kategorija }}</h2>
+    <div id="proizvodi">
+        {% for proizvod in proizvodi %}
+            <div class="proizvod">
+                <h3>{{ proizvod[1] }}</h3>
+                <p>Cijena: {{ proizvod[3] }} HRK</p>
+                <p>Opis: {{ proizvod[2] }}</p>
+                <button onclick="location.href='/proizvod/{{ proizvod[0] }}'">Pogledaj detalje</button>
+                <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
+                <button onclick="dodajUWishlist({{ proizvod[0] }})">Dodaj u Wishlist</button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function dodajUKosaricu(proizvodId) {
+            fetch('/api/kosarica', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    proizvodId: proizvodId,
+                    kolicina: 1  // Možete promijeniti ovu vrijednost prema potrebi
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch((error) => {
+                console.error('Greška:', error);
+            });
+        }
+    </script>
+    <script>
+        function dodajUWishlist(proizvodId) {
+            fetch('/wishlist/dodaj', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ proizvod_id: proizvodId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Prikaz poruke korisniku
+            })
+            .catch(error => {
+                console.error('Greška:', error);
+                alert('Došlo je do greške pri dodavanju proizvoda.');
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishlist</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Vaša Wishlist</h1>
+    <nav>
+
+        <!-- Gumbi za prijavu/registraciju -->
+        <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
+        <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
+        <!-- Gumb za odjavu -->
+        <button id="logoutButton" onclick="window.location.href='/logout'">Logout</button>
+        <a href="/kosarica">Košarica</a> <!-- Link za košaricu -->
+    </nav>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+    {% if proizvodi_u_wishlistu %}
+    <ul>
+        {% for proizvod in proizvodi_u_wishlistu %}
+        <li id="wishlist-item-{{ proizvod[0] }}">
+            <h3>{{ proizvod[1] }}</h3>
+            <p>Cijena: {{ proizvod[2] }} HRK</p>
+            <button onclick="ukloniIzWishliste({{ proizvod[0] }})">Ukloni iz wishliste</button>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Nemate proizvode u wishlisti.</p>
+{% endif %}
+
+
+
+<script>
+    function ukloniIzWishliste(proizvodId) {
+        fetch('/wishlist/ukloni', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ proizvod_id: proizvodId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message); // Prikaz poruke korisniku (opcionalno)
+                // Ukloni proizvod iz prikaza
+                const item = document.getElementById(`wishlist-item-${proizvodId}`);
+                if (item) {
+                    item.remove();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Greška:', error);
+            alert('Došlo je do greške pri uklanjanju proizvoda.');
+        });
+    }
+</script>
+
+</body>
+</html>

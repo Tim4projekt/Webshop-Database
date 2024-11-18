@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Prijava</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Prijava</h1>
+
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+    <!-- Prijava forma (prijava.html) -->
+<form action="/prijava" method="POST">
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <label for="lozinka">Lozinka:</label>
+    <input type="password" id="lozinka" name="lozinka" required>
+    <button type="submit">Prijavi se</button>
+</form>
+
+    
+    <script>
+        document.getElementById("prijavaForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Sprečava standardno slanje forme
+    
+            let email = event.target.email.value;
+            let lozinka = event.target.lozinka.value;
+    
+            fetch('/prijava', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email, lozinka: lozinka })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);  // Obavijest o uspješnoj prijavi
+                if (data.message === "Prijava uspješna!") {
+                    window.location.href = '/';  // Preusmjerenje na početnu stranicu
+                }
+            })
+            .catch((error) => console.error('Greška:', error));
+            
+        });
+    </script>
+    
+</body>
+</html>

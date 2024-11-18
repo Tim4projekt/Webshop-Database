@@ -1,0 +1,36 @@
+<h1>Povrat proizvoda</h1>
+<form id="povratForm">
+    <label for="stavka_id">Stavka ID:</label>
+    <input type="number" id="stavka_id" name="stavka_id" required>
+
+    <label for="razlog">Razlog povrata:</label>
+    <textarea id="razlog" name="razlog" required></textarea>
+
+    <label for="datum_povrata">Datum povrata:</label>
+    <input type="date" id="datum_povrata" name="datum_povrata" required>
+
+    <button type="submit">Pošaljite povrat</button>
+</form>
+
+<script>
+    document.getElementById('povratForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const stavka_id = document.getElementById('stavka_id').value;
+        const razlog = document.getElementById('razlog').value;
+        const datum_povrata = document.getElementById('datum_povrata').value;
+
+        fetch('/povrat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ stavka_id: stavka_id, razlog: razlog, datum_povrata: datum_povrata })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        })
+        .catch(error => console.error('Greška:', error));
+    });
+</script>

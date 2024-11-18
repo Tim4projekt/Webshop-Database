@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Registracija</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    
+    <h1>Registracija</h1>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+    <form id="registracija-form">
+        <input type="text" name="ime" placeholder="Ime" required>
+        <input type="text" name="prezime" placeholder="Prezime" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="lozinka" placeholder="Lozinka" required>
+        <input type="text" name="adresa" placeholder="Adresa">
+        <input type="text" name="grad" placeholder="Grad">
+        <input type="text" name="telefon" placeholder="Telefon">
+        <button type="submit">Registracija</button>
+    </form>
+    <script>
+        const form = document.getElementById('registracija-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+    
+            fetch('/registracija', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Greška:', error);
+            });
+        });
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Recenzije proizvoda</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Ostavite recenziju za proizvod</h1>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+    <!-- Prikazivanje poruke ako postoji -->
+    {% if message %}
+        <div class="message">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form id="recenzijaForm" method="POST">
+        <label for="proizvod_id">Odaberite proizvod:</label>
+        <select id="proizvod_id" name="proizvod_id" required>
+            <option value="">Odaberite proizvod</option>
+            {% for proizvod in proizvodi %}
+                <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="ocjena">Ocjena (1-5):</label>
+        <select id="ocjena" name="ocjena" required>
+            <option value="">Odaberite ocjenu</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+
+        <textarea id="komentar" name="komentar" placeholder="Unesite komentar" required></textarea>
+
+        <button type="submit">Pošaljite recenziju</button>
+    </form>
+
+</body>
+</html>

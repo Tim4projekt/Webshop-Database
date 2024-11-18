@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Košarica</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+        <h1>Košarica</h1>
+        <button onclick="location.href='/'">Natrag na proizvode</button>
+        <nav>
+            <a href="/">Početna</a>
+            <!-- Gumbi za prijavu/registraciju -->
+            <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
+            <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
+            <!-- Gumb za odjavu -->
+            <button id="logoutButton" onclick="window.location.href='/logout'">Logout</button>
+        </nav>
+    
+    <main>
+        <h2>Stavke u košarici</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Proizvod</th>
+                    <th>Cijena</th>
+                    <th>Količina</th>
+                    <th>Ukupno</th>
+                    <th>Akcija</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stavka in stavke %}
+                <tr>
+                    <td>{{ stavka[1] }}</td> <!-- naziv proizvoda -->
+                    <td>{{ stavka[2] }} HRK</td> <!-- cijena -->
+                    <td>
+                        <form class="update-cart-form" action="/api/kosarica/uredi" method="post">
+                            <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
+                            <input type="number" name="kolicina" value="{{ stavka[3] }}" min="1" required>
+                            <button type="submit">Ažuriraj</button>
+                        </form>
+                    </td> <!-- količina -->
+                    <td>{{ stavka[2] * stavka[3] }} HRK</td> <!-- ukupno -->
+                    <td>
+                        <form class="delete-item-form" action="/api/kosarica/izbrisi" method="post">
+                            <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
+                            <button type="submit">Izbriši</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <button onclick="location.href='/narudzba'">Kreiraj narudžbu</button>
+    </main>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.update-cart-form').on('submit', function(event) {
+                event.preventDefault(); // Spriječava ponovno učitavanje stranice
+    
+                var form = $(this); // Referenca na trenutnu formu
+    
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        alert(response.message); // Prikazuje poruku o uspjehu
+                        // Osvježite košaricu
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('Došlo je do greške: ' + xhr.responseText);
+                    }
+                });
+            });
+    
+            function refreshCart() {
+                $.ajax({
+                    url: '/kosarica', // URL za osvježavanje košarice
+                    type: 'GET',
+                    success: function(data) {
+                        $('#cart-container').html(data); // Osvježava sadržaj košarice
+                    },
+                    error: function(xhr) {
+                        alert('Greška prilikom osvježavanja košarice: ' + xhr.responseText);
+                    }
+                });
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.delete-item-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); // Sprječava ponovno učitavanje stranice
+        
+                const proizvodId = form.querySelector('input[name="proizvodId"]').value; // Dohvaćanje ID-a proizvoda
+                
+                console.log('Brisanje proizvoda ID:', proizvodId); // Ispis ID-a proizvoda
+                
+                fetch('/api/kosarica/izbrisi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Ovdje postavite Content-Type na application/json
+                    },
+                    body: JSON.stringify({ proizvodId }) // Pretvaranje podataka u JSON
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.success) {
+                        alert(data.message); // Prikazuje poruku o uspjehu
+                        location.reload();
+                        // Uklonite stavku iz DOM-a
+                        const stavkaElement = document.getElementById(`stavka-${proizvodId}`);
+                        if (stavkaElement) {
+                            stavkaElement.remove(); // Uklanja stavku iz DOM-a
+                        }
+                    } else {
+                        alert('Greška: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Greška:', error);
+                    alert('Došlo je do greške prilikom brisanja stavke.');
+                });
+            });
+        });
+        
+        
+        
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Provjera postoji li korisnički ID u sesiji
+                let userId = {{ session.get('user_id', 1) }};  // Ako je 1, korisnik nije prijavljen
+                
+                if (userId === 1) {
+                    // Ako korisnik nije prijavljen, sakrij gumb za odjavu
+                    document.getElementById('logoutButton').style.display = 'none';
+                } else {
+                    // Ako korisnik nije odjavljen, sakrij gumbe za prijavu/registraciju
+                    document.getElementById('loginButton').style.display = 'none';
+                    document.getElementById('registerButton').style.display = 'none';
+                }
+            });
+        </script>
+
+</body>
+</html>

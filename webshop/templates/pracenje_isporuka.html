@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Praćenje isporuka</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Praćenje isporuka</h1>
+    
+    <!-- Dugme za povratak na proizvode -->
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+    {% if session.get('is_admin') %}
+        <!-- Ako je korisnik admin, prikazujemo Admin stranicu -->
+        <a href="{{ url_for('admin_stranica') }}">Admin Stranica</a>
+    {% endif %}
+
+    <!-- Prikazivanje tablice narudžbi -->
+    {% if narudzbe %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Narudžbe</th>
+                    <th>Status isporuke</th>
+                    <th>Datum isporuke</th>
+                    {% if is_admin %}
+                        <!-- Kolona za promjenu statusa dostupna samo administratoru -->
+                        <th>Promijeni status</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for narudzba in narudzbe %}
+                    <tr>
+                        <td>{{ narudzba[0] }}</td>
+                        <td>{{ narudzba[2] if narudzba[2] else 'Nema podataka' }}</td>
+                        <td>{{ narudzba[3] if narudzba[3] else 'Nema podataka' }}</td>
+                        {% if is_admin %}
+                            <!-- Ako je admin, može promijeniti status -->
+                            <td>
+                                <form action="{{ url_for('pracenje_isporuka') }}" method="POST">
+                                    <input type="hidden" name="narudzba_id" value="{{ narudzba[0] }}">
+                                    <select name="status_isporuke">
+                                        <option value="u pripremi" {% if narudzba[2] == 'u pripremi' %}selected{% endif %}>U pripremi</option>
+                                        <option value="poslano" {% if narudzba[2] == 'poslano' %}selected{% endif %}>Poslano</option>
+                                        <option value="dostavljeno" {% if narudzba[2] == 'dostavljeno' %}selected{% endif %}>Dostavljeno</option>
+                                    </select>
+                                    <button type="submit">Spremi</button>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nemate narudžbi ili status isporuke nije dostupan.</p>
+    {% endif %}
+</body>
+</html>

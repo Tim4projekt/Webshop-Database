@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ proizvod[1] }}</title> <!-- naziv proizvoda -->
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>{{ proizvod[1] }}</h1> <!-- naziv proizvoda -->
+    <p>Cijena: {{ proizvod[3] }} HRK</p> <!-- cijena -->
+    <p>Opis: {{ proizvod[2] }}</p> <!-- opis -->
+    <p>Kategorija ID: {{ proizvod[4] }}</p> <!-- kategorija_id -->
+    <p>Količina na skladištu: {{ proizvod[5] }}</p> <!-- kolicina_na_skladistu -->
+    <p>Slika: <img src="{{ proizvod[6] }}" alt="{{ proizvod[1] }}"></p> <!-- slika -->
+    <p>Specifikacije: {{ proizvod[7] }}</p> <!-- specifikacije -->
+    <p>Datum kreiranja: {{ proizvod[8] }}</p> <!-- datum_kreiranja -->
+    <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
+    
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+    <script>
+        function dodajUKosaricu(proizvodId) {
+            fetch('/api/kosarica', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    proizvodId: proizvodId,
+                    kolicina: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch((error) => {
+                console.error('Greška:', error);
+            });
+        }
+    </script>
+</body>
+</html>

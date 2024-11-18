@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Podrška za korisnike</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Podrška za korisnike</h1>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+    <!-- Prikazivanje poruke ako postoji -->
+    {% if message %}
+        <div class="message">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form id="podrskaForm" method="POST">
+        <input type="text" id="tema" name="tema" placeholder="Unesite temu" required>
+        <textarea id="poruka" name="poruka" placeholder="Unesite poruku" required></textarea>
+        <button type="submit">Pošaljite</button>
+    </form>
+
+</body>
+</html>

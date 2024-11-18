@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Preporučeni proizvodi</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Preporučite proizvod</h1>
+    <button onclick="location.href='/'">Natrag na proizvode</button>
+
+     <!-- Prikazivanje poruke ako postoji -->
+     {% if message %}
+     <div class="message">
+         {{ message }}
+     </div>
+ {% endif %}
+
+ <form id="preporuceniForm" method="POST">
+     <label for="proizvod_id">Odaberite proizvod:</label>
+     <select id="proizvod_id" name="proizvod_id" required>
+         <option value="">Odaberite proizvod</option>
+         {% for proizvod in proizvodi %}
+             <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
+         {% endfor %}
+     </select>
+
+     <textarea id="razlog_preporuke" name="razlog_preporuke" placeholder="Unesite razlog preporuke" required></textarea>
+
+     <button type="submit">Preporuči proizvod</button>
+ </form>
+
+</body>
+</html>
