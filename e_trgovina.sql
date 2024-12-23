@@ -1,23 +1,23 @@
 CREATE DATABASE webshop;
 USE webshop;
 
-CREATE TABLE proizvodi (
-    id INT PRIMARY KEY,
-    naziv VARCHAR(255) NOT NULL,
-    opis TEXT,
-    cijena DECIMAL(10, 2) NOT NULL,
-    kategorija_id INT,
-    kolicina_na_skladistu INT NOT NULL,
-    slika VARCHAR(255),
-    specifikacije TEXT,
-    datum_kreiranja DATE NOT NULL,
-    FOREIGN KEY (kategorija_id) REFERENCES kategorije_proizvoda(id)
+CREATE TABLE kategorije_proizvoda (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    naziv VARCHAR(255) NOT NULL UNIQUE,
+    opis TEXT  NOT NULL
 );
 
-CREATE TABLE kategorije_proizvoda (
-    id INT PRIMARY KEY,
+CREATE TABLE proizvodi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     naziv VARCHAR(255) NOT NULL,
-    opis TEXT
+    opis TEXT NOT NULL,
+    cijena DECIMAL(10, 2) NOT NULL CHECK (cijena > 0),
+    kategorija_id INT NOT NULL,
+    kolicina_na_skladistu INT NOT NULL CHECK (kolicina_na_skladistu >= 0),
+    slika VARCHAR(255),
+    specifikacije TEXT,
+    datum_kreiranja TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (kategorija_id) REFERENCES kategorije_proizvoda(id)
 );
 
 CREATE TABLE korisnici (
@@ -41,6 +41,14 @@ CREATE TABLE nacini_isporuke (
     trajanje VARCHAR(50)
 );
 
+CREATE TABLE kuponi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kod VARCHAR(50) UNIQUE NOT NULL,
+    postotak_popusta DECIMAL(5, 2) NOT NULL,
+    datum_pocetka DATE NOT NULL,
+    datum_zavrsetka DATE NOT NULL,
+    max_iskoristenja INT NOT NULL
+);
 
 CREATE TABLE narudzbe (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,7 +62,6 @@ CREATE TABLE narudzbe (
     FOREIGN KEY (nacin_isporuke_id) REFERENCES nacini_isporuke(id),
     FOREIGN KEY (kupon_id) REFERENCES kuponi(id)
 );
-
 
 CREATE TABLE stavke_narudzbe (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,7 +103,7 @@ CREATE TABLE povrati_proizvoda (
 CREATE TABLE popusti (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proizvod_id INT NOT NULL,
-    postotak_popusta DECIMAL(5, 2) NOT NULL,
+    postotak_popusta DECIMAL(5, 2) NOT NULL CHECK (postotak_popusta BETWEEN 0 AND 100),
     datum_pocetka DATE NOT NULL,
     datum_zavrsetka DATE NOT NULL,
     FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id)
@@ -108,7 +115,7 @@ CREATE TABLE recenzije_proizvoda (
     korisnik_id INT NOT NULL,
     ocjena INT NOT NULL CHECK (ocjena BETWEEN 1 AND 5),
     komentar TEXT,
-    datum_recenzije DATE NOT NULL,
+    datum_recenzije TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id),
     FOREIGN KEY (korisnik_id) REFERENCES korisnici(id)
 );
@@ -129,15 +136,6 @@ CREATE TABLE pracenje_isporuka (
     FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id)
 );
 
-
-CREATE TABLE kuponi (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    kod VARCHAR(50) UNIQUE NOT NULL,
-    postotak_popusta DECIMAL(5, 2) NOT NULL,
-    datum_pocetka DATE NOT NULL,
-    datum_zavrsetka DATE NOT NULL,
-    max_iskoristenja INT NOT NULL
-);
 
 CREATE TABLE preporuceni_proizvodi (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -166,7 +164,6 @@ CREATE TABLE kosarica (
     kolicina INT NOT NULL,
     FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id)
 );
-
 
 
 
