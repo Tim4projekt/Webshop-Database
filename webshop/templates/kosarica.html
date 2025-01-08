@@ -3,57 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Košarica</title>
-    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <header>
         <h1>Košarica</h1>
-        <button onclick="location.href='/'">Natrag na proizvode</button>
-        <nav>
-            <a href="/">Početna</a>
-            <!-- Gumbi za prijavu/registraciju -->
-            <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
-            <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
-            <!-- Gumb za odjavu -->
-            <button id="logoutButton" onclick="window.location.href='/logout'">Logout</button>
-        </nav>
-    
-    <main>
-        <h2>Stavke u košarici</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Proizvod</th>
-                    <th>Cijena</th>
-                    <th>Količina</th>
-                    <th>Ukupno</th>
-                    <th>Akcija</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stavka in stavke %}
-                <tr>
-                    <td>{{ stavka[1] }}</td> <!-- naziv proizvoda -->
-                    <td>{{ stavka[2] }} HRK</td> <!-- cijena -->
-                    <td>
-                        <form class="update-cart-form" action="/api/kosarica/uredi" method="post">
-                            <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
-                            <input type="number" name="kolicina" value="{{ stavka[3] }}" min="1" required>
-                            <button type="submit">Ažuriraj</button>
-                        </form>
-                    </td> <!-- količina -->
-                    <td>{{ stavka[2] * stavka[3] }} HRK</td> <!-- ukupno -->
-                    <td>
-                        <form class="delete-item-form" action="/api/kosarica/izbrisi" method="post">
-                            <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
-                            <button type="submit">Izbriši</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <button onclick="location.href='/narudzba'">Kreiraj narudžbu</button>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+
+    <main id="kosarica-container">
+        <div class="kosarica-wrapper">
+            <h2>Stavke u košarici</h2>
+            
+            {% if stavke %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Proizvod</th>
+                        <th>Cijena</th>
+                        <th>Količina</th>
+                        <th>Ukupno</th>
+                        <th>Akcija</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stavka in stavke %}
+                    <tr>
+                        <td>{{ stavka[1] }}</td> <!-- naziv proizvoda -->
+                        <td>{{ stavka[2] }} HRK</td> <!-- cijena -->
+                        <td>
+                            <form class="update-cart-form" action="/api/kosarica/uredi" method="post">
+                                <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
+                                <input type="number" name="kolicina" value="{{ stavka[3] }}" min="1" required>
+                                <button type="submit">Ažuriraj</button>
+                            </form>
+                        </td> <!-- količina -->
+                        <td>{{ stavka[2] * stavka[3] }} HRK</td> <!-- ukupno -->
+                        <td>
+                            <form class="delete-item-form" action="/api/kosarica/izbrisi" method="post">
+                                <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
+                                <button type="submit" class="delete-button">Izbriši</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="kosarica-actions">
+                <button class="order-button" onclick="location.href='/narudzba'">Kreiraj narudžbu</button>
+            </div>
+            {% else %}
+            <p>Vaša košarica je prazna.</p>
+            {% endif %}
+        </div>
     </main>
 
 

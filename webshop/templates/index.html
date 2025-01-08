@@ -6,110 +6,146 @@
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
-    <h1>Webshop</h1>
-    <nav>
-        <!-- Gumbi za prijavu/registraciju -->
-        <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
-        <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
-        <!-- Gumb za odjavu -->
-        <button id="logoutButton" onclick="window.location.href='/logout'">Logout</button>
-        <a href="/kosarica">Košarica</a> <!-- Link za košaricu -->
-        <a href="{{ url_for('wishlist') }}">
-            <button>Vaša Wishlist</button>
-        </a>
-        <a href="/podrska">Podrška za korisnike</a>
-        <a href="/preporuceni_proizvodi">Preporučeni proizvodi</a>
-        <a href="/pracenje_isporuka">Praćenje isporuke</a>
-        <a href="/povrat">Povrat proizvoda</a>
-        <a href="/popust">Popusti na proizvode</a>
-        <a href="/recenzije">Recenzije proizvoda</a> 
-    
+    <header>
+        <h1>Webshop</h1>
+        <nav>
+            {% if 'user_id' in session %}
+                <!-- Navigacija za prijavljene korisnike -->
+                <button id="logoutButton" onclick="window.location.href='/logout'">Odjava</button>
+                <a href="/kosarica">Košarica</a>
+                <a href="/wishlist">Vaša Wishlist</a>
+                <a href="/podrska">Podrška za korisnike</a>
+                <a href="/preporuceni_proizvodi">Preporučeni proizvodi</a>
+                <a href="/pracenje_isporuka">Praćenje isporuke</a>
+                <a href="/povrat">Povrat proizvoda</a>
+                <a href="/popust">Popusti na proizvode</a>
+                <a href="/recenzije">Recenzije proizvoda</a>
+                <a href="/lista_preporuka">Lista preporuka</a>
+            {% else %}
+                <!-- Navigacija za neprijavljene korisnike -->
+                <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
+                <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
+            {% endif %}
+        </nav>
+        
+        
+    </header>
 
-    </nav>
-
-    <h1>Kategorije proizvoda</h1>
-    <div id="kategorije">
-        {% for kategorija in kategorije.keys() %}
-            <button onclick="location.href='/kategorija/{{ kategorija }}'">{{ kategorija }}</button>
-        {% endfor %}
-    </div>
-
-    <h1>Proizvodi</h1>
-    
-    <div id="proizvodi">
-        {% for kategorija, proizvodi in kategorije.items() %}
-            <h2>{{ kategorija }}</h2> <!-- Ime kategorije -->
-            <div class="kategorija-proizvodi">
-                {% for proizvod in proizvodi %}
-                    <div class="proizvod">
-                        <h3>{{ proizvod[1] }}</h3>  <!-- Naziv proizvoda -->
-                        <p>Cijena: {{ proizvod[3] }} HRK</p>  <!-- Cijena proizvoda -->
-                        <p>Opis: {{ proizvod[2] }}</p>  <!-- Opis proizvoda -->
-                        <button onclick="location.href='/proizvod/{{ proizvod[0] }}'">Pogledaj detalje</button>
-                        <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
-                        <button onclick="dodajUWishlist({{ proizvod[0] }})">Dodaj u Wishlist</button>
-                    </div>
+    <main>
+        <!-- Kategorije -->
+        <section>
+            <h2>Kategorije proizvoda</h2>
+            <div class="kategorije">
+                {% for kategorija in kategorije.keys() %}
+                    <button onclick="location.href='/kategorija/{{ kategorija }}'" class="kategorija-button">
+                        {{ kategorija }}
+                    </button>
                 {% endfor %}
             </div>
-        {% endfor %}
-    </div>
+        </section>
+
+        <!-- Lista proizvoda sa modalom -->
+        <section>
+            <h2>Proizvodi</h2>
+            <div class="proizvodi">
+                {% for proizvod in proizvodi %}
+                <div class="proizvod">
+                    <h4>{{ proizvod[1] }}</h4>
+                    <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p>
+                    <p>{{ proizvod[2] }}</p>
+                    <button onclick="location.href='/proizvod/{{ proizvod[0] }}'">Detalji</button>
+                    <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
+                    <button onclick="otvoriModal({{ proizvod[0] }})">Dodaj u Wishlist</button>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Modalni prozor -->
+        <div id="wishlistModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Odaberite grupu</h2>
+                <label for="modal-grupa">Grupa:</label>
+                <select id="modal-grupa">
+                    <option value="Gaming oprema">Gaming oprema</option>
+                    <option value="Za posao">Za posao</option>
+                    <option value="Kućna elektronika">Kućna elektronika</option>
+                    <option value="Hobi">Hobi</option>
+                </select>
+                <button id="confirmWishlist">Dodaj u Wishlist</button>
+                <button id="closeModal">Zatvori</button>
+            </div>
+        </div>
+
+                <!-- Navigacija za paginaciju -->
+                <section class="pagination">
+                    {% if page > 1 %}
+                        <a href="/?page={{ page - 1 }}" class="pagination-button">Prethodna</a>
+                    {% endif %}
+                    {% for p in pagination %}
+                        {% if p == '...' %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% elif p == page %}
+                            <span class="pagination-button active">{{ p }}</span>
+                        {% else %}
+                            <a href="/?page={{ p }}" class="pagination-button">{{ p }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page < total_pages %}
+                        <a href="/?page={{ page + 1 }}" class="pagination-button">Sljedeća</a>
+                    {% endif %}
+                </section>
+    </main>
 
     <script>
+        let selectedProductId = null;
+
+        // Funkcija za otvaranje modala
+        function otvoriModal(proizvodId) {
+            selectedProductId = proizvodId; // Čuvanje ID-a proizvoda
+            document.getElementById('wishlistModal').style.display = 'flex';
+        }
+
+        // Funkcija za zatvaranje modala
+        function zatvoriModal() {
+            document.getElementById('wishlistModal').style.display = 'none';
+            selectedProductId = null; // Resetovanje ID-a proizvoda
+        }
+
+        // Dodavanje proizvoda u Wishlist sa grupom
+        document.getElementById('confirmWishlist').addEventListener('click', function () {
+            const grupa = document.getElementById('modal-grupa').value;
+
+            fetch('/wishlist/dodaj', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ proizvod_id: selectedProductId, grupa: grupa })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Poruka korisniku
+                zatvoriModal(); // Zatvaranje modala
+            })
+            .catch(error => alert('Došlo je do greške pri dodavanju u Wishlist.'));
+        });
+
+        // Dodavanje eventa za zatvaranje modala
+        document.getElementById('closeModal').addEventListener('click', zatvoriModal);
+
         function dodajUKosaricu(proizvodId) {
             fetch('/api/kosarica', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    proizvodId: proizvodId,
-                    kolicina: 1  // Možete promijeniti ovu vrijednost prema potrebi
-                })
+                body: JSON.stringify({ proizvodId: proizvodId })
             })
             .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch((error) => {
-                console.error('Greška:', error);
-            });
+            .then(data => alert(data.message))
+            .catch(error => console.error('Greška:', error));
         }
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Provjera postoji li korisnički ID u sesiji
-            let userId = {{ session.get('user_id', 1) }};  // Ako je 1, korisnik nije prijavljen
-            
-            if (userId === 1) {
-                // Ako korisnik nije prijavljen, sakrij gumb za odjavu
-                document.getElementById('logoutButton').style.display = 'none';
-            } else {
-                // Ako korisnik nije odjavljen, sakrij gumbe za prijavu/registraciju
-                document.getElementById('loginButton').style.display = 'none';
-                document.getElementById('registerButton').style.display = 'none';
-            }
-        });
-    </script>
-    <script>
-        function dodajUWishlist(proizvodId) {
-            fetch('/wishlist/dodaj', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ proizvod_id: proizvodId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message); // Prikaz poruke korisniku
-            })
-            .catch(error => {
-                console.error('Greška:', error);
-                alert('Došlo je do greške pri dodavanju proizvoda.');
-            });
-        }
-    </script>
-    
-
 </body>
 </html>

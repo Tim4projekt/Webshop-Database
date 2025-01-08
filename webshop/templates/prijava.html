@@ -6,17 +6,25 @@
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
-    <h1>Prijava</h1>
+    <header>
+        <h1>Prijava</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
 
-    <button onclick="location.href='/'">Natrag na proizvode</button>
-    <!-- Prijava forma (prijava.html) -->
-<form action="/prijava" method="POST">
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required>
-    <label for="lozinka">Lozinka:</label>
-    <input type="password" id="lozinka" name="lozinka" required>
-    <button type="submit">Prijavi se</button>
-</form>
+    <main>
+        <div class="form-container">
+            <h2>Prijavite se</h2>
+            <form action="/prijava" method="POST">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="lozinka">Lozinka:</label>
+                <input type="password" id="lozinka" name="lozinka" required>
+
+                <button type="submit" class="submit-button">Prijavi se</button>
+            </form>
+        </div>
+    </main>
 
     
     <script>

@@ -6,25 +6,63 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    
-    <h1>Registracija</h1>
-    <button onclick="location.href='/'">Natrag na proizvode</button>
-    <form id="registracija-form">
-        <input type="text" name="ime" placeholder="Ime" required>
-        <input type="text" name="prezime" placeholder="Prezime" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="lozinka" placeholder="Lozinka" required>
-        <input type="text" name="adresa" placeholder="Adresa">
-        <input type="text" name="grad" placeholder="Grad">
-        <input type="text" name="telefon" placeholder="Telefon">
-        <button type="submit">Registracija</button>
-    </form>
+    <header>
+        <h1>Registracija</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2>Kreirajte račun</h2>
+            <form id="registracija-form" action="/registracija" method="POST">
+                <div class="form-group">
+                    <label for="ime">Ime:</label>
+                    <input type="text" id="ime" name="ime" placeholder="Unesite ime" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="prezime">Prezime:</label>
+                    <input type="text" id="prezime" name="prezime" placeholder="Unesite prezime" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Unesite email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lozinka">Lozinka:</label>
+                    <input type="password" id="lozinka" name="lozinka" placeholder="Unesite lozinku" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="adresa">Adresa:</label>
+                    <input type="text" id="adresa" name="adresa" placeholder="Unesite adresu">
+                </div>
+
+                <div class="form-group">
+                    <label for="grad">Grad:</label>
+                    <input type="text" id="grad" name="grad" placeholder="Unesite grad">
+                </div>
+
+                <div class="form-group">
+                    <label for="telefon">Telefon:</label>
+                    <input type="text" id="telefon" name="telefon" placeholder="Unesite telefon">
+                </div>
+
+                <button type="submit" class="submit-button">Registracija</button>
+            </form>
+        </div>
+    </main>
+
     <script>
         const form = document.getElementById('registracija-form');
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+    
+            console.log('Slanje podataka:', data);  // Logovanje podataka
     
             fetch('/registracija', {
                 method: 'POST',
@@ -35,13 +73,18 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);
+                console.log('Odgovor sa servera:', data);  // Logovanje odgovora sa servera
+                alert(data.message);  // Prikazivanje poruke korisniku
+                if (data.message === 'Registracija uspešna!') {
+                    window.location.href = "/home";  // Redirektuj na home stranicu
+                }
             })
             .catch(error => {
                 console.error('Greška:', error);
             });
         });
     </script>
+    
     
 </body>
 </html>

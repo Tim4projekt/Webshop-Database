@@ -3,20 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ proizvod[1] }}</title> <!-- naziv proizvoda -->
-    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
+
 </head>
 <body>
-    <h1>{{ proizvod[1] }}</h1> <!-- naziv proizvoda -->
-    <p>Cijena: {{ proizvod[3] }} HRK</p> <!-- cijena -->
-    <p>Opis: {{ proizvod[2] }}</p> <!-- opis -->
-    <p>Kategorija ID: {{ proizvod[4] }}</p> <!-- kategorija_id -->
-    <p>Količina na skladištu: {{ proizvod[5] }}</p> <!-- kolicina_na_skladistu -->
-    <p>Slika: <img src="{{ proizvod[6] }}" alt="{{ proizvod[1] }}"></p> <!-- slika -->
-    <p>Specifikacije: {{ proizvod[7] }}</p> <!-- specifikacije -->
-    <p>Datum kreiranja: {{ proizvod[8] }}</p> <!-- datum_kreiranja -->
-    <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
+    <header>
+        <h1>Detalji proizvoda</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+
+    <main>
+        <div id="proizvod-container">
+            <h2>{{ proizvod[1] }}</h2> <!-- naziv proizvoda -->
+            <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p> <!-- cijena -->
+            <p><strong>Opis:</strong> {{ proizvod[2] }}</p> <!-- opis -->
+            <p><strong>Kategorija ID:</strong> {{ proizvod[4] }}</p> <!-- kategorija_id -->
+            <p><strong>Količina na skladištu:</strong> {{ proizvod[5] }}</p> <!-- kolicina_na_skladistu -->
+            <p><strong>Specifikacije:</strong> {{ proizvod[7] }}</p> <!-- specifikacije -->
+            <p><strong>Datum kreiranja:</strong> {{ proizvod[8] }}</p> <!-- datum_kreiranja -->
+            <img src="{{ proizvod[6] }}" alt="{{ proizvod[1] }}" class="proizvod-slika">
+            <button class="btn-green" onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
+        </div>
+    </main>
     
-    <button onclick="location.href='/'">Natrag na proizvode</button>
 
     <script>
         function dodajUKosaricu(proizvodId) {

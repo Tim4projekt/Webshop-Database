@@ -7,33 +7,31 @@
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
-    <h1>Vaša Wishlist</h1>
-    <nav>
+    <header>
+        <h1>Vaša Wishlist</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
 
-        <!-- Gumbi za prijavu/registraciju -->
-        <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
-        <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
-        <!-- Gumb za odjavu -->
-        <button id="logoutButton" onclick="window.location.href='/logout'">Logout</button>
-        <a href="/kosarica">Košarica</a> <!-- Link za košaricu -->
-    </nav>
-    <button onclick="location.href='/'">Natrag na proizvode</button>
-
-    {% if proizvodi_u_wishlistu %}
-    <ul>
-        {% for proizvod in proizvodi_u_wishlistu %}
-        <li id="wishlist-item-{{ proizvod[0] }}">
-            <h3>{{ proizvod[1] }}</h3>
-            <p>Cijena: {{ proizvod[2] }} HRK</p>
-            <button onclick="ukloniIzWishliste({{ proizvod[0] }})">Ukloni iz wishliste</button>
-        </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>Nemate proizvode u wishlisti.</p>
-{% endif %}
-
-
+    <main>
+        {% if proizvodi_u_wishlistu %}
+        <div class="wishlist-container">
+            {% for grupa, proizvodi in proizvodi_u_wishlistu.items() %}
+            <div class="wishlist-group">
+                <h2>{{ grupa }}</h2>
+                {% for proizvod in proizvodi %}
+                <div class="wishlist-item" id="wishlist-item-{{ proizvod[0] }}">
+                    <h3>{{ proizvod[1] }}</h3>
+                    <p>Cijena: {{ proizvod[2] }} HRK</p>
+                    <button class="remove-button" onclick="ukloniIzWishliste({{ proizvod[0] }})">Ukloni iz wishliste</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-message">Nemate proizvode u wishlisti.</p>
+        {% endif %}
+    </main>
 
 <script>
     function ukloniIzWishliste(proizvodId) {

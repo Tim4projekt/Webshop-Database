@@ -6,29 +6,37 @@
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
-    <h1>Preporučite proizvod</h1>
-    <button onclick="location.href='/'">Natrag na proizvode</button>
+    <header>
+        <h1>Preporučeni proizvodi</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na proizvode</button>
+    </header>
 
-     <!-- Prikazivanje poruke ako postoji -->
-     {% if message %}
-     <div class="message">
-         {{ message }}
-     </div>
- {% endif %}
+    <main>
+        <!-- Prikazivanje poruke ako postoji -->
+        {% if message %}
+        <div class="message">
+            {{ message }}
+        </div>
+        {% endif %}
 
- <form id="preporuceniForm" method="POST">
-     <label for="proizvod_id">Odaberite proizvod:</label>
-     <select id="proizvod_id" name="proizvod_id" required>
-         <option value="">Odaberite proizvod</option>
-         {% for proizvod in proizvodi %}
-             <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
-         {% endfor %}
-     </select>
+        <form id="preporuceniForm" method="POST">
+            <div class="form-group">
+                <label for="proizvod_id">Odaberite proizvod:</label>
+                <select id="proizvod_id" name="proizvod_id" required>
+                    <option value="">Odaberite proizvod</option>
+                    {% for proizvod in proizvodi %}
+                        <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-     <textarea id="razlog_preporuke" name="razlog_preporuke" placeholder="Unesite razlog preporuke" required></textarea>
+            <div class="form-group">
+                <label for="razlog_preporuke">Razlog preporuke:</label>
+                <textarea id="razlog_preporuke" name="razlog_preporuke" placeholder="Unesite razlog preporuke" required></textarea>
+            </div>
 
-     <button type="submit">Preporuči proizvod</button>
- </form>
-
+            <button type="submit" class="submit-button">Preporuči proizvod</button>
+        </form>
+    </main>
 </body>
 </html>

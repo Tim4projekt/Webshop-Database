@@ -9,9 +9,9 @@
 <body>
     <button onclick="location.href='/'">Natrag na proizvode</button>
     <h2>Proizvodi u kategoriji: {{ kategorija }}</h2>
-    <div id="proizvodi">
+    <div id="proizvodi" class="proizvodi-grid">
         {% for proizvod in proizvodi %}
-            <div class="proizvod">
+            <div class="proizvod-card">
                 <h3>{{ proizvod[1] }}</h3>
                 <p>Cijena: {{ proizvod[3] }} HRK</p>
                 <p>Opis: {{ proizvod[2] }}</p>
@@ -20,6 +20,28 @@
                 <button onclick="dodajUWishlist({{ proizvod[0] }})">Dodaj u Wishlist</button>
             </div>
         {% endfor %}
+    </div>
+    
+
+    <!-- Navigacija za paginaciju -->
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="/kategorija/{{ kategorija }}?page={{ page - 1 }}" class="pagination-button">Prethodna</a>
+        {% endif %}
+
+        {% for p in pagination %}
+            {% if p == '...' %}
+                <span class="pagination-ellipsis">...</span>
+            {% elif p == page %}
+                <span class="pagination-button active">{{ p }}</span>
+            {% else %}
+                <a href="/kategorija/{{ kategorija }}?page={{ p }}" class="pagination-button">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+            <a href="/kategorija/{{ kategorija }}?page={{ page + 1 }}" class="pagination-button">Sljedeća</a>
+        {% endif %}
     </div>
 
     <script>
@@ -42,8 +64,7 @@
                 console.error('Greška:', error);
             });
         }
-    </script>
-    <script>
+
         function dodajUWishlist(proizvodId) {
             fetch('/wishlist/dodaj', {
                 method: 'POST',
@@ -63,5 +84,4 @@
         }
     </script>
 </body>
-
 </html>
