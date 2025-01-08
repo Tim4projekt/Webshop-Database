@@ -1,8 +1,12 @@
-from flask import Flask, jsonify, request, render_template, redirect, session, url_for, request
+from flask import Flask, jsonify, request, render_template, redirect, session, url_for, flash
 from flask_cors import CORS
 from datetime import date
 from decimal import Decimal
 import MySQLdb
+import bcrypt
+
+
+
 
 app = Flask(__name__)
 CORS(app)  # Omogućava CORS
@@ -17,20 +21,24 @@ db_config = {
     'password': 'root',
     'database': 'webshop'
 }
-
+@app.route('/home')
 @app.route('/')
 def home():
+    page = int(request.args.get('page', 1))  # Preuzimanje trenutne stranice
+    per_page = 5  # Broj proizvoda po stranici
+
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
+
+    # Dohvat svih proizvoda sa kategorijama
     cursor.execute("""
         SELECT p.id, p.naziv, p.opis, p.cijena, k.naziv AS kategorija_naziv
         FROM proizvodi p
         JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
     """)
     proizvodi = cursor.fetchall()
-    cursor.close()
-    db.close()
 
+    # Grupisanje proizvoda po kategorijama
     kategorije = {}
     for proizvod in proizvodi:
         kategorija = proizvod[4]
@@ -38,23 +46,110 @@ def home():
             kategorije[kategorija] = []
         kategorije[kategorija].append(proizvod)
 
-    return render_template('index.html', kategorije=kategorije)
+    # Paginacija
+    cursor.execute("SELECT COUNT(*) FROM proizvodi")
+    total_proizvodi = cursor.fetchone()[0]
+    total_pages = (total_proizvodi + per_page - 1) // per_page
+    offset = (page - 1) * per_page
+
+    cursor.execute("""
+        SELECT p.id, p.naziv, p.opis, p.cijena, k.naziv AS kategorija_naziv
+        FROM proizvodi p
+        JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
+        LIMIT %s OFFSET %s
+    """, (per_page, offset))
+    paginirani_proizvodi = cursor.fetchall()
+
+    # Dohvat popularnih proizvoda
+    cursor.execute("SELECT * FROM popularni_proizvodi WHERE broj_dodavanja > 0")
+    popularni_proizvodi = cursor.fetchall()
+
+    # Logika za prikaz paginacije
+    pagination = []
+    if total_pages <= 7:  # Ako ima manje od 7 stranica, prikaži sve
+        pagination = list(range(1, total_pages + 1))
+    else:
+        if page > 1:
+            pagination.append(1)  # Prva stranica
+        if page > 3:
+            pagination.append('...')  # Skraćivanje
+        pagination += [p for p in range(max(page - 2, 2), min(page + 3, total_pages))]
+        if page < total_pages - 2:
+            pagination.append('...')  # Skraćivanje
+        if page < total_pages:
+            pagination.append(total_pages)  # Poslednja stranica
+
+    cursor.close()
+    db.close()
+
+    return render_template(
+        'index.html',
+        kategorije=kategorije,
+        popularni_proizvodi=popularni_proizvodi,
+        proizvodi=paginirani_proizvodi,
+        page=page,
+        total_pages=total_pages,
+        pagination=pagination
+    )
+
+
 
 @app.route('/kategorija/<kategorija_naziv>')
 def prikazi_kategoriju(kategorija_naziv):
+    page = int(request.args.get('page', 1))  # Trenutna stranica
+    per_page = 5  # Broj proizvoda po stranici
+    offset = (page - 1) * per_page
+
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
+
+    # Dohvat proizvoda sa limitom i offsetom
     cursor.execute("""
         SELECT p.id, p.naziv, p.opis, p.cijena
         FROM proizvodi p
         JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
         WHERE k.naziv = %s
-    """, (kategorija_naziv,))
+        LIMIT %s OFFSET %s
+    """, (kategorija_naziv, per_page, offset))
     proizvodi = cursor.fetchall()
+
+    # Ukupan broj proizvoda za izračunavanje ukupnih stranica
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM proizvodi p
+        JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
+        WHERE k.naziv = %s
+    """, (kategorija_naziv,))
+    total_proizvodi = cursor.fetchone()[0]
+    total_pages = (total_proizvodi + per_page - 1) // per_page
+
     cursor.close()
     db.close()
 
-    return render_template('kategorija.html', proizvodi=proizvodi, kategorija=kategorija_naziv)
+    # Paginacija
+    pagination = []
+    if total_pages <= 7:
+        pagination = list(range(1, total_pages + 1))
+    else:
+        if page > 1:
+            pagination.append(1)
+        if page > 3:
+            pagination.append('...')
+        pagination += list(range(max(2, page - 2), min(total_pages, page + 3)))
+        if page < total_pages - 2:
+            pagination.append('...')
+        if page < total_pages:
+            pagination.append(total_pages)
+
+    return render_template(
+        'kategorija.html',
+        proizvodi=proizvodi,
+        kategorija=kategorija_naziv,
+        page=page,
+        total_pages=total_pages,
+        pagination=pagination
+    )
+
 
 @app.route('/logout')
 def logout():
@@ -64,22 +159,22 @@ def logout():
 @app.route('/prijava', methods=['GET', 'POST'])
 def prijava():
     if request.method == 'GET':
-        return render_template('prijava.html')  # Ako koristiš HTML stranicu
-    elif request.method == 'POST':
-        data = request.form
-        email = data['email']
-        lozinka = data['lozinka']
-        
-        db = MySQLdb.connect(**db_config)
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM korisnici WHERE email = %s", (email,))
-        korisnik = cursor.fetchone()
+        return render_template('prijava.html')
 
-        if korisnik and korisnik[4] == lozinka:  # Provjeri lozinku
-            session['user_id'] = korisnik[0]  # Spremi korisnikovo ID u sesiju
-            return redirect(url_for('home'))  # Preusmjeri na početnu stranicu ili drugu stranicu
-        else:
-            return jsonify({"message": "Neispravan email ili lozinka"}), 400
+    data = request.form
+    email = data['email']
+    lozinka = data['lozinka']
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    cursor.execute("SELECT id, lozinka FROM korisnici WHERE email = %s", (email,))
+    korisnik = cursor.fetchone()
+    db.close()
+
+    if korisnik and bcrypt.checkpw(lozinka.encode('utf-8'), korisnik[1].encode('utf-8')):
+        session['user_id'] = korisnik[0]
+        return redirect(url_for('home'))
+    return jsonify({'message': 'Neispravan email ili lozinka!'}), 401
 
 @app.route('/kosarica', methods=['GET'])
 def prikazi_kosaricu():
@@ -186,44 +281,46 @@ def proizvod_detail(proizvod_id):
 @app.route('/registracija', methods=['GET', 'POST'])
 def registracija():
     if request.method == 'GET':
-        return render_template('registracija.html')  # Prikaz forme za registraciju
+        # Kada je GET metoda, prikazujemo HTML formu za registraciju
+        return render_template('registracija.html')
+
     elif request.method == 'POST':
-        data = request.json
-        ime = data['ime']
-        prezime = data['prezime']
-        email = data['email']
-        lozinka = data['lozinka']
-        adresa = data.get('adresa')  # Opcionalno
-        grad = data.get('grad')  # Opcionalno
-        telefon = data.get('telefon')  # Opcionalno
+        try:
+            # Preuzimanje JSON podataka iz POST zahteva
+            data = request.get_json()
+            print(f"Primljeni podaci: {data}")  # Logovanje podataka
 
-        db = MySQLdb.connect(**db_config)
-        cursor = db.cursor()
+            ime = data['ime']
+            prezime = data['prezime']
+            email = data['email']
+            lozinka = bcrypt.hashpw(data['lozinka'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Provjera postoji li već korisnik s istim emailom
-        cursor.execute("SELECT * FROM korisnici WHERE email = %s", (email,))
-        if cursor.fetchone():
-            cursor.close()
-            db.close()
-            return jsonify({"message": "Email već postoji!"}), 400
+            # Povezivanje sa bazom podataka
+            db = MySQLdb.connect(**db_config)
+            cursor = db.cursor()
 
-        # Dodavanje korisnika s dodatnim podacima
-        cursor.execute(
-            """
-            INSERT INTO korisnici 
-            (ime, prezime, email, lozinka, adresa, grad, telefon, tip_korisnika, datum_registracije) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'kupac', CURDATE())
-            """,
-            (ime, prezime, email, lozinka, adresa, grad, telefon)
-            
-        )
-        db.commit()
-        cursor.close()
-        db.close()
-        
-        return jsonify({"message": "Registracija uspješna! Vratite se natrag na proizvode."}), 201
+            # Pozivanje procedure za dodavanje korisnika (sa samo 4 parametra)
+            cursor.callproc('dodaj_korisnika', (ime, prezime, email, lozinka))
+            db.commit()
 
+            print("Registracija uspešna!")  # Logovanje uspešne registracije
 
+            # Flash poruka za uspeh
+            flash('Registracija uspešna!', 'success')
+            return jsonify({'message': 'Registracija uspešna!'}), 200
+
+        except MySQLdb.MySQLError as e:
+            print(f"Greška pri registraciji: {e}")  # Logovanje greške
+            # Ako je greška vezana za postojanje korisnika sa istim email-om
+            if "Korisnik sa ovim email-om već postoji!" in str(e):
+                flash('Email već postoji!', 'error')
+                return jsonify({'message': 'Email već postoji!'}), 409
+            else:
+                flash('Došlo je do greške. Pokušajte ponovo!', 'error')
+                return jsonify({'message': 'Došlo je do greške. Pokušajte ponovo!'}), 500
+        finally:
+            if db:
+                db.close()
 
 @app.route('/narudzba', methods=['GET', 'POST'])
 def narudzba():
@@ -342,23 +439,29 @@ def wishlist():
     cursor = db.cursor()
 
     try:
-        # Dohvati proizvode iz wishlist-a
+        # Dohvati proizvode iz wishlist-a sa grupama
         cursor.execute("""
-            SELECT p.id, p.naziv, p.cijena, p.opis 
-            FROM wishlist w 
-            JOIN proizvodi p ON w.proizvod_id = p.id 
+            SELECT w.grupa, p.id, p.naziv, p.cijena
+            FROM wishlist w
+            JOIN proizvodi p ON w.proizvod_id = p.id
             WHERE w.korisnik_id = %s
         """, (korisnik_id,))
-
         proizvodi = cursor.fetchall()
-        print("Proizvodi u wishlist-u:", proizvodi)  # Za provjeru u konzoli
+
+        # Grupisanje proizvoda po grupama
+        proizvodi_u_wishlistu = {}
+        for grupa, proizvod_id, naziv, cijena in proizvodi:
+            if grupa not in proizvodi_u_wishlistu:
+                proizvodi_u_wishlistu[grupa] = []
+            proizvodi_u_wishlistu[grupa].append((proizvod_id, naziv, cijena))
+
     finally:
         db.close()
 
-    if not proizvodi:
-        return render_template('wishlist.html', proizvodi_u_wishlistu=None)
+    return render_template('wishlist.html', proizvodi_u_wishlistu=proizvodi_u_wishlistu)
 
-    return render_template('wishlist.html', proizvodi_u_wishlistu=proizvodi)
+
+
 
 
 @app.route('/api/wishlist', methods=['POST'])
@@ -425,32 +528,38 @@ def dodaj_u_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
+    grupa = data.get('grupa')
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
+
+    if not grupa:
+        grupa = "Bez grupe"  # Ako korisnik ne odabere grupu, koristi podrazumevanu
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
     try:
-        # Provjera postoji li proizvod već u wishlisti
-        cursor.execute(
-            "SELECT * FROM wishlist WHERE korisnik_id = %s AND proizvod_id = %s",
-            (korisnik_id, proizvod_id)
-        )
+        # Provera da li proizvod već postoji u wishlisti
+        cursor.execute("""
+            SELECT * FROM wishlist WHERE korisnik_id = %s AND proizvod_id = %s
+        """, (korisnik_id, proizvod_id))
         if cursor.fetchone():
             return jsonify({'message': 'Proizvod je već u wishlisti.'}), 400
 
-        # Dodavanje proizvoda u wishlistu
-        cursor.execute(
-            "INSERT INTO wishlist (korisnik_id, proizvod_id) VALUES (%s, %s)",
-            (korisnik_id, proizvod_id)
-        )
+        # Dodavanje proizvoda u wishlist sa grupom
+        cursor.execute("""
+            INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
+            VALUES (%s, %s, %s)
+        """, (korisnik_id, proizvod_id, grupa))
         db.commit()
+
     finally:
         db.close()
 
-    return jsonify({'message': 'Proizvod je uspješno dodan u wishlistu!'})
+    return jsonify({'message': f'Proizvod je uspešno dodan u wishlist pod grupu "{grupa}"!'})
+
+
 
 
 @app.route('/podrska', methods=['GET', 'POST'])
@@ -679,7 +788,21 @@ def recenzije():
 
     return render_template('recenzije.html', message=message, proizvodi=proizvodi)
 
+@app.route('/lista_preporuka', methods=['GET'])
+def lista_preporuka():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
 
+    try:
+        # Pozivanje procedure za prikaz preporuka
+        cursor.execute("CALL prikazi_preporuke()")
+        preporuke = cursor.fetchall()  # Dobijamo rezultate iz procedure
+    finally:
+        cursor.close()
+        db.close()
+
+    # Prosleđivanje rezultata šablonu
+    return render_template('lista_preporuka.html', preporuke=preporuke)
 
 
 if __name__ == '__main__':
