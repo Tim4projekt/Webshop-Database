@@ -1,74 +1,547 @@
+/* Postojeći stilovi */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    line-height: 1.6;
 }
 
 header {
     background-color: #333;
     color: white;
     padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 header h1 {
-    display: inline;
+    margin: 0;
 }
 
 nav {
-    float: right;
+    display: flex;
+    gap: 15px;
 }
 
 nav a {
     text-decoration: none;
-    margin-left: 15px;
+    color: white;
     padding: 10px;
     background-color: #28a745;
-    color: white;
-    border: none;
-    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    background-color: #218838;
 }
 
 main {
     padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-form {
-    max-width: 400px;
-    margin: auto;
+h2 {
+    color: #333;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 5px;
 }
 
-form label {
-    display: block;
-    margin: 10px 0 5px;
+#lista-kategorija {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-form input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-}
-
-button {
-    padding: 10px;
+.kategorija-button {
+    text-decoration: none;
     background-color: #28a745;
     color: white;
-    border: none;
-    cursor: pointer;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
 }
 
-button:hover {
+.kategorija-button:hover {
     background-color: #218838;
+}
+
+#popularni-proizvodi {
+    list-style: none;
+    padding: 0;
+}
+
+#popularni-proizvodi li {
+    margin: 5px 0;
+    font-size: 16px;
 }
 
 #lista-proizvoda {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    justify-content: space-between;
 }
 
-#lista-proizvoda div {
-    border: 1px solid #ccc;
-    padding: 10px;
-    width: 200px;
+.proizvod-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    width: calc(25% - 20px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
+
+.proizvod-card h4 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.proizvod-card p {
+    margin: 10px 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.proizvod-card button {
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.proizvod-card button:hover {
+    background-color: #218838;
+}
+
+/* Novi stilovi za prijavu i registraciju */
+form {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+}
+
+form h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+form input:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+}
+
+form button {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #218838;
+}
+
+form .alt-link {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: #28a745;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+form .alt-link:hover {
+    text-decoration: underline;
+}
+
+/* Poravnanje za prijavu i registraciju */
+#prijava-container, #registracija-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 60px); /* Oduzimamo visinu headera */
+    background-color: #f9f9f9;
+}
+
+ button {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+ button:hover {
+    background-color: #218838;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    list-style: none;
+    padding: 0;
+}
+
+.pagination a,
+.pagination span {
+    margin: 0 5px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #28a745;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+}
+
+.pagination a:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.pagination .active {
+    font-weight: bold;
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.pagination .pagination-ellipsis {
+    margin: 0 5px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* Stilovi za container proizvoda */
+/* Stilovi za container proizvoda */
+#proizvod-container {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+#proizvod-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#proizvod-container p {
+    margin: 10px 0;
+    color: #555;
+    font-size: 16px;
+}
+
+#proizvod-container img {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    margin: 20px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-green {
+    display: inline-block;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.btn-green:hover {
+    background-color: #218838;
+}
+
+header h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-align: center;
+    width: 150px;
+}
+
+.back-button:hover {
+    background-color: #218838;
+}
+
+/* General header styling */
+header {
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.back-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.back-button:hover {
+    background-color: #218838;
+}
+
+/* Container for cart items */
+/* Kosarica container styling */
+#kosarica-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - 60px);
+    background-color: #f9f9f9;
+    padding: 40px 20px;
+}
+
+/* Wrapper for kosarica */
+.kosarica-wrapper {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 900px;
+}
+
+/* Header styling */
+.kosarica-wrapper h2 {
+    text-align: center;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 10px;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+}
+
+table th {
+    background: #28a745;
+    color: white;
+    font-size: 16px;
+    text-align: center;
+}
+
+table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Aligning the forms in table cells */
+.update-cart-form, .delete-item-form {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+}
+
+/* Input field for quantity */
+.update-cart-form input[type="number"] {
+    width: 100%;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+/* Styling for buttons inside forms */
+.update-cart-form button, .delete-item-form button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.update-cart-form button:hover, .delete-item-form button:hover {
+    background-color: #218838;
+}
+
+/* Action buttons in table */
+.kosarica-actions {
+    text-align: right;
+}
+
+.kosarica-actions .order-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.kosarica-actions .order-button:hover {
+    background-color: #218838;
+}
+
+
+/* Stilovi za modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.modal-content button {
+    margin: 10px;
+}
+
+/* Kontejner za proizvode */
+.proizvodi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Podesite širinu kolona */
+    gap: 20px; /* Razmak između kartica */
+    padding: 20px;
+}
+
+/* Stil za svaku karticu proizvoda */
+.proizvod-card {
+    width: 400px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 300px;
+}
+
+.proizvod-card h3 {
+    margin-bottom: 10px;
+}
+
+.proizvod-card p {
+    margin: 5px 0;
+}
+
+.proizvod-card button {
+    margin: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.proizvod-card button:hover {
+    background-color: #218838;
+}
+
+/* Razmak između proizvoda */
+.proizvod-card + .proizvod-card {
+    margin-left: 20px;
+}
+

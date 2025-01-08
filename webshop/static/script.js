@@ -65,3 +65,4 @@ document.getElementById('zavrsi-narudzbu').addEventListener('click', async () =>
     const data = await response.json();
     alert(data.message);
 });
+
