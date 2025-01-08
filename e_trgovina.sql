@@ -1,5 +1,6 @@
+DROP DATABASE webshop;
 CREATE DATABASE webshop;
-USE webshop;
+USE webshop; 
 
 CREATE TABLE kategorije_proizvoda (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1129,3 +1130,147 @@ INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES
 	('Brza dostava', 'Dostava proizvoda putem kurirske službe u ekspresnom roku.', 80.00, '1-2 radna dana'),
 	('Dostava na paketomat', 'Dostava na odabrani paketomat, kupac preuzima paket u paketu s PIN kodom.', 40.00, '3-5 radnih dana');
     
+INSERT INTO narudzbe (id, korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id)
+VALUES
+(1, 1, CURDATE(), 'u obradi', 100.00, 1, NULL), -- Narudžba za korisnika 1
+(2, 2, CURDATE(), 'u obradi', 200.00, 1, NULL), -- Narudžba za korisnika 2
+(3, 1, CURDATE(), 'u obradi', 150.00, 1, NULL); -- Druga narudžba za korisnika 1
+    
+
+INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
+VALUES
+(1, 811, 2), -- Narudžba 1, proizvod 811, količina 2
+(2, 812, 2), -- Narudžba 2, proizvod 812, količina 1
+(3, 813, 2); -- Narudžba 3, proizvod 813, količina 1
+
+
+-- Umetanje u tabelu wishlist
+INSERT INTO wishlist (korisnik_id, proizvod_id)
+VALUES 
+    (1, 1),  -- Korisnik sa ID 1 dodaje Proizvod sa ID 1
+    (1, 2),  -- Korisnik sa ID 1 dodaje Proizvod sa ID 2
+    (2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 1
+    (3, 3),  -- Korisnik sa ID 3 dodaje Proizvod sa ID 3
+    (2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 2
+	(2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 2
+    (4, 1);
+
+
+-- Pogled: Aktivni korisnici (korisnici sa proizvodima u wishlist) (Leo)
+CREATE VIEW aktivni_korisnici AS
+SELECT k.id AS korisnik_id, k.ime, k.prezime, COUNT(w.proizvod_id) AS broj_proizvoda_u_wishlistu
+FROM korisnici k
+LEFT JOIN wishlist w ON k.id = w.korisnik_id
+GROUP BY k.id, k.ime, k.prezime
+HAVING broj_proizvoda_u_wishlistu > 0;
+
+-- Pogled: Popularni proizvodi (najviše puta dodati u wishlist) (Leo)
+CREATE OR REPLACE VIEW popularni_proizvodi AS
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv,
+    COUNT(w.proizvod_id) AS broj_dodavanja
+FROM proizvodi p
+LEFT JOIN wishlist w ON p.id = w.proizvod_id
+GROUP BY p.id, p.naziv
+ORDER BY broj_dodavanja DESC;
+
+
+-- Procedura: Dodavanje korisnika (Leo)
+DELIMITER $$
+CREATE PROCEDURE dodaj_korisnika(
+    IN p_ime VARCHAR(255),
+    IN p_prezime VARCHAR(255),
+    IN p_email VARCHAR(255),
+    IN p_lozinka VARCHAR(255)
+)
+BEGIN
+    IF EXISTS (SELECT 1 FROM korisnici WHERE email = p_email) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Korisnik sa ovim email-om već postoji!';
+    ELSE
+        INSERT INTO korisnici (ime, prezime, email, lozinka, tip_korisnika, datum_registracije)
+        VALUES (p_ime, p_prezime, p_email, p_lozinka, 'kupac', CURDATE());
+    END IF;
+END$$
+DELIMITER ;
+
+-- Procedura: Prikaz preporuka (Leo)
+DELIMITER $$
+CREATE PROCEDURE prikazi_preporuke()
+BEGIN
+    SELECT 
+        pp.id AS id_preporuke,
+        k.ime AS ime_korisnika,
+        k.prezime AS prezime_korisnika,
+        p.naziv AS naziv_proizvoda,
+        pp.razlog_preporuke
+    FROM preporuceni_proizvodi pp
+    JOIN korisnici k ON pp.korisnik_id = k.id
+    JOIN proizvodi p ON pp.proizvod_id = p.id
+    ORDER BY pp.id DESC;
+END$$
+DELIMITER ;
+
+-- Procedura: Brisanje korisnika (Leo)
+DELIMITER $$
+CREATE PROCEDURE obrisi_korisnika(
+    IN p_korisnik_id INT
+)
+BEGIN
+    DELETE FROM wishlist WHERE korisnik_id = p_korisnik_id;
+    DELETE FROM narudzbe WHERE korisnik_id = p_korisnik_id;
+    DELETE FROM korisnici WHERE id = p_korisnik_id;
+END$$
+DELIMITER ;
+
+-- Okidač: Automatsko postavljanje datuma registracije korisnika (Leo)
+DELIMITER $$
+CREATE TRIGGER postavi_datum_registracije
+BEFORE INSERT ON korisnici
+FOR EACH ROW
+BEGIN
+    IF NEW.datum_registracije IS NULL THEN
+        SET NEW.datum_registracije = CURDATE();
+    END IF;
+END$$
+DELIMITER ;
+
+
+-- Okidač: Sprečavanje brisanja korisnika sa narudžbama (Leo)
+DELIMITER $$
+CREATE TRIGGER spreči_brisanje_korisnika
+BEFORE DELETE ON korisnici
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = OLD.id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
+    END IF;
+END$$
+DELIMITER ;
+
+-- Okidač: Sprečavanje duplikata u wishlist-u (Leo)
+DELIMITER $$
+CREATE TRIGGER spreči_duplikate_wishlist
+BEFORE INSERT ON wishlist
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM wishlist
+        WHERE korisnik_id = NEW.korisnik_id AND proizvod_id = NEW.proizvod_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Proizvod je već u wishlist-u ovog korisnika!';
+    END IF;
+END$$
+DELIMITER ;
+
+ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
+SELECT * FROM popularni_proizvodi;
+SELECT * FROM aktivni_korisnici;
+SHOW TRIGGERS;
+SHOW WARNINGS;
+
+
