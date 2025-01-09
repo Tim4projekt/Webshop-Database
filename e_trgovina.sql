@@ -1121,7 +1121,19 @@ INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar) VAL
 	(7, 3, 4, 'Dobro izrađen, vrijedi cijene.'),
 	(8, 4, 3, 'Osrednje iskustvo, mogao bi biti bolji.'),
 	(9, 5, 2, 'Nije vrijedan novca.'),
-	(10, 1, 5, 'Izvanredan proizvod, preporučujem svima!');
+	(10, 1, 5, 'Izvanredan proizvod, preporučujem svima!'),
+	(3, 5, 5, 'Izvanredan proizvod!'),
+	(3, 7, 5, 'Preporučujem svima!'),
+	(3, 11, 4, 'Solidno.'),
+	(3, 9, 4, 'Ništa posebno.'),
+	(3, 2, 5, 'Fantastičan proizvod, vrijedi!'),
+	(3, 1, 4, 'Moglo bi i bolje.'),
+	(3, 19, 4, 'Dobar proizvod.'),
+	(3, 22, 4, 'Ipak mislim da može mrvicu bolje.'),
+	(3, 14, 3, 'Nije loše ajmo reć.'),
+	(3, 23, 4, 'Sve ok osim što smatram da je malo preskup ovaj proizvod'),
+	(3, 20, 5, 'Vrh vrhova!'),
+	(3, 8, 5, 'Top!');
 
 
 INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES
@@ -1273,4 +1285,289 @@ SELECT * FROM aktivni_korisnici;
 SHOW TRIGGERS;
 SHOW WARNINGS;
 
+
+
+
+######## Loren ###########
+
+-- Pogled: Svi proizvodi s kategorijama (Loren)
+
+CREATE VIEW svi_proizvodi_s_kategorijama AS
+SELECT 
+    p.id AS proizvod_id, 
+    p.naziv AS proizvod, 
+    p.cijena, 
+    k.naziv AS kategorija, 
+    p.kolicina_na_skladistu
+FROM proizvodi p
+JOIN kategorije_proizvoda k ON p.kategorija_id = k.id;
+
+-- SELECT * FROM svi_proizvodi_s_kategorijama;
+
+-- Pogled: Proizvodi koji su trenutno na skladištu (Loren)
+
+CREATE VIEW dostupni_proizvodi AS
+SELECT 
+    p.id AS proizvod_id, 
+    p.naziv AS proizvod, 
+    p.kolicina_na_skladistu
+FROM proizvodi p
+WHERE p.kolicina_na_skladistu > 0;
+
+-- SELECT * FROM dostupni_proizvodi;
+
+-- Pogled: Sve recenzije s podacima o proizvodima i korisnicima (Loren)
+
+CREATE VIEW recenzije_s_proizvodima_i_korisnicima AS
+SELECT 
+    r.id AS recenzija_id, 
+    p.naziv AS proizvod, 
+    k.ime AS korisnik_ime, 
+    r.ocjena, 
+    r.komentar, 
+    r.datum_recenzije
+FROM recenzije_proizvoda r
+JOIN proizvodi p ON r.proizvod_id = p.id
+JOIN korisnici k ON r.korisnik_id = k.id;
+
+-- SELECT * FROM recenzije_s_proizvodima_i_korisnicima;
+
+-- Pogled: najpopularnijih proizvoda s najvećim brojem recenzija (Loren)
+
+CREATE VIEW najpopularniji_proizvodi AS
+SELECT 
+    p.id AS proizvod_id, 
+    p.naziv AS proizvod, 
+    COUNT(r.id) AS broj_recenzija
+FROM proizvodi p
+LEFT JOIN recenzije_proizvoda r ON p.id = r.proizvod_id
+GROUP BY p.id, p.naziv
+ORDER BY broj_recenzija DESC;
+
+-- SELECT * FROM najpopularniji_proizvodi;
+
+-- Upit: Proizvodi koji su dostupni na skladištu, imaju više od 10 recenzija i prosječnu ocjenu iznad 4  (Loren)
+
+SELECT 
+    p.id AS proizvod_id, 
+    p.naziv AS proizvod, 
+    p.kolicina_na_skladistu, 
+    COUNT(r.id) AS broj_recenzija, 
+    AVG(r.ocjena) AS prosjecna_ocjena
+FROM proizvodi p
+LEFT JOIN recenzije_proizvoda r ON p.id = r.proizvod_id
+WHERE p.kolicina_na_skladistu > 0
+GROUP BY p.id, p.naziv, p.kolicina_na_skladistu
+HAVING broj_recenzija > 10 AND prosjecna_ocjena > 4;
+
+-- Upit: Proizvodi s najvećom i najmanjom cijenom po kategoriji (Loren)
+
+SELECT 
+    k.naziv AS kategorija, 
+    MAX(p.cijena) AS najskuplji_proizvod, 
+    MIN(p.cijena) AS najjeftiniji_proizvod
+FROM proizvodi p
+JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
+GROUP BY k.naziv;
+
+-- Upit: Korisnici koji su napisali najviše recenzija i njihove prosječne ocjene (Loren)
+
+SELECT 
+    k.id AS korisnik_id, 
+    k.ime, 
+    k.prezime, 
+    COUNT(r.id) AS broj_recenzija, 
+    AVG(r.ocjena) AS prosjecna_ocjena
+FROM korisnici k
+JOIN recenzije_proizvoda r ON k.id = r.korisnik_id
+GROUP BY k.id, k.ime, k.prezime
+ORDER BY broj_recenzija DESC
+LIMIT 5;
+
+
+-- Okidač: Obavijest o niskoj zalihi spremju se u privremenu tablicu (Loren)
+
+
+CREATE TEMPORARY TABLE privremene_obavijesti (
+    poruka TEXT,
+    vrijeme_kreiranja DATETIME
+);
+
+DELIMITER //
+CREATE TRIGGER au_ObavijestNiskaZaliha
+AFTER UPDATE ON proizvodi
+FOR EACH ROW
+BEGIN
+    IF NEW.kolicina_na_skladistu < 5 THEN
+        INSERT INTO privremene_obavijesti (poruka, vrijeme_kreiranja)
+        VALUES (
+            CONCAT('Upozorenje: Zaliha za proizvod "', NEW.naziv, '" je pala ispod 5.'),
+            NOW()
+        );
+    END IF;
+END //
+DELIMITER ;
+
+/*
+UPDATE proizvodi 
+SET kolicina_na_skladistu = 3
+WHERE id = 2;
+
+SELECT * FROM privremene_obavijesti;
+
+SELECT * FROM proizvodi WHERE id = 2;
+*/
+
+-- Okidač: Ne dopušta recenziju ako korisnik nije kupio proizvod (Loren)
+
+
+DELIMITER //
+CREATE TRIGGER bi_RestrikcijaRecenzije
+BEFORE INSERT ON recenzije_proizvoda
+FOR EACH ROW
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM stavke_narudzbe sn
+        JOIN narudzbe n ON sn.narudzba_id = n.id
+        WHERE sn.proizvod_id = NEW.proizvod_id AND n.korisnik_id = NEW.korisnik_id
+    ) THEN
+        SIGNAL SQLSTATE '45505'
+        SET MESSAGE_TEXT = 'Korisnik nije kupio ovaj proizvod i ne može ostaviti recenziju.';
+    END IF;
+END //
+DELIMITER ;
+
+INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar) VALUES 
+	(1, 2, 5, 'Odličan proizvod!');
+
+
+-- Procedura: Povećanje cijene za 5% na sve proizvode iz kategorije "Matične ploče" (Loren)
+
+DELIMITER //
+CREATE PROCEDURE PovecajCijenu (
+    IN kategorija_naziv VARCHAR(255)
+)
+BEGIN
+    UPDATE proizvodi p
+    INNER JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
+    SET p.cijena = p.cijena * 1.05
+    WHERE k.naziv = kategorija_naziv;
+END //
+DELIMITER ;
+
+/*
+CALL PovecajCijenu('Matične ploče');
+
+SELECT naziv, cijena 
+FROM proizvodi 
+WHERE kategorija_id = (SELECT id FROM kategorije_proizvoda WHERE naziv = 'Matične ploče');
+*/
+
+-- Procedura za brisanje proizvoda s provjerom povezanih podataka (Loren)
+
+
+DELIMITER //
+CREATE PROCEDURE ObrisiProizvod (
+    IN p_proizvod_id INT
+)
+BEGIN
+
+    IF EXISTS (
+        SELECT 1
+        FROM stavke_narudzbe
+        WHERE proizvod_id = p_proizvod_id
+    ) THEN
+        SIGNAL SQLSTATE '45503'
+        SET MESSAGE_TEXT = 'Proizvod ne može biti obrisan jer postoje povezane narudžbe.';
+    ELSE
+
+        DELETE FROM popusti
+        WHERE proizvod_id = p_proizvod_id;
+
+        DELETE FROM recenzije_proizvoda
+        WHERE proizvod_id = p_proizvod_id;
+
+        DELETE FROM wishlist
+        WHERE proizvod_id = p_proizvod_id;
+
+        DELETE FROM proizvodi
+        WHERE id = p_proizvod_id;
+    END IF;
+END //
+DELIMITER ;
+
+
+-- CALL ObrisiProizvod(1);
+
+
+
+-- Procedura: Dodavanje proizvoda s provjerom grešaka (Loren)
+
+DELIMITER //
+CREATE PROCEDURE DodajProizvod (
+    IN p_naziv VARCHAR(255),
+    IN p_opis TEXT,
+    IN p_cijena DECIMAL(10, 2),
+    IN p_kategorija_id INT,
+    IN p_kolicina INT,
+    IN p_slika VARCHAR(255),
+    IN p_specifikacije TEXT
+)
+BEGIN
+  
+    IF p_cijena <= 0 THEN
+        SIGNAL SQLSTATE '45501'
+        SET MESSAGE_TEXT = 'Cijena mora biti veća od 0.';
+    ELSEIF p_kolicina < 0 THEN
+        SIGNAL SQLSTATE '45502'
+        SET MESSAGE_TEXT = 'Količina na skladištu ne može biti negativna.';
+    ELSE
+ 
+        INSERT INTO proizvodi (naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije)
+        VALUES (p_naziv, p_opis, p_cijena, p_kategorija_id, p_kolicina, p_slika, p_specifikacije);
+    END IF;
+END //
+DELIMITER ;
+
+-- CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', 10, 1, -1, 'slika.jpg', 'Specifikacije');
+-- CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', -21, 1, 12, 'slika.jpg', 'Specifikacije');
+
+
+-- Procedura: Pronalazi proizvode s ključnom riječi (Loren)
+
+DELIMITER //
+CREATE PROCEDURE PronadjiProizvode (
+    IN kljucna_rijec VARCHAR(255)
+)
+BEGIN
+    SELECT * 
+    FROM proizvodi
+    WHERE naziv LIKE CONCAT('%', kljucna_rijec, '%')
+       OR opis LIKE CONCAT('%', kljucna_rijec, '%');
+END //
+DELIMITER ;
+
+-- CALL PronadjiProizvode('računalo');
+
+-- Funkcija: Vraća ukupnu vrijednost svih proizvoda na skladištu (Loren)
+
+DROP function UkupnaVrijednostSkladista;
+
+DELIMITER //
+CREATE FUNCTION UkupnaVrijednostSkladista ()
+RETURNS DECIMAL(15,2)
+DETERMINISTIC
+BEGIN
+    DECLARE ukupna_vrijednost DECIMAL(15,2);
+    
+    SELECT SUM(kolicina_na_skladistu * cijena)
+    INTO ukupna_vrijednost
+    FROM proizvodi;
+       
+    RETURN ukupna_vrijednost;
+END //
+DELIMITER ;
+
+-- SELECT UkupnaVrijednostSkladista();
 
