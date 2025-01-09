@@ -465,13 +465,14 @@ def wishlist():
 
 
 @app.route('/api/wishlist', methods=['POST'])
-def api_wishlist():  # naziv endpointa je "api_wishlist"
+def api_wishlist():
     korisnik_id = session.get('user_id')
     if not korisnik_id:
         return jsonify({'message': 'Morate biti prijavljeni!'}), 401
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
+    grupa = data.get('grupa', 'Bez grupe')  # Podrazumevana grupa ako nije definisana
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
@@ -480,17 +481,22 @@ def api_wishlist():  # naziv endpointa je "api_wishlist"
     cursor = db.cursor()
 
     try:
-        cursor.execute(
-            "INSERT INTO wishlist (korisnik_id, proizvod_id) VALUES (%s, %s)",
-            (korisnik_id, proizvod_id),
-        )
+        # Direktan unos u wishlist; SQL okidač će se pobrinuti za validaciju
+        cursor.execute("""
+            INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
+            VALUES (%s, %s, %s)
+        """, (korisnik_id, proizvod_id, grupa))
         db.commit()
-    except MySQLdb.IntegrityError:
-        return jsonify({'message': 'Proizvod je već u wishlisti!'}), 409
+    except MySQLdb.IntegrityError as e:
+        # Obrada greške iz SQL okidača (npr. duplikat)
+        if "Duplicate entry" in str(e) or "45002" in str(e):
+            return jsonify({'message': 'Proizvod je već u wishlisti!'}), 409
+        else:
+            return jsonify({'message': f'Greška pri dodavanju u wishlist: {str(e)}'}), 500
     finally:
         db.close()
 
-    return jsonify({'message': 'Proizvod uspješno dodan u wishlist!'})
+    return jsonify({'message': f'Proizvod je uspešno dodan u wishlist pod grupu "{grupa}"!'})
 
 
 @app.route('/wishlist/ukloni', methods=['POST'])
@@ -558,7 +564,6 @@ def dodaj_u_wishlist():
         db.close()
 
     return jsonify({'message': f'Proizvod je uspešno dodan u wishlist pod grupu "{grupa}"!'})
-
 
 
 
