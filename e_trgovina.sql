@@ -1244,13 +1244,12 @@ BEFORE DELETE ON korisnici
 FOR EACH ROW
 BEGIN
     IF EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = OLD.id) THEN
-        SIGNAL SQLSTATE '45000'
+        SIGNAL SQLSTATE '45001'
         SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
     END IF;
 END$$
 DELIMITER ;
 
--- Okidač: Sprečavanje duplikata u wishlist-u (Leo)
 DELIMITER $$
 CREATE TRIGGER spreči_duplikate_wishlist
 BEFORE INSERT ON wishlist
@@ -1261,11 +1260,12 @@ BEGIN
         FROM wishlist
         WHERE korisnik_id = NEW.korisnik_id AND proizvod_id = NEW.proizvod_id
     ) THEN
-        SIGNAL SQLSTATE '45000'
+        SIGNAL SQLSTATE '45002'
         SET MESSAGE_TEXT = 'Proizvod je već u wishlist-u ovog korisnika!';
     END IF;
 END$$
 DELIMITER ;
+
 
 ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
 SELECT * FROM popularni_proizvodi;
