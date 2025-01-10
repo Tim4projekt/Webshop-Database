@@ -1418,8 +1418,7 @@ SELECT * FROM privremene_obavijesti;
 SELECT * FROM proizvodi WHERE id = 2;
 */
 
--- Okidač: Ne dopušta recenziju ako korisnik nije kupio proizvod (Loren)
-
+-- Okidač: Ne dopušta recenziju ako korisnik nije kupio proizvod i ako je već napisao recenziju za taj proizvod (Loren)
 
 DELIMITER //
 CREATE TRIGGER bi_RestrikcijaRecenzije
@@ -1434,6 +1433,15 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45505'
         SET MESSAGE_TEXT = 'Korisnik nije kupio ovaj proizvod i ne može ostaviti recenziju.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM recenzije_proizvoda
+        WHERE proizvod_id = NEW.proizvod_id AND korisnik_id = NEW.korisnik_id
+    ) THEN
+        SIGNAL SQLSTATE '45506'
+        SET MESSAGE_TEXT = 'Korisnik je već ostavio recenziju za ovaj proizvod.';
     END IF;
 END //
 DELIMITER ;
