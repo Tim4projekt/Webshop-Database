@@ -1168,13 +1168,18 @@ VALUES
     (4, 1);
 
 
--- Pogled: Aktivni korisnici (korisnici sa proizvodima u wishlist) (Leo)
-CREATE VIEW aktivni_korisnici AS
-SELECT k.id AS korisnik_id, k.ime, k.prezime, COUNT(w.proizvod_id) AS broj_proizvoda_u_wishlistu
-FROM korisnici k
-LEFT JOIN wishlist w ON k.id = w.korisnik_id
-GROUP BY k.id, k.ime, k.prezime
-HAVING broj_proizvoda_u_wishlistu > 0;
+-- Pogled: za korisnički profil (Leo)
+CREATE VIEW profil_korisnika AS
+SELECT 
+    id AS korisnik_id,
+    ime,
+    prezime,
+    email,
+    adresa,
+    grad,
+    telefon,
+    datum_registracije
+FROM korisnici;
 
 -- Pogled: Popularni proizvodi (najviše puta dodati u wishlist) (Leo)
 CREATE OR REPLACE VIEW popularni_proizvodi AS
@@ -1187,6 +1192,20 @@ LEFT JOIN wishlist w ON p.id = w.proizvod_id
 GROUP BY p.id, p.naziv
 ORDER BY broj_dodavanja DESC;
 
+--  Pogled: Narudžbe Korisnika (Leo)
+CREATE VIEW narudzbe_korisnika AS
+SELECT 
+    n.id AS narudzba_id,
+    n.datum_narudzbe,
+    n.status_narudzbe AS status,
+    s.proizvod_id,
+    p.naziv AS proizvod_naziv,
+    s.kolicina,
+    s.kolicina * p.cijena AS ukupna_cijena_proizvoda,
+    n.korisnik_id
+FROM narudzbe n
+JOIN stavke_narudzbe s ON n.id = s.narudzba_id
+JOIN proizvodi p ON s.proizvod_id = p.id;
 
 -- Procedura: Dodavanje korisnika (Leo)
 DELIMITER $$
@@ -1194,15 +1213,18 @@ CREATE PROCEDURE dodaj_korisnika(
     IN p_ime VARCHAR(255),
     IN p_prezime VARCHAR(255),
     IN p_email VARCHAR(255),
-    IN p_lozinka VARCHAR(255)
+    IN p_lozinka VARCHAR(255),
+    IN p_adresa TEXT,
+    IN p_grad VARCHAR(255),
+    IN p_telefon VARCHAR(20)
 )
 BEGIN
     IF EXISTS (SELECT 1 FROM korisnici WHERE email = p_email) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Korisnik sa ovim email-om već postoji!';
     ELSE
-        INSERT INTO korisnici (ime, prezime, email, lozinka, tip_korisnika, datum_registracije)
-        VALUES (p_ime, p_prezime, p_email, p_lozinka, 'kupac', CURDATE());
+        INSERT INTO korisnici (ime, prezime, email, lozinka, adresa, grad, telefon, tip_korisnika, datum_registracije)
+        VALUES (p_ime, p_prezime, p_email, p_lozinka, p_adresa, p_grad, p_telefon, 'kupac', CURDATE());
     END IF;
 END$$
 DELIMITER ;
@@ -1226,13 +1248,55 @@ DELIMITER ;
 
 -- Procedura: Brisanje korisnika (Leo)
 DELIMITER $$
+
 CREATE PROCEDURE obrisi_korisnika(
     IN p_korisnik_id INT
 )
 BEGIN
-    DELETE FROM wishlist WHERE korisnik_id = p_korisnik_id;
-    DELETE FROM narudzbe WHERE korisnik_id = p_korisnik_id;
-    DELETE FROM korisnici WHERE id = p_korisnik_id;
+    DECLARE korisnik_ima_aktivne_narudzbe BOOLEAN;
+
+    -- Provera da li korisnik ima aktivne narudžbe
+    SELECT EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = p_korisnik_id)
+    INTO korisnik_ima_aktivne_narudzbe;
+
+    IF korisnik_ima_aktivne_narudzbe THEN
+        SIGNAL SQLSTATE '45001'
+        SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
+    ELSE
+        -- Brisanje povezanih podataka
+        DELETE FROM placanja WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
+        DELETE FROM stavke_narudzbe WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
+        DELETE FROM narudzbe WHERE korisnik_id = p_korisnik_id;
+        DELETE FROM wishlist WHERE korisnik_id = p_korisnik_id;
+
+        -- Na kraju, brisanje korisnika
+        DELETE FROM korisnici WHERE id = p_korisnik_id;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- Procedura: Ažuriranje korsinika(Leo)
+DELIMITER $$
+CREATE PROCEDURE azuriraj_korisnika(
+    IN p_korisnik_id INT,
+    IN p_ime VARCHAR(255),
+    IN p_prezime VARCHAR(255),
+    IN p_email VARCHAR(255),
+    IN p_adresa TEXT,
+    IN p_grad VARCHAR(255),
+    IN p_telefon VARCHAR(20)
+)
+BEGIN
+    UPDATE korisnici
+    SET 
+        ime = p_ime,
+        prezime = p_prezime,
+        email = p_email,
+        adresa = p_adresa,
+        grad = p_grad,
+        telefon = p_telefon
+    WHERE id = p_korisnik_id;
 END$$
 DELIMITER ;
 
@@ -1249,19 +1313,7 @@ END$$
 DELIMITER ;
 
 
--- Okidač: Sprečavanje brisanja korisnika sa narudžbama (Leo)
-DELIMITER $$
-CREATE TRIGGER spreči_brisanje_korisnika
-BEFORE DELETE ON korisnici
-FOR EACH ROW
-BEGIN
-    IF EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = OLD.id) THEN
-        SIGNAL SQLSTATE '45001'
-        SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
-    END IF;
-END$$
-DELIMITER ;
-
+-- Okidač: spreči duplikate wishlist (Leo)
 DELIMITER $$
 CREATE TRIGGER spreči_duplikate_wishlist
 BEFORE INSERT ON wishlist
@@ -1281,9 +1333,9 @@ DELIMITER ;
 
 ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
 SELECT * FROM popularni_proizvodi;
-SELECT * FROM aktivni_korisnici;
 SHOW TRIGGERS;
 SHOW WARNINGS;
+
 
 
 
