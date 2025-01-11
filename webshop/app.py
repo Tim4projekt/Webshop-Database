@@ -841,15 +841,21 @@ def profil():
     cursor = db.cursor()
 
     try:
-        # Dohvaćanje podataka o korisniku
-        cursor.execute("SELECT * FROM profil_korisnika WHERE korisnik_id = %s", (korisnik_id,))
+        # Dohvaćanje podataka o korisniku i formatiranje datuma direktno u SQL-u pomoću funkcije
+        cursor.execute("""
+            SELECT 
+                korisnik_id, 
+                ime, 
+                prezime, 
+                email, 
+                adresa, 
+                grad, 
+                telefon, 
+                formatiraj_datum(datum_registracije) AS datum_registracije 
+            FROM profil_korisnika 
+            WHERE korisnik_id = %s
+        """, (korisnik_id,))
         korisnik = cursor.fetchone()
-
-        # Formatiranje datuma registracije
-        if korisnik:
-            datum_registracije = korisnik[7].strftime('%d.%m.%Y') if korisnik[7] else None
-            korisnik = list(korisnik)  # Pretvaranje tuple-a u listu
-            korisnik[7] = datum_registracije  # Postavljanje formatiranog datuma
 
         # Dohvaćanje narudžbi korisnika
         cursor.execute("SELECT * FROM narudzbe_korisnika WHERE korisnik_id = %s", (korisnik_id,))
@@ -859,6 +865,7 @@ def profil():
         db.close()
 
     return render_template('profil.html', korisnik=korisnik, narudzbe=narudzbe)
+
 
 
 @app.route('/profil/azuriraj', methods=['POST'])
