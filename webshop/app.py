@@ -6,8 +6,6 @@ import MySQLdb
 import bcrypt
 
 
-
-
 app = Flask(__name__)
 CORS(app)  # Omogućava CORS
 
@@ -21,6 +19,7 @@ db_config = {
     'password': 'root',
     'database': 'webshop'
 }
+
 @app.route('/home')
 @app.route('/')
 def home():
@@ -281,43 +280,49 @@ def proizvod_detail(proizvod_id):
 @app.route('/registracija', methods=['GET', 'POST'])
 def registracija():
     if request.method == 'GET':
-        # Kada je GET metoda, prikazujemo HTML formu za registraciju
         return render_template('registracija.html')
 
     elif request.method == 'POST':
+        db = None
         try:
-            # Preuzimanje JSON podataka iz POST zahteva
+            # Dohvati JSON podatke iz POST zahteva
             data = request.get_json()
-            print(f"Primljeni podaci: {data}")  # Logovanje podataka
+            print(f"Primljeni podaci iz JSON-a: {data}")
 
+            # Provera svih ključnih podataka
+            if not all(key in data for key in ['ime', 'prezime', 'email', 'lozinka', 'adresa', 'grad', 'telefon']):
+                return jsonify({'message': 'Nedostaju neki obavezni podaci!'}), 400
+
+            # Ekstrakcija podataka
             ime = data['ime']
             prezime = data['prezime']
             email = data['email']
             lozinka = bcrypt.hashpw(data['lozinka'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            adresa = data['adresa']
+            grad = data['grad']
+            telefon = data['telefon']
 
             # Povezivanje sa bazom podataka
             db = MySQLdb.connect(**db_config)
             cursor = db.cursor()
 
-            # Pozivanje procedure za dodavanje korisnika (sa samo 4 parametra)
-            cursor.callproc('dodaj_korisnika', (ime, prezime, email, lozinka))
+            # Pozivanje procedure za dodavanje korisnika
+            cursor.callproc('dodaj_korisnika', (ime, prezime, email, lozinka, adresa, grad, telefon))
             db.commit()
 
-            print("Registracija uspešna!")  # Logovanje uspešne registracije
-
-            # Flash poruka za uspeh
-            flash('Registracija uspešna!', 'success')
+            print("Registracija uspešna!")
             return jsonify({'message': 'Registracija uspešna!'}), 200
 
         except MySQLdb.MySQLError as e:
-            print(f"Greška pri registraciji: {e}")  # Logovanje greške
-            # Ako je greška vezana za postojanje korisnika sa istim email-om
-            if "Korisnik sa ovim email-om već postoji!" in str(e):
-                flash('Email već postoji!', 'error')
-                return jsonify({'message': 'Email već postoji!'}), 409
-            else:
-                flash('Došlo je do greške. Pokušajte ponovo!', 'error')
-                return jsonify({'message': 'Došlo je do greške. Pokušajte ponovo!'}), 500
+            error_message = str(e)
+            print(f"Greška pri registraciji: {error_message}")  # Log greške
+
+            # Provera za specifičnu grešku iz SQL procedure
+            if "Korisnik sa ovim email-om već postoji!" in error_message:
+                return jsonify({'message': 'Korisnik sa ovim email-om već postoji!'}), 409
+
+            return jsonify({'message': 'Došlo je do greške pri registraciji.'}), 500
+
         finally:
             if db:
                 db.close()
@@ -439,13 +444,34 @@ def wishlist():
     cursor = db.cursor()
 
     try:
-        # Dohvati proizvode iz wishlist-a sa grupama
-        cursor.execute("""
+        # Dohvat svih dostupnih grupa
+        cursor.execute("SELECT DISTINCT grupa FROM wishlist WHERE korisnik_id = %s", (korisnik_id,))
+        dostupne_grupe = [row[0] for row in cursor.fetchall()]
+
+        # Dohvati proizvode iz wishlist-a sa filtriranjem
+        grupa_filter = request.args.get('grupa', '').strip()
+        min_cijena = request.args.get('min_cijena', type=float)
+        max_cijena = request.args.get('max_cijena', type=float)
+
+        query = """
             SELECT w.grupa, p.id, p.naziv, p.cijena
             FROM wishlist w
             JOIN proizvodi p ON w.proizvod_id = p.id
             WHERE w.korisnik_id = %s
-        """, (korisnik_id,))
+        """
+        params = [korisnik_id]
+
+        if grupa_filter:
+            query += " AND w.grupa = %s"
+            params.append(grupa_filter)
+        if min_cijena is not None:
+            query += " AND p.cijena >= %s"
+            params.append(min_cijena)
+        if max_cijena is not None:
+            query += " AND p.cijena <= %s"
+            params.append(max_cijena)
+
+        cursor.execute(query, tuple(params))
         proizvodi = cursor.fetchall()
 
         # Grupisanje proizvoda po grupama
@@ -458,9 +484,7 @@ def wishlist():
     finally:
         db.close()
 
-    return render_template('wishlist.html', proizvodi_u_wishlistu=proizvodi_u_wishlistu)
-
-
+    return render_template('wishlist.html', proizvodi_u_wishlistu=proizvodi_u_wishlistu, dostupne_grupe=dostupne_grupe)
 
 
 
@@ -534,31 +558,27 @@ def dodaj_u_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
-    grupa = data.get('grupa')
+    grupa = data.get('grupa', 'Bez grupe')  # Podrazumevana grupa
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
-
-    if not grupa:
-        grupa = "Bez grupe"  # Ako korisnik ne odabere grupu, koristi podrazumevanu
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
     try:
-        # Provera da li proizvod već postoji u wishlisti
-        cursor.execute("""
-            SELECT * FROM wishlist WHERE korisnik_id = %s AND proizvod_id = %s
-        """, (korisnik_id, proizvod_id))
-        if cursor.fetchone():
-            return jsonify({'message': 'Proizvod je već u wishlisti.'}), 400
-
-        # Dodavanje proizvoda u wishlist sa grupom
+        # Direktno unosimo u bazu, oslanjajući se na okidač za validaciju
         cursor.execute("""
             INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
             VALUES (%s, %s, %s)
         """, (korisnik_id, proizvod_id, grupa))
         db.commit()
+
+    except MySQLdb.OperationalError as e:
+        if "Proizvod je već u wishlist-u ovog korisnika!":  
+            return jsonify({'message': 'Proizvod je već u wishlisti!'}), 409
+        else:
+            return jsonify({'message': 'Došlo je do greške pri dodavanju u wishlist!'}), 500
 
     finally:
         db.close()
@@ -808,6 +828,93 @@ def lista_preporuka():
 
     # Prosleđivanje rezultata šablonu
     return render_template('lista_preporuka.html', preporuke=preporuke)
+
+from datetime import datetime
+
+@app.route('/profil', methods=['GET'])
+def profil():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    korisnik_id = session['user_id']
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        # Dohvaćanje podataka o korisniku
+        cursor.execute("SELECT * FROM profil_korisnika WHERE korisnik_id = %s", (korisnik_id,))
+        korisnik = cursor.fetchone()
+
+        # Formatiranje datuma registracije
+        if korisnik:
+            datum_registracije = korisnik[7].strftime('%d.%m.%Y') if korisnik[7] else None
+            korisnik = list(korisnik)  # Pretvaranje tuple-a u listu
+            korisnik[7] = datum_registracije  # Postavljanje formatiranog datuma
+
+        # Dohvaćanje narudžbi korisnika
+        cursor.execute("SELECT * FROM narudzbe_korisnika WHERE korisnik_id = %s", (korisnik_id,))
+        narudzbe = cursor.fetchall()
+
+    finally:
+        db.close()
+
+    return render_template('profil.html', korisnik=korisnik, narudzbe=narudzbe)
+
+
+@app.route('/profil/azuriraj', methods=['POST'])
+def azuriraj_profil():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Morate biti prijavljeni!'}), 401
+
+    data = request.get_json()
+    korisnik_id = session['user_id']
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        cursor.callproc('azuriraj_korisnika', (
+            korisnik_id,
+            data['ime'],
+            data['prezime'],
+            data['email'],
+            data['adresa'],
+            data['grad'],
+            data['telefon']
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    return jsonify({'message': 'Profil uspešno ažuriran!'})
+
+
+@app.route('/profil/obrisi', methods=['POST'])
+def obrisi_profil():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Morate biti prijavljeni!'}), 401
+
+    korisnik_id = session['user_id']
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        cursor.callproc('obrisi_korisnika', (korisnik_id,))
+        db.commit()
+        session.pop('user_id', None)  # Ukloni korisnika iz sesije nakon brisanja
+        return jsonify({'message': 'Račun uspešno obrisan!'}), 200
+
+    except MySQLdb.MySQLError as e:
+        # Prepoznaj grešku generisanu SIGNAL-om
+        if e.args[0] == 1644:  # Kod prilagođene greške
+            return jsonify({'message': e.args[1]}), 400
+        else:
+            return jsonify({'message': 'Došlo je do greške pri brisanju računa.'}), 500
+
+    finally:
+        db.close()
+
 
 
 if __name__ == '__main__':
