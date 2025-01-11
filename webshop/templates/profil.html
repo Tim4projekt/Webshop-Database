@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Profil Korisnika</h1>
+    </header>
+
+    <main>
+        <section>
+            <h2>Osnovni Podaci</h2>
+            <p><strong>Ime:</strong> {{ korisnik[1] }}</p>
+            <p><strong>Prezime:</strong> {{ korisnik[2] }}</p>
+            <p><strong>Email:</strong> {{ korisnik[3] }}</p>
+            <p><strong>Adresa:</strong> {{ korisnik[4] }}</p>
+            <p><strong>Grad:</strong> {{ korisnik[5] }}</p>
+            <p><strong>Telefon:</strong> {{ korisnik[6] }}</p>
+            <p><strong>Datum Registracije:</strong> {{ korisnik[7] }}</p>
+            <button onclick="otvoriFormuZaAzuriranje()">Ažuriraj Podatke</button>
+            <button onclick="obrisiRacun()">Obriši Račun</button>
+        </section>
+
+        <div id="azuriranje-form-container" style="display: none;">
+            <h2>Ažuriranje Podataka</h2>
+            <form id="azuriranje-form">
+                <div>
+                    <label for="ime">Ime:</label>
+                    <input type="text" id="ime" name="ime" value="{{ korisnik[1] }}" required>
+                </div>
+                <div>
+                    <label for="prezime">Prezime:</label>
+                    <input type="text" id="prezime" name="prezime" value="{{ korisnik[2] }}" required>
+                </div>
+                <div>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="{{ korisnik[3] }}" required>
+                </div>
+                <div>
+                    <label for="adresa">Adresa:</label>
+                    <input type="text" id="adresa" name="adresa" value="{{ korisnik[4] }}" required>
+                </div>
+                <div>
+                    <label for="grad">Grad:</label>
+                    <input type="text" id="grad" name="grad" value="{{ korisnik[5] }}" required>
+                </div>
+                <div>
+                    <label for="telefon">Telefon:</label>
+                    <input type="text" id="telefon" name="telefon" value="{{ korisnik[6] }}" required>
+                </div>
+                <button type="button" onclick="azurirajProfil()">Sačuvaj Promene</button>
+                <button type="button" onclick="zatvoriFormu()">Otkaži</button>
+            </form>
+        </div>
+
+        <section>
+            <h2>Vaše Narudžbe</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Narudžbe</th>
+                        <th>Datum</th>
+                        <th>Status</th>
+                        <th>Proizvod</th>
+                        <th>Količina</th>
+                        <th>Ukupna Cijena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for narudzba in narudzbe %}
+                    <tr>
+                        <td>{{ narudzba[0] }}</td>
+                        <td>{{ narudzba[1] }}</td>
+                        <td>{{ narudzba[2] }}</td>
+                        <td>{{ narudzba[4] }}</td>
+                        <td>{{ narudzba[5] }}</td>
+                        <td>{{ narudzba[6] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        function otvoriFormuZaAzuriranje() {
+            document.getElementById('azuriranje-form-container').style.display = 'block';
+        }
+
+        function zatvoriFormu() {
+            document.getElementById('azuriranje-form-container').style.display = 'none';
+        }
+
+        function azurirajProfil() {
+            const data = {
+                ime: document.getElementById('ime').value,
+                prezime: document.getElementById('prezime').value,
+                email: document.getElementById('email').value,
+                adresa: document.getElementById('adresa').value,
+                grad: document.getElementById('grad').value,
+                telefon: document.getElementById('telefon').value,
+            };
+
+            fetch('/profil/azuriraj', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.message === 'Profil uspešno ažuriran!') {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Greška:', error);
+                alert('Došlo je do greške pri ažuriranju profila!');
+            });
+        }
+
+        function obrisiRacun() {
+            if (confirm("Jeste li sigurni da želite obrisati račun?")) {
+                fetch('/profil/obrisi', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.message === 'Račun uspešno obrisan!') {
+                            window.location.href = '/logout';
+                        }
+                    })
+                    .catch(error => console.error('Greška:', error));
+            }
+        }
+    </script>
+</body>
+</html>

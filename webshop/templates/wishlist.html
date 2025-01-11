@@ -13,13 +13,35 @@
     </header>
 
     <main>
+        <form id="filter-form" onsubmit="event.preventDefault(); filterWishlist();">
+            <label for="filter-grupa">Grupa:</label>
+            <select id="filter-grupa">
+                <option value="">Sve grupe</option>
+                {% for grupa in dostupne_grupe %}
+                <option value="{{ grupa }}">{{ grupa }}</option>
+                {% endfor %}
+            </select>
+        
+            <label for="filter-min-cijena">Min. cijena:</label>
+            <input type="number" id="filter-min-cijena" step="0.01" placeholder="Minimalna cijena">
+        
+            <label for="filter-max-cijena">Max. cijena:</label>
+            <input type="number" id="filter-max-cijena" step="0.01" placeholder="Maksimalna cijena">
+        
+            <button type="submit" class="filter-button">Filtriraj</button>
+        </form>
+        
+
         {% if proizvodi_u_wishlistu %}
         <div class="wishlist-container">
             {% for grupa, proizvodi in proizvodi_u_wishlistu.items() %}
-            <div class="wishlist-group">
+            <div class="wishlist-group" data-grupa="{{ grupa }}">
                 <h2>{{ grupa }}</h2>
                 {% for proizvod in proizvodi %}
-                <div class="wishlist-item" id="wishlist-item-{{ proizvod[0] }}">
+                <div class="wishlist-item" 
+                     id="wishlist-item-{{ proizvod[0] }}" 
+                     data-cijena="{{ proizvod[2] }}" 
+                     data-grupa="{{ grupa }}">
                     <h3>{{ proizvod[1] }}</h3>
                     <p>Cijena: {{ proizvod[2] }} HRK</p>
                     <button class="remove-button" onclick="ukloniIzWishliste({{ proizvod[0] }})">Ukloni iz wishliste</button>
@@ -33,32 +55,51 @@
         {% endif %}
     </main>
 
-<script>
-    function ukloniIzWishliste(proizvodId) {
-        fetch('/wishlist/ukloni', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ proizvod_id: proizvodId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert(data.message); // Prikaz poruke korisniku (opcionalno)
-                // Ukloni proizvod iz prikaza
-                const item = document.getElementById(`wishlist-item-${proizvodId}`);
-                if (item) {
-                    item.remove();
+    <script>
+        function ukloniIzWishliste(proizvodId) {
+            fetch('/wishlist/ukloni', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ proizvod_id: proizvodId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message); // Prikaz poruke korisniku (opcionalno)
+                    // Ukloni proizvod iz prikaza
+                    const item = document.getElementById(`wishlist-item-${proizvodId}`);
+                    if (item) {
+                        item.remove();
+                    }
                 }
-            }
-        })
-        .catch(error => {
-            console.error('Greška:', error);
-            alert('Došlo je do greške pri uklanjanju proizvoda.');
-        });
-    }
-</script>
+            })
+            .catch(error => {
+                console.error('Greška:', error);
+                alert('Došlo je do greške pri uklanjanju proizvoda.');
+            });
+        }
 
+        function filterWishlist() {
+            const filterGrupa = document.getElementById('filter-grupa').value.toLowerCase();
+            const filterMinCijena = parseFloat(document.getElementById('filter-min-cijena').value) || 0;
+            const filterMaxCijena = parseFloat(document.getElementById('filter-max-cijena').value) || Infinity;
+
+            const items = document.querySelectorAll('.wishlist-item');
+
+            items.forEach(item => {
+                const itemGrupa = item.getAttribute('data-grupa').toLowerCase();
+                const itemCijena = parseFloat(item.getAttribute('data-cijena'));
+
+                if ((filterGrupa === '' || itemGrupa.includes(filterGrupa)) &&
+                    (itemCijena >= filterMinCijena && itemCijena <= filterMaxCijena)) {
+                    item.style.display = 'block'; // Prikaz proizvoda
+                } else {
+                    item.style.display = 'none'; // Sakrivanje proizvoda
+                }
+            });
+        }
+    </script>
 </body>
 </html>

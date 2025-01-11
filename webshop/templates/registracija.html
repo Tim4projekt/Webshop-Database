@@ -2,6 +2,7 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registracija</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -14,7 +15,7 @@
     <main>
         <div class="form-container">
             <h2>Kreirajte račun</h2>
-            <form id="registracija-form" action="/registracija" method="POST">
+            <form id="registracija-form">
                 <div class="form-group">
                     <label for="ime">Ime:</label>
                     <input type="text" id="ime" name="ime" placeholder="Unesite ime" required>
@@ -37,17 +38,17 @@
 
                 <div class="form-group">
                     <label for="adresa">Adresa:</label>
-                    <input type="text" id="adresa" name="adresa" placeholder="Unesite adresu">
+                    <input type="text" id="adresa" name="adresa" placeholder="Unesite adresu" required>
                 </div>
 
                 <div class="form-group">
                     <label for="grad">Grad:</label>
-                    <input type="text" id="grad" name="grad" placeholder="Unesite grad">
+                    <input type="text" id="grad" name="grad" placeholder="Unesite grad" required>
                 </div>
 
                 <div class="form-group">
                     <label for="telefon">Telefon:</label>
-                    <input type="text" id="telefon" name="telefon" placeholder="Unesite telefon">
+                    <input type="text" id="telefon" name="telefon" placeholder="Unesite telefon" required pattern="^\+?\d{9,15}$" title="Telefon mora imati 9-15 cifara i opcionalno početi sa +">
                 </div>
 
                 <button type="submit" class="submit-button">Registracija</button>
@@ -57,34 +58,41 @@
 
     <script>
         const form = document.getElementById('registracija-form');
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function (event) {
             event.preventDefault();
+
+            // Kreiranje objekta iz forme
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-    
-            console.log('Slanje podataka:', data);  // Logovanje podataka
-    
-            fetch('/registracija', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Odgovor sa servera:', data);  // Logovanje odgovora sa servera
-                alert(data.message);  // Prikazivanje poruke korisniku
-                if (data.message === 'Registracija uspešna!') {
-                    window.location.href = "/home";  // Redirektuj na home stranicu
+
+            // Logovanje podataka za proveru
+            console.log('Slanje podataka:', data);
+
+            try {
+                // Slanje POST zahteva na server
+                const response = await fetch('/registracija', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                console.log('Odgovor sa servera:', result);
+
+                // Obrada odgovora
+                if (response.ok) {
+                    alert(result.message);
+                    window.location.href = '/home'; // Redirekcija nakon uspešne registracije
+                } else {
+                    alert(result.message || 'Došlo je do greške.');
                 }
-            })
-            .catch(error => {
-                console.error('Greška:', error);
-            });
+            } catch (error) {
+                console.error('Greška prilikom slanja zahteva:', error);
+                alert('Došlo je do greške prilikom registracije.');
+            }
         });
     </script>
-    
-    
 </body>
 </html>
