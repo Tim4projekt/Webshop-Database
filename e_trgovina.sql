@@ -1330,14 +1330,55 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- Funkcija: Formatiranje datuma (Leo)
+DELIMITER $$
+CREATE FUNCTION formatiraj_datum(input_date DATE)
+RETURNS VARCHAR(10)
+DETERMINISTIC
+BEGIN
+    RETURN DATE_FORMAT(input_date, '%d.%m.%Y');
+END$$
+DELIMITER ;
+
+-- Upit: Provera popularnosti proizvoda (koji proizvodi su najčešće dodati u wishlist) (Leo)
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    COUNT(w.proizvod_id) AS broj_dodavanja
+FROM proizvodi p
+LEFT JOIN wishlist w ON p.id = w.proizvod_id
+GROUP BY p.id, p.naziv
+ORDER BY broj_dodavanja DESC
+LIMIT 10; -- Dohvata prvih 10 proizvoda
+
+-- Upit: Provera korisnika sa najviše narudžbi (Leo)
+SELECT 
+    k.id AS korisnik_id,
+    k.ime,
+    k.prezime,
+    COUNT(n.id) AS broj_narudzbi
+FROM korisnici k
+JOIN narudzbe n ON k.id = n.korisnik_id
+GROUP BY k.id, k.ime, k.prezime
+ORDER BY broj_narudzbi DESC
+LIMIT 5; -- Prikazuje prvih 5 korisnika sa najviše narudžbi
+
+-- Upit: Ukupna zarada po korisnicima na osnovu narudžbi(Leo)
+SELECT 
+    k.id AS korisnik_id,
+    k.ime,
+    k.prezime,
+    SUM(n.ukupna_cijena) AS ukupna_zarada
+FROM korisnici k
+JOIN narudzbe n ON k.id = n.korisnik_id
+GROUP BY k.id, k.ime, k.prezime
+ORDER BY ukupna_zarada DESC;
+
 
 ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
 SELECT * FROM popularni_proizvodi;
 SHOW TRIGGERS;
 SHOW WARNINGS;
-
-
-
 
 
 ######## Loren ###########
