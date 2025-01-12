@@ -1182,7 +1182,7 @@ SELECT
 FROM korisnici;
 
 -- Pogled: Popularni proizvodi (najviše puta dodati u wishlist) (Leo)
-CREATE OR REPLACE VIEW popularni_proizvodi AS
+CREATE VIEW popularni_proizvodi AS
 SELECT 
     p.id AS proizvod_id,
     p.naziv,
@@ -1208,7 +1208,7 @@ JOIN stavke_narudzbe s ON n.id = s.narudzba_id
 JOIN proizvodi p ON s.proizvod_id = p.id;
 
 -- Procedura: Dodavanje korisnika (Leo)
-DELIMITER $$
+DELIMITER //
 CREATE PROCEDURE dodaj_korisnika(
     IN p_ime VARCHAR(255),
     IN p_prezime VARCHAR(255),
@@ -1226,11 +1226,11 @@ BEGIN
         INSERT INTO korisnici (ime, prezime, email, lozinka, adresa, grad, telefon, tip_korisnika, datum_registracije)
         VALUES (p_ime, p_prezime, p_email, p_lozinka, p_adresa, p_grad, p_telefon, 'kupac', CURDATE());
     END IF;
-END$$
+END//
 DELIMITER ;
 
 -- Procedura: Prikaz preporuka (Leo)
-DELIMITER $$
+DELIMITER //
 CREATE PROCEDURE prikazi_preporuke()
 BEGIN
     SELECT 
@@ -1243,11 +1243,11 @@ BEGIN
     JOIN korisnici k ON pp.korisnik_id = k.id
     JOIN proizvodi p ON pp.proizvod_id = p.id
     ORDER BY pp.id DESC;
-END$$
+END//
 DELIMITER ;
 
 -- Procedura: Brisanje korisnika (Leo)
-DELIMITER $$
+DELIMITER //
 
 CREATE PROCEDURE obrisi_korisnika(
     IN p_korisnik_id INT
@@ -1272,12 +1272,12 @@ BEGIN
         -- Na kraju, brisanje korisnika
         DELETE FROM korisnici WHERE id = p_korisnik_id;
     END IF;
-END$$
+END//
 
 DELIMITER ;
 
 -- Procedura: Ažuriranje korsinika(Leo)
-DELIMITER $$
+DELIMITER //
 CREATE PROCEDURE azuriraj_korisnika(
     IN p_korisnik_id INT,
     IN p_ime VARCHAR(255),
@@ -1297,11 +1297,11 @@ BEGIN
         grad = p_grad,
         telefon = p_telefon
     WHERE id = p_korisnik_id;
-END$$
+END//
 DELIMITER ;
 
 -- Okidač: Automatsko postavljanje datuma registracije korisnika (Leo)
-DELIMITER $$
+DELIMITER //
 CREATE TRIGGER postavi_datum_registracije
 BEFORE INSERT ON korisnici
 FOR EACH ROW
@@ -1309,12 +1309,12 @@ BEGIN
     IF NEW.datum_registracije IS NULL THEN
         SET NEW.datum_registracije = CURDATE();
     END IF;
-END$$
+END//
 DELIMITER ;
 
 
 -- Okidač: spreči duplikate wishlist (Leo)
-DELIMITER $$
+DELIMITER //
 CREATE TRIGGER spreči_duplikate_wishlist
 BEFORE INSERT ON wishlist
 FOR EACH ROW
@@ -1327,20 +1327,20 @@ BEGIN
         SIGNAL SQLSTATE '45002'
         SET MESSAGE_TEXT = 'Proizvod je već u wishlist-u ovog korisnika!';
     END IF;
-END$$
+END//
 DELIMITER ;
 
 -- Funkcija: Formatiranje datuma (Leo)
-DELIMITER $$
+DELIMITER //
 CREATE FUNCTION formatiraj_datum(input_date DATE)
 RETURNS VARCHAR(10)
 DETERMINISTIC
 BEGIN
     RETURN DATE_FORMAT(input_date, '%d.%m.%Y');
-END$$
+END//
 DELIMITER ;
 
--- Upit: Provera popularnosti proizvoda (koji proizvodi su najčešće dodati u wishlist) (Leo)
+-- Upit: Provjera popularnosti proizvoda (koji proizvodi su najčešće dodati u wishlist) (Leo)
 SELECT 
     p.id AS proizvod_id,
     p.naziv AS proizvod_naziv,
@@ -1351,7 +1351,7 @@ GROUP BY p.id, p.naziv
 ORDER BY broj_dodavanja DESC
 LIMIT 10; -- Dohvata prvih 10 proizvoda
 
--- Upit: Provera korisnika sa najviše narudžbi (Leo)
+-- Upit: Provjera korisnika sa najviše narudžbi (Leo)
 SELECT 
     k.id AS korisnik_id,
     k.ime,
