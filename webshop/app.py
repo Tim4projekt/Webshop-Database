@@ -20,6 +20,42 @@ db_config = {
     'database': 'webshop'
 }
 
+db = MySQLdb.connect(**db_config)
+cursor = db.cursor()
+
+try:
+    cursor.execute("SELECT id, lozinka FROM korisnici")
+    korisnici = cursor.fetchall()
+
+    for korisnik in korisnici:
+        korisnik_id = korisnik[0]
+        plain_lozinka = korisnik[1]
+
+
+        if plain_lozinka.startswith("$2b$"):
+            continue
+
+        # Hashiranje lozinke
+        hashed_lozinka = bcrypt.hashpw(plain_lozinka.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        # Ažuriranje lozinke u bazi
+        cursor.execute(
+            "UPDATE korisnici SET lozinka = %s WHERE id = %s",
+            (hashed_lozinka, korisnik_id)
+        )
+
+    # Spremljenje izmjene u bazi
+    db.commit()
+    print("Sve lozinke su uspešno hashirane.")
+
+except Exception as e:
+    print(f"Greška: {e}")
+    db.rollback()
+
+finally:
+    cursor.close()
+    db.close()
+
 @app.route('/home')
 @app.route('/')
 def home():
@@ -37,7 +73,7 @@ def home():
     """)
     proizvodi = cursor.fetchall()
 
-    # Grupisanje proizvoda po kategorijama
+    # Grupiranje proizvoda po kategorijama
     kategorije = {}
     for proizvod in proizvodi:
         kategorija = proizvod[4]
@@ -76,7 +112,7 @@ def home():
         if page < total_pages - 2:
             pagination.append('...')  # Skraćivanje
         if page < total_pages:
-            pagination.append(total_pages)  # Poslednja stranica
+            pagination.append(total_pages)  # Posljednja stranica
 
     cursor.close()
     db.close()
@@ -289,7 +325,7 @@ def registracija():
             data = request.get_json()
             print(f"Primljeni podaci iz JSON-a: {data}")
 
-            # Provera svih ključnih podataka
+            # Provjera svih ključnih podataka
             if not all(key in data for key in ['ime', 'prezime', 'email', 'lozinka', 'adresa', 'grad', 'telefon']):
                 return jsonify({'message': 'Nedostaju neki obavezni podaci!'}), 400
 
@@ -317,7 +353,7 @@ def registracija():
             error_message = str(e)
             print(f"Greška pri registraciji: {error_message}")  # Log greške
 
-            # Provera za specifičnu grešku iz SQL procedure
+            # Provjera za specifičnu grešku iz SQL procedure
             if "Korisnik sa ovim email-om već postoji!" in error_message:
                 return jsonify({'message': 'Korisnik sa ovim email-om već postoji!'}), 409
 
@@ -474,7 +510,7 @@ def wishlist():
         cursor.execute(query, tuple(params))
         proizvodi = cursor.fetchall()
 
-        # Grupisanje proizvoda po grupama
+        # Grupiranje proizvoda po grupama
         proizvodi_u_wishlistu = {}
         for grupa, proizvod_id, naziv, cijena in proizvodi:
             if grupa not in proizvodi_u_wishlistu:
@@ -496,7 +532,7 @@ def api_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
-    grupa = data.get('grupa', 'Bez grupe')  # Podrazumevana grupa ako nije definisana
+    grupa = data.get('grupa', 'Bez grupe')  # Podrazumjevana grupa ako nije definirana
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
@@ -558,7 +594,7 @@ def dodaj_u_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
-    grupa = data.get('grupa', 'Bez grupe')  # Podrazumevana grupa
+    grupa = data.get('grupa', 'Bez grupe')  # Podrazumjevana grupa
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
@@ -826,7 +862,7 @@ def lista_preporuka():
         cursor.close()
         db.close()
 
-    # Prosleđivanje rezultata šablonu
+    # Prosljeđivanje rezultata šablonu
     return render_template('lista_preporuka.html', preporuke=preporuke)
 
 from datetime import datetime
@@ -913,7 +949,7 @@ def obrisi_profil():
         return jsonify({'message': 'Račun uspešno obrisan!'}), 200
 
     except MySQLdb.MySQLError as e:
-        # Prepoznaj grešku generisanu SIGNAL-om
+        # Prepoznaj grešku generiranu SIGNAL-om
         if e.args[0] == 1644:  # Kod prilagođene greške
             return jsonify({'message': e.args[1]}), 400
         else:
