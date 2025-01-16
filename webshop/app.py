@@ -46,7 +46,7 @@ try:
 
     # Spremljenje izmjene u bazi
     db.commit()
-    print("Sve lozinke su uspešno hashirane.")
+    print("Sve lozinke su uspješno hashirane.")
 
 except Exception as e:
     print(f"Greška: {e}")
