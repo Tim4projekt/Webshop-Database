@@ -41,7 +41,8 @@ CREATE TABLE nacini_isporuke (
     naziv VARCHAR(255) NOT NULL,
     opis TEXT,
     cijena DECIMAL(10, 2) NOT NULL,
-    trajanje VARCHAR(50)
+    trajanje INT,
+    CONSTRAINT chk_trajanje_nacin_isporuke CHECK (trajanje > -1)
 );
 
 CREATE TABLE kuponi (
@@ -110,6 +111,7 @@ CREATE TABLE popusti (
     datum_pocetka DATE NOT NULL,
     datum_zavrsetka DATE NOT NULL,
     CONSTRAINT chk_postotak_popusta_popusti CHECK (postotak_popusta BETWEEN 0 AND 100),
+    CONSTRAINT chk_datum_pocetka_and_datum_zavrsetka_popusti CHECK (datum_pocetka <= datum_zavrsetka),
     CONSTRAINT fk_proizvod_popusti FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id)
 );
 
@@ -1064,7 +1066,17 @@ INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrset
 	(7, 15.00, '2023-12-25', '2024-01-05'),
 	(8, 18.00, '2024-01-15', '2024-01-30'),
 	(9, 22.50, '2024-02-10', '2024-02-25'),
-	(10, 10.00, '2023-12-05', '2023-12-20');
+	(10, 10.00, '2023-12-05', '2023-12-20'),
+    (11, 5.00, '2024-01-10', '2024-01-20'),
+    (12, 12.00, '2024-02-01', '2024-02-15'),
+    (13, 18.50, '2024-03-05', '2024-03-25'),
+    (14, 22.00, '2024-01-20', '2024-02-05'),
+    (15, 27.50, '2024-02-10', '2024-02-28'),
+    (16, 33.00, '2024-03-15', '2024-03-31'),
+    (17, 45.00, '2024-01-01', '2024-01-10'),
+    (18, 50.00, '2024-02-20', '2024-03-10'),
+    (19, 7.50, '2024-03-01', '2024-03-15'),
+    (20, 15.00, '2024-01-25', '2024-02-10');
 
 
 INSERT INTO korisnici (ime, prezime, email, lozinka, adresa, grad, telefon, tip_korisnika, datum_registracije) VALUES
