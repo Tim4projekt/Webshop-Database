@@ -16,7 +16,7 @@ app.secret_key = 'neki_skriveni_kljuc_koji_je_jedinstven'
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Babobilka156',
+    'password': 'root',
     'database': 'webshop'
 }
 
