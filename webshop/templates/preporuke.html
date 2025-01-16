@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preporuke drugih korisnika</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Preporuke drugih korisnika</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+
+    <main>
+        <section>
+            <h2>Preporučeni proizvodi</h2>
+            {% if preporuke %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ime</th>
+                        <th>Prezime</th>
+                        <th>Naziv proizvoda</th>
+                        <th>Razlog preporuke</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for preporuka in preporuke %}
+                    <tr>
+                        <td>{{ preporuka[0] }}</td>
+                        <td>{{ preporuka[1] }}</td>
+                        <td>{{ preporuka[2] }}</td>
+                        <td>{{ preporuka[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-message">Nema preporuka za prikaz.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

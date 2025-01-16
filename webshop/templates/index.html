@@ -78,24 +78,29 @@
             </div>
         </div>
 
-                <!-- Navigacija za paginaciju -->
-                <section class="pagination">
-                    {% if page > 1 %}
-                        <a href="/?page={{ page - 1 }}" class="pagination-button">Prethodna</a>
-                    {% endif %}
-                    {% for p in pagination %}
-                        {% if p == '...' %}
-                            <span class="pagination-ellipsis">...</span>
-                        {% elif p == page %}
-                            <span class="pagination-button active">{{ p }}</span>
-                        {% else %}
-                            <a href="/?page={{ p }}" class="pagination-button">{{ p }}</a>
-                        {% endif %}
-                    {% endfor %}
-                    {% if page < total_pages %}
-                        <a href="/?page={{ page + 1 }}" class="pagination-button">Sljedeća</a>
-                    {% endif %}
-                </section>
+<!-- Paginacija -->
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="{{ url_for('home', page=1) }}">Prva</a>
+        <a href="{{ url_for('home', page=page-1) }}">Prethodna</a>
+    {% endif %}
+
+    {% for p in pagination %}
+        {% if p == page %}
+            <span>{{ p }}</span>  <!-- Ako je trenutna stranica, ne prikazuj link -->
+        {% elif p == '...' %}
+            <span>...</span>  <!-- Ako je to skraćivanje, prikaži ... -->
+        {% else %}
+            <a href="{{ url_for('home', page=p) }}">{{ p }}</a>  <!-- Ako nije trenutna stranica, prikaži link -->
+        {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('home', page=page+1) }}">Sljedeća</a>
+        <a href="{{ url_for('home', page=total_pages) }}">Posljednja</a>
+    {% endif %}
+</div>
+
     </main>
 
     <script>

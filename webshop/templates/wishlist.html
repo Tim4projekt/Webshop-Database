@@ -5,6 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wishlist</title>
     <link rel="stylesheet" href="static/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .popularni-proizvodi, .wishlist-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .proizvod, .wishlist-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .proizvod:hover, .wishlist-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .proizvod h4, .wishlist-item h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .wishlist-item p {
+            margin: 10px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .remove-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .remove-button:hover {
+            background-color: #c82333;
+        }
+
+        form {
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        form label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        form input, form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        form .filter-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+            display: block;
+            width: 100%;
+        }
+
+        form .filter-button:hover {
+            background-color: #218838;
+        }
+
+        .empty-message {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -13,6 +136,23 @@
     </header>
 
     <main>
+        <!-- Popularni proizvodi -->
+        <section>
+            <h2>Top 3 najpopularnija proizvoda u wishlisti</h2>
+            {% if popularni_proizvodi %}
+            <div class="popularni-proizvodi">
+                {% for proizvod in popularni_proizvodi %}
+                <div class="proizvod">
+                    <h4>{{ proizvod[1] }}</h4>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-message">Nema popularnih proizvoda za prikaz.</p>
+            {% endif %}
+        </section>
+
+        <!-- Filter forma -->
         <form id="filter-form" onsubmit="event.preventDefault(); filterWishlist();">
             <label for="filter-grupa">Grupa:</label>
             <select id="filter-grupa">
@@ -21,27 +161,24 @@
                 <option value="{{ grupa }}">{{ grupa }}</option>
                 {% endfor %}
             </select>
-        
+
             <label for="filter-min-cijena">Min. cijena:</label>
             <input type="number" id="filter-min-cijena" step="0.01" placeholder="Minimalna cijena">
-        
+
             <label for="filter-max-cijena">Max. cijena:</label>
             <input type="number" id="filter-max-cijena" step="0.01" placeholder="Maksimalna cijena">
-        
+
             <button type="submit" class="filter-button">Filtriraj</button>
         </form>
-        
 
+        <!-- Wishlist proizvodi -->
         {% if proizvodi_u_wishlistu %}
         <div class="wishlist-container">
             {% for grupa, proizvodi in proizvodi_u_wishlistu.items() %}
             <div class="wishlist-group" data-grupa="{{ grupa }}">
                 <h2>{{ grupa }}</h2>
                 {% for proizvod in proizvodi %}
-                <div class="wishlist-item" 
-                     id="wishlist-item-{{ proizvod[0] }}" 
-                     data-cijena="{{ proizvod[2] }}" 
-                     data-grupa="{{ grupa }}">
+                <div class="wishlist-item" id="wishlist-item-{{ proizvod[0] }}" data-cijena="{{ proizvod[2] }}" data-grupa="{{ grupa }}">
                     <h3>{{ proizvod[1] }}</h3>
                     <p>Cijena: {{ proizvod[2] }} HRK</p>
                     <button class="remove-button" onclick="ukloniIzWishliste({{ proizvod[0] }})">Ukloni iz wishliste</button>

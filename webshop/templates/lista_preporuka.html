@@ -3,45 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preporučeni proizvodi</title>
+    <title>Lista preporuka</title>
     <link rel="stylesheet" href="static/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .back-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .proizvodi-lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .proizvod {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .proizvod:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .proizvod h3 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .proizvod p {
+            margin: 10px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination a, .pagination span {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 0 5px;
+            color: white;
+            background-color: #28a745;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .pagination span {
+            background-color: #ddd;
+            color: #333;
+            pointer-events: none;
+        }
+
+        .pagination a:hover {
+            background-color: #218838;
+        }
+
+        a {
+    text-decoration: none;  /* Uklanja podcrtavanje (liniju ispod) */
+}
+
+    </style>
 </head>
 <body>
     <header>
-        <h1>Preporučeni proizvodi</h1>
+        <h1>Lista Preporuka</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <a class="back-button" href="/preporuke">Pogledaj preporuke drugih korisnika</a>
     </header>
 
     <main>
         <section>
-            <h2>Najnovije preporuke</h2>
-            {% if preporuke %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID Preporuke</th>
-                        <th>Ime korisnika</th>
-                        <th>Prezime korisnika</th>
-                        <th>Naziv proizvoda</th>
-                        <th>Razlog preporuke</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for preporuka in preporuke %}
-                    <tr>
-                        <td>{{ preporuka[0] }}</td>
-                        <td>{{ preporuka[1] }}</td>
-                        <td>{{ preporuka[2] }}</td>
-                        <td>{{ preporuka[3] }}</td>
-                        <td>{{ preporuka[4] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <h2>Preporučeni proizvodi za vas</h2>
+            {% if proizvodi %}
+            <div class="proizvodi-lista">
+                {% for proizvod in proizvodi %}
+                <div class="proizvod">
+                    <h3>{{ proizvod[1] }}</h3>  <!-- Prikazujemo naziv proizvoda -->
+                    <p>{{ proizvod[2] }}</p>    <!-- Prikazujemo opis proizvoda -->
+                    <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p>  <!-- Prikazujemo cijenu proizvoda -->
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
-            <p>Trenutno nema preporučenih proizvoda.</p>
+            <p style="text-align: center; color: #555;">Nema personalizovanih preporuka za vas. Pokušajte kasnije!</p>
             {% endif %}
         </section>
+
+        <!-- Paginacija -->
+        <section>
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('lista_preporuka', page=1) }}">Prva</a>
+                    <a href="{{ url_for('lista_preporuka', page=page-1) }}">Prethodna</a>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                        <span>{{ p }}</span>
+                    {% else %}
+                        <a href="{{ url_for('lista_preporuka', page=p) }}">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page < total_pages %}
+                    <a href="{{ url_for('lista_preporuka', page=page+1) }}">Sljedeća</a>
+                    <a href="{{ url_for('lista_preporuka', page=total_pages) }}">Posljednja</a>
+                {% endif %}
+            </div>
+        </section>
     </main>
+
 </body>
 </html>
