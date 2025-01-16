@@ -1142,18 +1142,114 @@ INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES
 	('Brza dostava', 'Dostava proizvoda putem kurirske službe u ekspresnom roku.', 80.00, '1-2 radna dana'),
 	('Dostava na paketomat', 'Dostava na odabrani paketomat, kupac preuzima paket u paketu s PIN kodom.', 40.00, '3-5 radnih dana');
     
+INSERT INTO kosarica (id, korisnik_id, proizvod_id, kolicina)
+VALUES
+ (1, 8, 101, 3),
+ (2, 18, 102, 5),
+ (3, 29, 103, 2),
+ (4, 3, 104, 7),
+ (5, 28, 105, 4),
+ (6, 30, 106, 1),
+ (7, 14, 107, 6),
+ (8, 16, 108, 8),
+ (9, 2, 109, 2),
+ (10, 3, 110, 3),
+ (11, 9, 111, 4),
+ (12, 20, 112, 7),
+ (13, 11, 113, 1),
+ (14, 23, 114, 2),
+ (15, 25, 115, 5),
+ (16, 9, 116, 9),
+ (17, 1, 117, 6),
+ (18, 15, 118, 3),
+ (19, 9, 119, 4),
+ (20, 13, 120, 7),
+ (21, 7, 121, 2),
+ (22, 10, 122, 3),
+ (23, 20, 123, 5),
+ (24, 13, 124, 8),
+ (25, 12, 125, 1),
+ (26, 8, 126, 9),
+ (27, 27, 127, 6),
+ (28, 22, 128, 4),
+ (29, 23, 129, 2),
+ (30, 9, 130, 7);
+
+    
 INSERT INTO narudzbe (id, korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id)
 VALUES
-(1, 1, CURDATE(), 'u obradi', 100.00, 1, NULL), -- Narudžba za korisnika 1
-(2, 2, CURDATE(), 'u obradi', 200.00, 1, NULL), -- Narudžba za korisnika 2
-(3, 1, CURDATE(), 'u obradi', 150.00, 1, NULL); -- Druga narudžba za korisnika 1
+(1, 1, '2025-01-01', 'u obradi', 250.75, 1, NULL),
+(2, 2, '2025-01-02', 'dostavljeno', 180.00, 2, NULL),
+(3, 3, '2025-01-03', 'poslano', 0.00, 3, NULL),
+(4, 4, '2025-01-04', 'u obradi', 320.50, 4, NULL),
+(5, 5, '2025-01-05', 'dostavljeno', 150.00, 2, NULL),
+(6, 16, '2025-01-06', 'u obradi', 200.25, 2, NULL),
+(7, 27, '2025-01-07', 'dostavljeno', 420.00, 1, NULL),
+(8, 25, '2025-01-08', 'poslano', 0.00, 3, NULL),
+(9, 24, '2025-01-09', 'u obradi', 280.75, 4, NULL),
+(10, 23, '2025-01-10', 'dostavljeno', 340.00, 3, NULL),
+(11, 21, '2025-01-11', 'u obradi', 290.00, 1, NULL),
+(12, 11, '2025-01-12', 'dostavljeno', 175.50, 2, NULL),
+(13, 15, '2025-01-13', 'poslano', 0.00, 3, NULL),
+(14, 6, '2025-01-14', 'u obradi', 410.00, 4, NULL),
+(15, 7, '2025-01-15', 'dostavljeno', 230.75, 1, NULL),
+(16, 8, '2025-01-16', 'u obradi', 360.50, 1, NULL),
+(17, 9, '2025-01-17', 'dostavljeno', 220.00, 2, NULL),
+(18, 10, '2025-01-18', 'poslano', 0.00, 3, NULL),
+(19, 11, '2025-01-19', 'u obradi', 450.25, 4, NULL),
+(20, 12, '2025-01-20', 'dostavljeno', 310.00, 4, NULL),
+(21, 13, '2025-01-21', 'u obradi', 295.00, 1, NULL),
+(22, 14, '2025-01-22', 'dostavljeno', 185.00, 2, NULL),
+(23, 15, '2025-01-23', 'poslano', 0.00, 3, NULL),
+(24, 17, '2025-01-24', 'u obradi', 425.50, 4, NULL),
+(25, 22, '2025-01-25', 'dostavljeno', 240.75, 2, NULL),
+(26, 21, '2025-01-26', 'u obradi', 375.00, 1, NULL),
+(27, 12, '2025-01-27', 'dostavljeno', 205.00, 2, NULL),
+(28, 18, '2025-01-28', 'dostavljeno', 0.00, 3, NULL),
+(29, 19, '2025-01-29', 'u obradi', 485.00, 4, NULL),
+(30, 20, '2025-01-30', 'dostavljeno', 350.25, 4, NULL);
     
 
 INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
 VALUES
-(1, 811, 2), -- Narudžba 1, proizvod 811, količina 2
-(2, 812, 2), -- Narudžba 2, proizvod 812, količina 1
-(3, 813, 2); -- Narudžba 3, proizvod 813, količina 1
+(1, 101, 2),
+(1, 102, 1),
+(2, 103, 3),
+(2, 104, 2),
+(3, 105, 1),
+(4, 106, 4),
+(4, 107, 2),
+(5, 108, 5),
+(5, 109, 3),
+(6, 110, 2),
+(7, 111, 3),
+(7, 112, 1),
+(8, 113, 4),
+(9, 114, 6),
+(9, 115, 2),
+(10, 116, 3),
+(10, 117, 5),
+(11, 118, 1),
+(12, 119, 4),
+(13, 120, 2),
+(14, 121, 7),
+(14, 122, 3),
+(15, 123, 5),
+(16, 124, 6),
+(17, 125, 2),
+(18, 126, 4),
+(19, 127, 1),
+(20, 128, 2),
+(21, 129, 3),
+(22, 130, 4),
+(23, 131, 5),
+(24, 132, 1),
+(25, 133, 2),
+(26, 134, 3),
+(27, 135, 4),
+(28, 136, 2),
+(29, 137, 5),
+(30, 138, 6);
 
 
 -- Umetanje u tabelu wishlist
@@ -1671,4 +1767,300 @@ END //
 DELIMITER ;
 
 -- SELECT UkupnaVrijednostSkladista();
+
+
+-- Triger: Status isporuke određene narudžbe: (Morena)
+DELIMITER //
+
+CREATE TRIGGER dodaj_pracenje_nakon_narudzbe
+AFTER INSERT ON narudzbe
+FOR EACH ROW
+BEGIN
+    INSERT INTO pracenje_isporuka (narudzba_id, status_isporuke, datum_isporuke)
+    VALUES (NEW.id, 'Na čekanju', NULL);
+END//
+
+DELIMITER ;
+-- Pogled: Prikazuje stavke u košarici korsinika: (Morena)
+CREATE VIEW pogled_kosarica_korisnika AS
+SELECT 
+    k.id AS kosarica_id,
+    k.korisnik_id,
+    k.proizvod_id,
+    p.naziv AS proizvod_naziv,
+    p.cijena AS proizvod_cijena,
+    k.kolicina AS proizvod_kolicina,
+    (k.kolicina * p.cijena) AS ukupna_cijena
+FROM 
+    kosarica k
+JOIN 
+    proizvodi p ON k.proizvod_id = p.id;
+    
+-- Pogled:prikazuje sve narudžbe korisnika zajedno s detaljima o stavkama narudžbi, uključujući količinu proizvoda i ukupnu cijenu: (Morena)
+CREATE VIEW pogled_narudzbi_korisnika AS
+SELECT 
+    n.id AS narudzba_id,
+    n.datum_narudzbe,
+    n.status_narudzbe,
+    n.ukupna_cijena,
+    n.nacin_isporuke_id,
+    n.kupon_id,
+    s.proizvod_id,
+    p.naziv AS proizvod_naziv,
+    s.kolicina AS proizvod_kolicina,
+    p.cijena AS proizvod_cijena,
+    (s.kolicina * p.cijena) AS ukupna_cijena_stavke
+FROM 
+    narudzbe n
+JOIN 
+    stavke_narudzbe s ON n.id = s.narudzba_id
+JOIN 
+    proizvodi p ON s.proizvod_id = p.id;
+    
+-- procedura:omogućuje korisnicima da stvore novu narudžbu. Unosi korisnika, odabrani način isporuke, 
+-- i kupon (ako postoji), a zatim automatski dodaje stavke iz košarice u narudžbu. (Morena)
+
+
+SET @narudzba_id=NULL;
+
+DELIMITER //
+
+CREATE PROCEDURE kreiraj_narudzbu(
+    IN p_korisnik_id INT,
+    IN p_nacin_isporuke_id INT,
+    IN p_kupon_id INT,
+    OUT p_narudzba_id INT
+)
+BEGIN
+    DECLARE v_ukupna_cijena DECIMAL(10, 2) DEFAULT 0.00;
+    
+    -- Izračunaj ukupnu cijenu na temelju košarice
+    SELECT SUM(p.cijena * k.kolicina) INTO v_ukupna_cijena
+    FROM kosarica k
+    JOIN proizvodi p ON k.proizvod_id = p.id
+    WHERE k.korisnik_id = p_korisnik_id;
+    
+    -- Unesi novu narudžbu
+    INSERT INTO narudzbe (korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id)
+    VALUES (p_korisnik_id, CURRENT_DATE, 'u obradi', v_ukupna_cijena, p_nacin_isporuke_id, p_kupon_id);
+    
+    -- Dohvati ID nove narudžbe
+    SET p_narudzba_id = LAST_INSERT_ID();
+    
+    -- Kopiraj stavke iz košarice u stavke narudžbe
+    INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
+    SELECT p_narudzba_id, k.proizvod_id, k.kolicina
+    FROM kosarica k
+    WHERE k.korisnik_id = p_korisnik_id;
+    
+    -- Očisti košaricu korisnika
+    DELETE FROM kosarica WHERE korisnik_id = p_korisnik_id;
+END //
+DELIMITER ; 
+
+-- procedura:omogućuje administraciji da ažurira status narudžbe (npr. 'u obradi', 'poslano', 'dostavljeno') prema ID-u narudžbe. (Morena)
+
+DELIMITER //
+
+CREATE PROCEDURE azuriraj_status_narudzbe(
+    IN p_narudzba_id INT,
+    IN p_status_narudzbe ENUM('u obradi', 'poslano', 'dostavljeno')
+)
+BEGIN
+    -- Ažuriraj status narudžbe
+    UPDATE narudzbe
+    SET status_narudzbe = p_status_narudzbe
+    WHERE id = p_narudzba_id;
+    
+    -- Ovisno o statusu, može se dodati i dodatna logika (npr. poslati obavijest korisniku)
+END //
+
+DELIMITER ;
+
+-- procedura:omogućuje korisnicima dodavanje stavke u svoju košaricu, povećavajući količinu proizvoda u košarici ako je proizvod već prisutan.(Morena)
+
+DELIMITER //
+
+CREATE PROCEDURE dodaj_u_kosaricu(
+    IN p_korisnik_id INT,
+    IN p_proizvod_id INT,
+    IN p_kolicina INT
+)
+BEGIN
+    DECLARE v_kolicina INT;
+    
+    -- Provjeri postoji li proizvod već u košarici
+    SELECT kolicina INTO v_kolicina
+    FROM kosarica
+    WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id;
+    
+    IF v_kolicina IS NOT NULL THEN
+        -- Ako proizvod postoji, samo povećaj količinu
+        UPDATE kosarica
+        SET kolicina = kolicina + p_kolicina
+        WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id;
+    ELSE
+        -- Ako proizvod ne postoji, dodaj novu stavku u košaricu
+        INSERT INTO kosarica (korisnik_id, proizvod_id, kolicina)
+        VALUES (p_korisnik_id, p_proizvod_id, p_kolicina);
+    END IF;
+END //
+
+DELIMITER ;
+
+-- okidač: automatski ažurira status narudžbe u tablici narudzbe na 'dostavljeno' kada se status isporuke u tablici pracenje_isporuka 
+-- promijeni na 'dostavljeno'.(Morena)
+
+DELIMITER //
+
+CREATE TRIGGER azuriraj_status_narudzbe_na_dostavljeno
+AFTER UPDATE ON pracenje_isporuka
+FOR EACH ROW
+BEGIN
+    IF NEW.status_isporuke = 'dostavljeno' THEN
+        -- Ažurira status narudžbe na 'dostavljeno'
+        UPDATE narudzbe
+        SET status_narudzbe = 'dostavljeno'
+        WHERE id = NEW.narudzba_id;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- okidač: automatski ažurira status narudžbe u tablici narudzbe na 'poslano' kada se status isporuke u tablici pracenje_isporuka 
+-- promijeni na 'poslano'.(Morena)
+
+DELIMITER //
+
+CREATE TRIGGER azuriraj_status_narudzbe_na_poslano
+AFTER UPDATE ON pracenje_isporuka
+FOR EACH ROW
+BEGIN
+    IF NEW.status_isporuke = 'poslano' THEN
+        -- Ažurira status narudžbe na 'poslano'
+        UPDATE narudzbe
+        SET status_narudzbe = 'poslano'
+        WHERE id = NEW.narudzba_id;
+    END IF;
+END //
+
+DELIMITER ;
+
+-- okidač: automatski vraća količinu proizvoda na skladište kada se povrati proizvod (kad se doda zapis u tablicu povrati_proizvoda).(Morena)
+
+DELIMITER //
+
+CREATE TRIGGER povrat_proizvoda_skladiste
+AFTER INSERT ON povrati_proizvoda
+FOR EACH ROW
+BEGIN
+    -- Povećava količinu proizvoda na skladištu kad je proizvod vraćen
+    UPDATE proizvodi
+    SET kolicina_na_skladistu = kolicina_na_skladistu + (SELECT kolicina FROM stavke_narudzbe WHERE id = NEW.stavka_id)
+    WHERE id = (SELECT proizvod_id FROM stavke_narudzbe WHERE id = NEW.stavka_id);
+END //
+
+DELIMITER ;
+
+-- upit: vraća sve narudžbe određenog korisnika, uključujući podatke o proizvodima i količinama u narudžbi(dan je primjer sa korisnikom 
+-- čiji je ID=1). (Morena)
+
+SELECT 
+    n.id AS narudzba_id,
+    n.datum_narudzbe,
+    n.status_narudzbe,
+    n.ukupna_cijena,
+    sn.proizvod_id,
+    p.naziv AS proizvod_naziv,
+    sn.kolicina AS proizvod_kolicina
+FROM narudzbe n
+JOIN stavke_narudzbe sn ON n.id = sn.narudzba_id
+JOIN proizvodi p ON sn.proizvod_id = p.id
+WHERE n.korisnik_id = 1;
+
+-- upit: prikazuje sve proizvode u košarici određenog korisnika s količinama.(Dan je primjer sa korisnikom čiji je ID=1)(Morena)
+
+SELECT 
+    k.id AS kosarica_id,
+    k.proizvod_id,
+    p.naziv AS proizvod_naziv,
+    k.kolicina AS proizvod_kolicina,
+    p.cijena * k.kolicina AS ukupna_cijena
+FROM kosarica k
+JOIN proizvodi p ON k.proizvod_id = p.id
+WHERE k.korisnik_id = 1;
+
+-- upit: prikazuje sve proizvode koji imaju aktivni popust, uključujući popust i datume važenja.(Morena)
+
+
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    pop.postotak_popusta,
+    pop.datum_pocetka,
+    pop.datum_zavrsetka
+FROM popusti pop
+JOIN proizvodi p ON pop.proizvod_id = p.id
+WHERE pop.datum_pocetka <= CURDATE() AND pop.datum_zavrsetka >= CURDATE();
+
+-- upit:dohvaća sve narudžbe koje su koristile kupon i izračunava ukupnu cijenu s uključenim popustom.(Morena)
+
+SELECT 
+    n.id AS narudzba_id,
+    n.korisnik_id,
+    n.datum_narudzbe,
+    n.ukupna_cijena,
+    k.kod AS kupon_kod,
+    k.postotak_popusta,
+    (n.ukupna_cijena - (n.ukupna_cijena * k.postotak_popusta / 100)) AS ukupna_cijena_sa_popustom
+FROM narudzbe n
+JOIN kuponi k ON n.kupon_id = k.id
+WHERE n.kupon_id IS NOT NULL;
+
+
+-- funkcija: vraća broj proizvoda u košarici određenog korisnika. Broj proizvoda je zbroj svih količina proizvoda u košarici. (Morena)
+
+DELIMITER //
+
+CREATE FUNCTION brojProizvodaUKosarici(korisnikId INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE brojProizvoda INT DEFAULT 0;
+
+    SELECT SUM(kolicina) INTO brojProizvoda
+    FROM kosarica
+    WHERE korisnik_id = korisnikId;
+
+    RETURN brojProizvoda;
+END//
+
+DELIMITER ;
+
+SELECT brojProizvodaUKosarici(1)
+
+-- funkcija: izračunava ukupnu cijenu narudžbe na temelju stavki narudžbe. Uzimajući u obzir količinu proizvoda i 
+-- cijenu svakog proizvoda, funkcija vraća ukupnu cijenu za zadanu narudžbu.(Morena)
+
+DELIMITER //
+
+CREATE FUNCTION izracunajUkupnuCijenuNarudzbe(narudzbaId INT)
+RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE ukupnaCijena DECIMAL(10, 2) DEFAULT 0.00;
+
+    SELECT SUM(p.cijena * sn.kolicina) INTO ukupnaCijena
+    FROM stavke_narudzbe sn
+    JOIN proizvodi p ON sn.proizvod_id = p.id
+    WHERE sn.narudzba_id = narudzbaId;
+
+    RETURN ukupnaCijena;
+END//
+
+DELIMITER ;
+
+SELECT izracunajUkupnuCijenuNarudzbe(1);
+
+
 
