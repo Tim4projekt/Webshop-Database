@@ -16,7 +16,7 @@ app.secret_key = 'neki_skriveni_kljuc_koji_je_jedinstven'
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': 'Babobilka156',
     'database': 'webshop'
 }
 
@@ -95,10 +95,6 @@ def home():
     """, (per_page, offset))
     paginirani_proizvodi = cursor.fetchall()
 
-    # Dohvat popularnih proizvoda
-    cursor.execute("SELECT * FROM popularni_proizvodi WHERE broj_dodavanja > 0")
-    popularni_proizvodi = cursor.fetchall()
-
     # Logika za prikaz paginacije
     pagination = []
     if total_pages <= 7:  # Ako ima manje od 7 stranica, prikaži sve
@@ -120,7 +116,6 @@ def home():
     return render_template(
         'index.html',
         kategorije=kategorije,
-        popularni_proizvodi=popularni_proizvodi,
         proizvodi=paginirani_proizvodi,
         page=page,
         total_pages=total_pages,
@@ -517,10 +512,18 @@ def wishlist():
                 proizvodi_u_wishlistu[grupa] = []
             proizvodi_u_wishlistu[grupa].append((proizvod_id, naziv, cijena))
 
+        # Dohvat popularnih proizvoda u wishlist top 3 
+        cursor.execute("SELECT * FROM popularni_proizvodi LIMIT 3")
+        popularni_proizvodi = cursor.fetchall()
+
     finally:
         db.close()
 
-    return render_template('wishlist.html', proizvodi_u_wishlistu=proizvodi_u_wishlistu, dostupne_grupe=dostupne_grupe)
+    return render_template('wishlist.html', 
+                           proizvodi_u_wishlistu=proizvodi_u_wishlistu, 
+                           dostupne_grupe=dostupne_grupe,
+                           popularni_proizvodi=popularni_proizvodi)
+
 
 
 
@@ -851,21 +854,35 @@ def recenzije():
 
 @app.route('/lista_preporuka', methods=['GET'])
 def lista_preporuka():
+    korisnik_id = session.get('user_id')  # Preuzimanje korisnik ID iz sesije
+    if not korisnik_id:
+        return redirect(url_for('prijava'))  # Preusmjerenje ako korisnik nije prijavljen
+
+    page = int(request.args.get('page', 1))  # Preuzimanje trenutne stranice iz GET parametra
+    per_page = 10  # Broj proizvoda po stranici
+
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    try:
-        # Pozivanje procedure za prikaz preporuka
-        cursor.execute("CALL prikazi_preporuke()")
-        preporuke = cursor.fetchall()  # Dobijamo rezultate iz procedure
-    finally:
-        cursor.close()
-        db.close()
+    # Pozivanje SQL procedure za personalizovane preporuke koristeći korisnik_id
+    cursor.execute("""
+        CALL prikazi_preporuke(%s, %s, %s)
+    """, (korisnik_id, page, per_page))
+    proizvodi = cursor.fetchall()  # Dohvaćanje proizvoda iz procedure
 
-    # Prosljeđivanje rezultata šablonu
-    return render_template('lista_preporuka.html', preporuke=preporuke)
+    # Paginacija: Ukupni broj proizvoda
+    cursor.execute("""
+        CALL prikazi_preporuke(%s, 1, 9999)
+    """, (korisnik_id,))
+    total_proizvodi = len(cursor.fetchall())  # Ukupni broj proizvoda za ovog korisnika
+    total_pages = (total_proizvodi + per_page - 1) // per_page  # Broj stranica
 
-from datetime import datetime
+    cursor.close()
+    db.close()
+
+    # Prosljeđivanje proizvoda, ukupnog broja stranica, trenutne stranice u šablon
+    return render_template('lista_preporuka.html', proizvodi=proizvodi, page=page, total_pages=total_pages)
+
 
 @app.route('/profil', methods=['GET'])
 def profil():
@@ -957,6 +974,21 @@ def obrisi_profil():
 
     finally:
         db.close()
+
+@app.route('/preporuke')
+def preporuke():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        # Dohvat svih preporuka iz pogleda "preporuke_drugih"
+        cursor.execute("SELECT ime, prezime, proizvod_naziv, razlog_preporuke FROM preporuke_drugih")
+        preporuke = cursor.fetchall()
+
+    finally:
+        db.close()
+
+    return render_template('preporuke.html', preporuke=preporuke)
 
 
 
