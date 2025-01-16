@@ -1288,6 +1288,19 @@ LEFT JOIN wishlist w ON p.id = w.proizvod_id
 GROUP BY p.id, p.naziv
 ORDER BY broj_dodavanja DESC;
 
+-- Pogled: Preporuke drugih (Leo)
+CREATE VIEW preporuke_drugih AS
+SELECT 
+    k.id AS korisnik_id,
+    k.ime,
+    k.prezime,
+    p.naziv AS proizvod_naziv,
+    pp.razlog_preporuke
+FROM preporuceni_proizvodi pp
+JOIN korisnici k ON pp.korisnik_id = k.id
+JOIN proizvodi p ON pp.proizvod_id = p.id;
+
+
 --  Pogled: Narudžbe Korisnika (Leo)
 CREATE VIEW narudzbe_korisnika AS
 SELECT 
@@ -1325,21 +1338,46 @@ BEGIN
 END//
 DELIMITER ;
 
--- Procedura: Prikaz preporuka (Leo)
+-- Procedura: Prikaz personaliziranih preporuka (Leo)
 DELIMITER //
-CREATE PROCEDURE prikazi_preporuke()
+
+CREATE PROCEDURE prikazi_preporuke(korisnik_id INT, page INT, per_page INT)
 BEGIN
+    DECLARE offset_value INT;
+
+    -- Izračunavanje offset-a
+    SET offset_value = (page - 1) * per_page;
+
     SELECT 
-        pp.id AS id_preporuke,
-        k.ime AS ime_korisnika,
-        k.prezime AS prezime_korisnika,
-        p.naziv AS naziv_proizvoda,
-        pp.razlog_preporuke
-    FROM preporuceni_proizvodi pp
-    JOIN korisnici k ON pp.korisnik_id = k.id
-    JOIN proizvodi p ON pp.proizvod_id = p.id
-    ORDER BY pp.id DESC;
+        p.id AS proizvod_id,
+        p.naziv,
+        p.opis,
+        p.cijena
+    FROM proizvodi p
+    WHERE p.kategorija_id IN (
+        -- Preporučujemo proizvode iz kategorija koje je korisnik dodao u wishlist ili kupio
+        SELECT DISTINCT p2.kategorija_id
+        FROM proizvodi p2
+        JOIN wishlist w ON p2.id = w.proizvod_id
+        WHERE w.korisnik_id = korisnik_id
+        UNION
+        SELECT DISTINCT p3.kategorija_id
+        FROM proizvodi p3
+        JOIN stavke_narudzbe s ON p3.id = s.proizvod_id
+        JOIN narudzbe n ON s.narudzba_id = n.id
+        WHERE n.korisnik_id = korisnik_id
+    )
+    AND p.id NOT IN (
+        -- Iznimamo proizvode koje je korisnik već dodao u wishlist
+        SELECT proizvod_id
+        FROM wishlist
+        WHERE korisnik_id = korisnik_id
+    )
+    ORDER BY p.cijena DESC
+    LIMIT per_page OFFSET offset_value;  -- Koristimo izračunati offset
+
 END//
+
 DELIMITER ;
 
 -- Procedura: Brisanje korisnika (Leo)
@@ -1445,7 +1483,7 @@ FROM proizvodi p
 LEFT JOIN wishlist w ON p.id = w.proizvod_id
 GROUP BY p.id, p.naziv
 ORDER BY broj_dodavanja DESC
-LIMIT 10; -- Dohvata prvih 10 proizvoda
+LIMIT 3; -- Dohvata prvih 3 proizvoda
 
 -- Upit: Provjera korisnika sa najviše narudžbi (Leo)
 SELECT 
@@ -1470,11 +1508,11 @@ JOIN narudzbe n ON k.id = n.korisnik_id
 GROUP BY k.id, k.ime, k.prezime
 ORDER BY ukupna_zarada DESC;
 
-
 ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
 SELECT * FROM popularni_proizvodi;
 SHOW TRIGGERS;
 SHOW WARNINGS;
+
 
 
 ######## Loren ###########
