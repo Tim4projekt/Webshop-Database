@@ -2151,3 +2151,57 @@ SELECT izracunajUkupnuCijenuNarudzbe(1);
 
 
 
+
+
+########## Bruno #########
+
+-- Upiti (Bruno)
+
+-- Prikaži sve narudžbe gdje se narudžba isporučila u manje od 3 dana (uključujući i preuzimanje)
+SELECT *
+	FROM narudzbe
+    INNER JOIN (SELECT *
+				 FROM nacini_isporuke
+                 WHERE trajanje < 3) AS temp_nacini_isporuke 
+    ON narudzbe.nacin_isporuke_id = temp_nacini_isporuke.id
+    HAVING narudzbe.status_narudzbe = "dostavljeno";
+
+
+-- Prikaži sve proizvode koji su bili sniženi 20% ili više u zadnjih godinu dana
+SELECT proizvodi.*, temp_popusti.postotak_popusta, temp_popusti.datum_pocetka, temp_popusti.datum_zavrsetka
+	FROM proizvodi
+    INNER JOIN (SELECT *
+					FROM popusti
+					WHERE (postotak_popusta >= 20 AND datum_zavrsetka > CURDATE() - INTERVAL 1 YEAR)) AS temp_popusti
+    ON proizvodi.id = temp_popusti.proizvod_id;
+
+
+-- Prikaži broj kupaca koji su preuzeli svoju narudzbu u trgovini
+SELECT COUNT(*) AS broj_kupaca
+	FROM narudzbe
+    INNER JOIN (SELECT id
+					FROM nacini_isporuke
+                    WHERE trajanje = 0) AS temp_nacini_isporuke
+				ON narudzbe.nacin_isporuke_id = temp_nacini_isporuke.id
+                GROUP BY temp_nacini_isporuke.id;
+
+
+    
+-- Pogledi (Bruno)
+-- Napravi pogled koji prikazuje sve proizvode sa sniženom cijenom kad se primjeni popust
+CREATE VIEW proizvodi_sa_snizenom_cijenom AS
+SELECT proizvodi.*, ROUND((cijena * (1 - popusti.postotak_popusta / 100)), 2) AS snizena_cijena
+	FROM popusti
+    INNER JOIN proizvodi ON popusti.proizvod_id = proizvodi.id;
+
+SELECT * FROM proizvodi_sa_snizenom_cijenom;
+
+
+-- Napravi pogled koji prikazuje trenutno aktivne popuste na proizvodima
+CREATE VIEW proizvodi_sa_aktivnim_popustom AS
+SELECT proizvodi.*, popusti.postotak_popusta, popusti.datum_pocetka, popusti.datum_zavrsetka
+	FROM popusti
+    INNER JOIN proizvodi ON proizvodi.id = popusti.proizvod_id
+    HAVING datum_pocetka <= CURDATE() AND datum_zavrsetka >> CURDATE();
+
+SELECT * FROM proizvodi_sa_aktivnim_popustom;
