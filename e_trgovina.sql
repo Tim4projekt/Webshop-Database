@@ -2552,3 +2552,132 @@ SELECT proizvodi.*, popusti.postotak_popusta, popusti.datum_pocetka, popusti.dat
     HAVING datum_pocetka <= CURDATE() AND datum_zavrsetka >> CURDATE();
 
 SELECT * FROM proizvodi_sa_aktivnim_popustom;
+
+
+
+-- Funkcije (Bruno)
+
+-- Funkcija koja računa konačnu cijenu proizvoda nakon popusta
+DELIMITER //
+CREATE FUNCTION cijena_s_popustom(cijena DECIMAL(10,2), postotak_popusta DECIMAL(5,2)) RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+	RETURN cijena * (1 - postotak_popusta / 100);
+END //
+DELIMITER ;
+
+SELECT proizvodi.*, cijena_s_popustom(cijena, postotak_popusta) AS snizena_cijena
+	FROM proizvodi
+    INNER JOIN popusti ON proizvodi.id = popusti.proizvod_id;
+    
+    
+-- Funkcija koja dohvaća naziv načina isporuke po unesenom ID-u
+DELIMITER //
+CREATE FUNCTION naziv_isporuke(isporuka_id INTEGER) RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+	DECLARE naziv_p VARCHAR(255);
+    
+    SELECT naziv INTO naziv_p
+		FROM nacini_isporuke
+        WHERE id = isporuka_id;
+	
+    RETURN naziv_p;
+END //
+DELIMITER ;
+
+SELECT *, naziv_isporuke(nacin_isporuke_id) AS naziv_isporuke
+	FROM narudzbe;
+    
+
+-- Funkcija koja računa koliko je pojedinih načina isporuke narudžbi
+DELIMITER //
+CREATE FUNCTION broj_nacina_isporuke(isporuka_id INTEGER) RETURNS INTEGER
+DETERMINISTIC
+BEGIN
+	DECLARE broj INTEGER;
+    
+	SELECT COUNT(*) INTO broj
+		FROM narudzbe
+        WHERE nacin_isporuke_id = isporuka_id
+        GROUP BY nacin_isporuke_id;
+	
+    RETURN broj;
+END //
+DELIMITER ;
+
+SELECT *, broj_nacina_isporuke(id) AS broj_nacina_isporuke
+	FROM nacini_isporuke;
+    
+    
+
+-- Procedure (Bruno)
+-- Procedura za dodavanje načina isporuke
+DELIMITER //
+CREATE PROCEDURE dodaj_nacin_isporuke(naziv_p VARCHAR(255), opis_p TEXT, cijena_p DECIMAL(10,2), trajanje_p INTEGER)
+BEGIN
+    INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES (naziv_p, opis_p, cijena_p, trajanje_p);
+END //
+DELIMITER ;
+
+CALL dodaj_nacin_isporuke("Express dostava", "Dostava u roku 3 sata", 150, 0);
+SELECT *
+	FROM nacini_isporuke;
+    
+    
+-- Procedura za brisanje načina isporuke po ID-u
+DELIMITER //
+CREATE PROCEDURE obrisi_nacin_isporuke(id_p INTEGER)
+BEGIN
+	DELETE
+		FROM nacini_isporuke
+        WHERE id = id_p;
+END //
+DELIMITER ;
+
+
+CALL obrisi_nacin_isporuke(7);
+SELECT *
+	FROM nacini_isporuke;
+
+
+-- Procedura za dodavanje popusta 
+DELIMITER //
+CREATE PROCEDURE dodaj_popust(proizvod_id_p INTEGER, postotak_popusta_p DECIMAL(5,2), datum_pocetka_p DATE, datum_zavrsetka_p DATE)
+BEGIN
+    INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka) VALUES (proizvod_id_p, postotak_popusta_p, datum_pocetka_p, datum_zavrsetka_p);
+END //
+DELIMITER ;
+
+CALL dodaj_popust(56, 30, '2025-01-01', '2025-01-10');
+SELECT *
+	FROM popusti;
+    
+    
+-- Procedura za brisanje popusta po ID-u
+DELIMITER //
+CREATE PROCEDURE obrisi_popust(id_p INTEGER)
+BEGIN
+	DELETE
+		FROM popusti
+        WHERE id = id_p;
+END //
+DELIMITER ;
+
+
+CALL obrisi_popust(41);
+SELECT *
+	FROM popusti;
+    
+    
+-- Procedura za ažuriranje popusta
+DELIMITER //
+CREATE PROCEDURE azuriraj_popust(popust_id INTEGER, novi_postotak DECIMAL(5,2))
+BEGIN
+    UPDATE popusti SET postotak_popusta = novi_postotak WHERE id = popust_id;
+END //
+DELIMITER ;
+
+SELECT *
+	FROM popusti;
+CALL azuriraj_popust(1, 10);
