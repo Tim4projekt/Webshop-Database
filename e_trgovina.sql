@@ -1149,10 +1149,10 @@ INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar) VAL
 
 
 INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES
-	('Dostava na adresu', 'Dostava proizvoda na adresu kupca putem kurirske službe.', 50.00, '2-3 radna dana'),
-	('Osobno preuzimanje', 'Kupac može osobno preuzeti proizvode u trgovini.', 0.00, 'Odmah nakon narudžbe'),
-	('Brza dostava', 'Dostava proizvoda putem kurirske službe u ekspresnom roku.', 80.00, '1-2 radna dana'),
-	('Dostava na paketomat', 'Dostava na odabrani paketomat, kupac preuzima paket u paketu s PIN kodom.', 40.00, '3-5 radnih dana');
+	('Dostava na adresu', 'Dostava proizvoda na adresu kupca putem kurirske službe.', 50.00, 3),
+	('Osobno preuzimanje', 'Kupac može osobno preuzeti proizvode u trgovini.', 0.00, 0),
+	('Brza dostava', 'Dostava proizvoda putem kurirske službe u ekspresnom roku.', 80.00, 2),
+	('Dostava na paketomat', 'Dostava na odabrani paketomat, kupac preuzima paket u paketu s PIN kodom.', 40.00, 5);
     
 INSERT INTO kosarica (id, korisnik_id, proizvod_id, kolicina)
 VALUES
