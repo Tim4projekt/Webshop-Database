@@ -1689,26 +1689,63 @@ INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar) VAL
 	(1, 2, 5, 'Odličan proizvod!');
 
 
--- Procedura: Povećanje cijene za 5% na sve proizvode iz kategorije "Matične ploče" (Loren)
+-- Procedura: Azuriranje proizvoda
 
 DELIMITER //
-CREATE PROCEDURE PovecajCijenu (
-    IN kategorija_naziv VARCHAR(255)
+
+CREATE PROCEDURE azuriraj_proizvod(
+    IN p_proizvod_id INT,
+    IN p_naziv VARCHAR(255),
+    IN p_opis TEXT,
+    IN p_cijena DECIMAL(10, 2),
+    IN p_kategorija_id INT,
+    IN p_kolicina_na_skladistu INT,
+    IN p_slika VARCHAR(255),
+    IN p_specifikacije TEXT
 )
 BEGIN
-    UPDATE proizvodi p
-    INNER JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
-    SET p.cijena = p.cijena * 1.05
-    WHERE k.naziv = kategorija_naziv;
+    IF p_cijena <= 0 THEN
+        SIGNAL SQLSTATE '45007'
+        SET MESSAGE_TEXT = 'Cijena mora biti veća od 0.';
+    END IF;
+
+    IF p_kolicina_na_skladistu < 0 THEN
+        SIGNAL SQLSTATE '45008'
+        SET MESSAGE_TEXT = 'Količina na skladištu ne smije biti negativna.';
+    END IF;
+
+    IF NOT EXISTS (SELECT * FROM kategorije_proizvoda WHERE id = p_kategorija_id) THEN
+        SIGNAL SQLSTATE '45009'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim ID ne postoji.';
+    END IF;
+
+    IF NOT EXISTS (SELECT * FROM proizvodi WHERE id = p_proizvod_id) THEN
+        SIGNAL SQLSTATE '45010'
+        SET MESSAGE_TEXT = 'Proizvod s unesenim ID ne postoji.';
+    END IF;
+
+    UPDATE proizvodi
+    SET naziv = p_naziv,
+        opis = p_opis,
+        cijena = p_cijena,
+        kategorija_id = p_kategorija_id,
+        kolicina_na_skladistu = p_kolicina_na_skladistu,
+        slika = p_slika,
+        specifikacije = p_specifikacije
+    WHERE id = p_proizvod_id;
 END //
+
 DELIMITER ;
 
-/*
-CALL PovecajCijenu('Matične ploče');
 
-SELECT naziv, cijena 
-FROM proizvodi 
-WHERE kategorija_id = (SELECT id FROM kategorije_proizvoda WHERE naziv = 'Matične ploče');
+
+/*
+INSERT INTO proizvodi (id, naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije, datum_kreiranja) VALUES
+	(826, 'Televizor', 'Smart TV', 500.00, 1, 10, 'smart_tv.jpg', '4K, Smart TV, OS:Android', '2024-11-16');
+
+SELECT * FROM proizvodi WHERE id = 826;
+
+CALL azuriraj_proizvod(826, 'Televizor Philips', '4K Smart TV', 550.00, 1, 11, 'slike/tv.jpg', 'Ultra HD 4K , OS:Android');
 */
 
 -- Procedura za brisanje proizvoda s provjerom povezanih podataka (Loren)
@@ -1721,7 +1758,7 @@ CREATE PROCEDURE ObrisiProizvod (
 BEGIN
 
     IF EXISTS (
-        SELECT 1
+        SELECT *
         FROM stavke_narudzbe
         WHERE proizvod_id = p_proizvod_id
     ) THEN
