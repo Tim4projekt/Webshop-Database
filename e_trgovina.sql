@@ -1541,7 +1541,9 @@ SELECT
 FROM proizvodi p
 JOIN kategorije_proizvoda k ON p.kategorija_id = k.id;
 
--- SELECT * FROM svi_proizvodi_s_kategorijama;
+/*
+SELECT * FROM svi_proizvodi_s_kategorijama;
+*/
 
 -- Pogled: Proizvodi koji su trenutno na skladištu (Loren)
 
@@ -1553,7 +1555,9 @@ SELECT
 FROM proizvodi p
 WHERE p.kolicina_na_skladistu > 0;
 
--- SELECT * FROM dostupni_proizvodi;
+/*
+SELECT * FROM dostupni_proizvodi;
+*/
 
 -- Pogled: Sve recenzije s podacima o proizvodima i korisnicima (Loren)
 
@@ -1569,7 +1573,9 @@ FROM recenzije_proizvoda r
 JOIN proizvodi p ON r.proizvod_id = p.id
 JOIN korisnici k ON r.korisnik_id = k.id;
 
--- SELECT * FROM recenzije_s_proizvodima_i_korisnicima;
+/*
+SELECT * FROM recenzije_s_proizvodima_i_korisnicima;
+*/
 
 -- Pogled: najpopularnijih proizvoda s najvećim brojem recenzija (Loren)
 
@@ -1583,7 +1589,34 @@ LEFT JOIN recenzije_proizvoda r ON p.id = r.proizvod_id
 GROUP BY p.id, p.naziv
 ORDER BY broj_recenzija DESC;
 
--- SELECT * FROM najpopularniji_proizvodi;
+/*
+SELECT * FROM najpopularniji_proizvodi;
+*/
+
+-- Pogled: Proizvodi koji su na popustu
+
+CREATE VIEW proizvodi_na_popustu AS
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    p.opis AS proizvod_opis,
+    p.cijena AS originalna_cijena,
+    (p.cijena - (p.cijena * pop.postotak_popusta / 100)) AS cijena_sa_popustom,
+    pop.postotak_popusta,
+    pop.datum_pocetka,
+    pop.datum_zavrsetka
+FROM 
+    proizvodi p
+JOIN 
+    popusti pop ON p.id = pop.proizvod_id
+WHERE 
+    CURRENT_DATE BETWEEN pop.datum_pocetka AND pop.datum_zavrsetka
+ORDER BY 
+    pop.postotak_popusta DESC;
+
+/*
+SELECT * FROM proizvodi_na_popustu;
+*/
 
 -- Upit: Proizvodi koji su dostupni na skladištu, imaju više od 10 recenzija i prosječnu ocjenu iznad 4  (Loren)
 
@@ -1622,6 +1655,23 @@ JOIN recenzije_proizvoda r ON k.id = r.korisnik_id
 GROUP BY k.id, k.ime, k.prezime
 ORDER BY broj_recenzija DESC
 LIMIT 5;
+
+-- Upit: Prosječna ocjena proizvoda na temelju recenzija (Loren)
+
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    p.opis AS proizvod_opis,
+    AVG(r.ocjena) AS prosjecna_ocjena,
+    COUNT(r.id) AS broj_recenzija
+FROM 
+    proizvodi p
+LEFT JOIN 
+    recenzije_proizvoda r ON p.id = r.proizvod_id
+GROUP BY 
+    p.id, p.naziv, p.opis
+ORDER BY 
+    prosjecna_ocjena DESC;
 
 
 -- Okidač: Obavijest o niskoj zalihi spremju se u privremenu tablicu (Loren)
@@ -1685,70 +1735,127 @@ BEGIN
 END //
 DELIMITER ;
 
+/*
 INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar) VALUES 
 	(1, 2, 5, 'Odličan proizvod!');
+*/
 
-
--- Procedura: Azuriranje proizvoda
+-- Okidač: Automatsko ažuriranje količine na skladištu (Loren)
 
 DELIMITER //
 
-CREATE PROCEDURE azuriraj_proizvod(
-    IN p_proizvod_id INT,
-    IN p_naziv VARCHAR(255),
-    IN p_opis TEXT,
-    IN p_cijena DECIMAL(10, 2),
-    IN p_kategorija_id INT,
-    IN p_kolicina_na_skladistu INT,
-    IN p_slika VARCHAR(255),
-    IN p_specifikacije TEXT
-)
+CREATE TRIGGER azuriraj_kolicinu_na_skladistu
+AFTER INSERT ON stavke_narudzbe
+FOR EACH ROW
 BEGIN
-    IF p_cijena <= 0 THEN
-        SIGNAL SQLSTATE '45007'
-        SET MESSAGE_TEXT = 'Cijena mora biti veća od 0.';
-    END IF;
-
-    IF p_kolicina_na_skladistu < 0 THEN
-        SIGNAL SQLSTATE '45008'
-        SET MESSAGE_TEXT = 'Količina na skladištu ne smije biti negativna.';
-    END IF;
-
-    IF NOT EXISTS (SELECT * FROM kategorije_proizvoda WHERE id = p_kategorija_id) THEN
-        SIGNAL SQLSTATE '45009'
-        SET MESSAGE_TEXT = 'Kategorija s unesenim ID ne postoji.';
-    END IF;
-
-    IF NOT EXISTS (SELECT * FROM proizvodi WHERE id = p_proizvod_id) THEN
-        SIGNAL SQLSTATE '45010'
-        SET MESSAGE_TEXT = 'Proizvod s unesenim ID ne postoji.';
+    IF (SELECT kolicina_na_skladistu FROM proizvodi WHERE id = NEW.proizvod_id) < NEW.kolicina THEN
+        SIGNAL SQLSTATE '45513'
+        SET MESSAGE_TEXT = 'Nedovoljna količina proizvoda na skladištu.';
     END IF;
 
     UPDATE proizvodi
-    SET naziv = p_naziv,
-        opis = p_opis,
-        cijena = p_cijena,
-        kategorija_id = p_kategorija_id,
-        kolicina_na_skladistu = p_kolicina_na_skladistu,
-        slika = p_slika,
-        specifikacije = p_specifikacije
-    WHERE id = p_proizvod_id;
+    SET kolicina_na_skladistu = kolicina_na_skladistu - NEW.kolicina
+    WHERE id = NEW.proizvod_id;
 END //
 
 DELIMITER ;
 
-
-
 /*
-INSERT INTO proizvodi (id, naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije, datum_kreiranja) VALUES
-	(826, 'Televizor', 'Smart TV', 500.00, 1, 10, 'smart_tv.jpg', '4K, Smart TV, OS:Android', '2024-11-16');
-
-SELECT * FROM proizvodi WHERE id = 826;
-
-CALL azuriraj_proizvod(826, 'Televizor Philips', '4K Smart TV', 550.00, 1, 11, 'slike/tv.jpg', 'Ultra HD 4K , OS:Android');
+INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
+VALUES (30, 1, 5);
+SELECT * FROM stavke_narudzbe;
+SELECT * FROM proizvodi WHERE id = 1;
 */
 
--- Procedura za brisanje proizvoda s provjerom povezanih podataka (Loren)
+
+-- Funkcija: Vraća ukupnu vrijednost svih proizvoda na skladištu (Loren)
+
+
+DELIMITER //
+CREATE FUNCTION UkupnaVrijednostSkladista ()
+RETURNS DECIMAL(15,2)
+DETERMINISTIC
+BEGIN
+    DECLARE ukupna_vrijednost DECIMAL(15,2);
+    
+    SELECT SUM(kolicina_na_skladistu * cijena)
+    INTO ukupna_vrijednost
+    FROM proizvodi;
+       
+    RETURN ukupna_vrijednost;
+END //
+DELIMITER ;
+
+/*
+SELECT UkupnaVrijednostSkladista();
+*/
+
+-- Funkcija: Funkcija za provjeru dostupnosti proizvoda na skladištu (Loren)
+
+DELIMITER //
+
+CREATE FUNCTION provjeri_dostupnost(
+    p_proizvod_id INT,
+    p_kolicina INT
+)
+RETURNS BOOLEAN
+DETERMINISTIC
+BEGIN
+    DECLARE v_kolicina_na_skladistu INT;
+
+    SELECT kolicina_na_skladistu
+    INTO v_kolicina_na_skladistu
+    FROM proizvodi
+    WHERE id = p_proizvod_id;
+
+    IF v_kolicina_na_skladistu IS NULL THEN
+        RETURN FALSE;
+    END IF;
+
+    IF p_kolicina > v_kolicina_na_skladistu THEN
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+END //
+
+DELIMITER ;
+
+/*
+SELECT provjeri_dostupnost(1, 51) AS dostupno;
+*/
+
+
+
+
+-- Funkcija: Funkcija za izračunavanje prosječne ocjene proizvoda na temelju recenzija (Loren)
+
+DELIMITER //
+
+CREATE FUNCTION prosjecna_ocjena_proizvoda(
+    p_proizvod_id INT
+)
+RETURNS DECIMAL(3, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE v_prosjecna_ocjena DECIMAL(3, 2);
+
+    SELECT AVG(ocjena)
+    INTO v_prosjecna_ocjena
+    FROM recenzije_proizvoda
+    WHERE proizvod_id = p_proizvod_id;
+
+    RETURN v_prosjecna_ocjena;
+END //
+
+DELIMITER ;
+
+/*
+SELECT prosjecna_ocjena_proizvoda(1) AS prosjecna_ocjena;
+*/
+
+
+-- Procedura:Procedura za brisanje proizvoda s provjerom povezanih podataka (Loren)
 
 
 DELIMITER //
@@ -1781,9 +1888,9 @@ BEGIN
 END //
 DELIMITER ;
 
-
--- CALL ObrisiProizvod(1);
-
+/*
+CALL ObrisiProizvod(1);
+*/
 
 
 -- Procedura: Dodavanje proizvoda s provjerom grešaka (Loren)
@@ -1814,9 +1921,10 @@ BEGIN
 END //
 DELIMITER ;
 
--- CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', 10, 1, -1, 'slika.jpg', 'Specifikacije');
--- CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', -21, 1, 12, 'slika.jpg', 'Specifikacije');
-
+/*
+CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', 10, 1, -1, 'slika.jpg', 'Specifikacije');
+CALL DodajProizvod('Test Proizvod', 'Opis proizvoda', -21, 1, 12, 'slika.jpg', 'Specifikacije');
+*/
 
 -- Procedura: Pronalazi proizvode s ključnom riječi (Loren)
 
@@ -1832,28 +1940,267 @@ BEGIN
 END //
 DELIMITER ;
 
--- CALL PronadjiProizvode('računalo');
+/*
+CALL PronadjiProizvode('računalo');
+*/
 
--- Funkcija: Vraća ukupnu vrijednost svih proizvoda na skladištu (Loren)
 
-DROP function UkupnaVrijednostSkladista;
+
+-- Procedura: Procedura ima mogućnost ažuriranja svih podataka vezanih za neki proizvod. (Loren)
+
 
 DELIMITER //
-CREATE FUNCTION UkupnaVrijednostSkladista ()
-RETURNS DECIMAL(15,2)
-DETERMINISTIC
+
+CREATE PROCEDURE azuriraj_proizvod(
+    IN p_proizvod_id INT,
+    IN p_naziv VARCHAR(255),
+    IN p_opis TEXT,
+    IN p_cijena DECIMAL(10, 2),
+    IN p_kategorija_id INT,
+    IN p_kolicina_na_skladistu INT,
+    IN p_slika VARCHAR(255),
+    IN p_specifikacije TEXT
+)
 BEGIN
-    DECLARE ukupna_vrijednost DECIMAL(15,2);
-    
-    SELECT SUM(kolicina_na_skladistu * cijena)
-    INTO ukupna_vrijednost
-    FROM proizvodi;
-       
-    RETURN ukupna_vrijednost;
+    IF p_cijena <= 0 THEN
+        SIGNAL SQLSTATE '45501'
+        SET MESSAGE_TEXT = 'Cijena mora biti veća od 0.';
+    END IF;
+
+    IF p_kolicina_na_skladistu < 0 THEN
+        SIGNAL SQLSTATE '45502'
+        SET MESSAGE_TEXT = 'Količina na skladištu ne može biti negativna.';
+    END IF;
+
+    IF NOT EXISTS (SELECT * FROM kategorije_proizvoda WHERE id = p_kategorija_id) THEN
+        SIGNAL SQLSTATE '45509'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim ID ne postoji.';
+    END IF;
+
+    IF NOT EXISTS (SELECT * FROM proizvodi WHERE id = p_proizvod_id) THEN
+        SIGNAL SQLSTATE '45510'
+        SET MESSAGE_TEXT = 'Proizvod s unesenim ID ne postoji.';
+    END IF;
+
+    UPDATE proizvodi
+    SET naziv = p_naziv,
+        opis = p_opis,
+        cijena = p_cijena,
+        kategorija_id = p_kategorija_id,
+        kolicina_na_skladistu = p_kolicina_na_skladistu,
+        slika = p_slika,
+        specifikacije = p_specifikacije
+    WHERE id = p_proizvod_id;
 END //
+
 DELIMITER ;
 
--- SELECT UkupnaVrijednostSkladista();
+
+
+/*
+INSERT INTO proizvodi (id, naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije, datum_kreiranja) VALUES
+	(826, 'Televizor', 'Smart TV', 500.00, 1, 10, 'smart_tv.jpg', '4K, Smart TV, OS:Android', '2024-11-16');
+
+SELECT * FROM proizvodi WHERE id = 826;
+
+CALL azuriraj_proizvod(826, 'Televizor Philips', '4K Smart TV', 550.00, 1, 11, 'slike/tv.jpg', 'Ultra HD 4K , OS:Android');
+*/
+
+-- Procedura:Procedura za dodavanje kategorije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE dodaj_kategoriju_proizvoda(
+    IN p_naziv VARCHAR(255),
+    IN p_opis TEXT
+)
+BEGIN
+    IF EXISTS (SELECT * FROM kategorije_proizvoda WHERE naziv = p_naziv) THEN
+        SIGNAL SQLSTATE '45504'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim nazivom već postoji.';
+    END IF;
+
+    INSERT INTO kategorije_proizvoda (naziv, opis)
+    VALUES (p_naziv, p_opis);
+END //
+
+DELIMITER ;
+
+/*
+CALL dodaj_kategoriju_proizvoda('Televizori', 'Različiti modeli televizija');
+SELECT * FROM kategorije_proizvoda;
+*/
+
+-- Procedura:Procedura za ažuriranje kategorije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE azuriraj_kategoriju_proizvoda(
+    IN p_kategorija_id INT,
+    IN p_naziv VARCHAR(255),
+    IN p_opis TEXT
+)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM kategorije_proizvoda WHERE id = p_kategorija_id) THEN
+        SIGNAL SQLSTATE '45509'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim ID ne postoji.';
+    END IF;
+
+    IF EXISTS (
+        SELECT * FROM kategorije_proizvoda 
+        WHERE naziv = p_naziv AND id != p_kategorija_id
+    ) THEN
+        SIGNAL SQLSTATE '45504'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim nazivom već postoji.';
+    END IF;
+
+    UPDATE kategorije_proizvoda
+    SET naziv = p_naziv,
+        opis = p_opis
+    WHERE id = p_kategorija_id;
+END //
+
+DELIMITER ;
+
+/*
+CALL azuriraj_kategoriju_proizvoda(31, 'TV', 'Ažurirani opis');
+SELECT * FROM kategorije_proizvoda;
+*/
+
+-- Procedura: Procedura za brisanje kategorije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE obrisi_kategoriju_proizvoda(
+    IN p_kategorija_id INT
+)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM kategorije_proizvoda WHERE id = p_kategorija_id) THEN
+        SIGNAL SQLSTATE '45509'
+        SET MESSAGE_TEXT = 'Kategorija s unesenim ID ne postoji.';
+    END IF;
+    IF EXISTS (SELECT * FROM proizvodi WHERE kategorija_id = p_kategorija_id) THEN
+        SIGNAL SQLSTATE '45507'
+        SET MESSAGE_TEXT = 'Nije moguće obrisati kategoriju jer postoje proizvodi povezani s njom.';
+    END IF;
+
+    DELETE FROM kategorije_proizvoda
+    WHERE id = p_kategorija_id;
+END //
+
+DELIMITER ;
+
+/*
+CALL obrisi_kategoriju_proizvoda(31);
+*/
+
+-- Procedura: Procedura za unos recenzije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE dodaj_recenziju_proizvoda(
+    IN p_proizvod_id INT,
+    IN p_korisnik_id INT,
+    IN p_ocjena INT,
+    IN p_komentar TEXT
+)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM proizvodi WHERE id = p_proizvod_id) THEN
+        SIGNAL SQLSTATE '45510'
+        SET MESSAGE_TEXT = 'Proizvod s unesenim ID ne postoji.';
+    END IF;
+
+    IF NOT EXISTS (SELECT * FROM korisnici WHERE id = p_korisnik_id) THEN
+        SIGNAL SQLSTATE '45508'
+        SET MESSAGE_TEXT = 'Korisnik s unesenim ID ne postoji.';
+    END IF;
+
+    IF p_ocjena < 1 OR p_ocjena > 5 THEN
+        SIGNAL SQLSTATE '45511'
+        SET MESSAGE_TEXT = 'Ocjena mora biti između 1 i 5.';
+    END IF;
+
+    IF EXISTS (
+        SELECT * FROM recenzije_proizvoda 
+        WHERE proizvod_id = p_proizvod_id AND korisnik_id = p_korisnik_id
+    ) THEN
+        SIGNAL SQLSTATE '45506'
+        SET MESSAGE_TEXT = 'Korisnik je već ostavio recenziju za ovaj proizvod.';
+    END IF;
+
+    INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar)
+    VALUES (p_proizvod_id, p_korisnik_id, p_ocjena, p_komentar);
+END //
+
+DELIMITER ;
+
+/*
+SELECT * FROM recenzije_proizvoda;
+CALL dodaj_recenziju_proizvoda(101, 1, 5, 'Odličan proizvod!');
+SELECT * FROM stavke_narudzbe;
+*/
+
+-- Procedura: Procedura za ažuriranje recenzije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE azuriraj_recenziju_proizvoda(
+    IN p_recenzija_id INT,
+    IN p_ocjena INT,
+    IN p_komentar TEXT
+)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM recenzije_proizvoda WHERE id = p_recenzija_id) THEN
+        SIGNAL SQLSTATE '45512'
+        SET MESSAGE_TEXT = 'Recenzija s unesenim ID ne postoji.';
+    END IF;
+
+    IF p_ocjena < 1 OR p_ocjena > 5 THEN
+        SIGNAL SQLSTATE '45511'
+        SET MESSAGE_TEXT = 'Ocjena mora biti između 1 i 5.';
+    END IF;
+
+    UPDATE recenzije_proizvoda
+    SET ocjena = p_ocjena,
+        komentar = p_komentar,
+        datum_recenzije = CURRENT_TIMESTAMP
+    WHERE id = p_recenzija_id;
+END //
+
+DELIMITER ;
+
+/*
+SELECT * FROM recenzije_proizvoda;
+
+CALL azuriraj_recenziju_proizvoda(33, 4, 'Proizvod je dobar, ali ima nekih nedostataka.');
+*/
+
+-- Procedura: Procedura za brisanje recenzije proizvoda (Loren)
+
+DELIMITER //
+
+CREATE PROCEDURE obrisi_recenziju_proizvoda(
+    IN p_recenzija_id INT
+)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM recenzije_proizvoda WHERE id = p_recenzija_id) THEN
+        SIGNAL SQLSTATE '45512'
+        SET MESSAGE_TEXT = 'Recenzija s unesenim ID ne postoji.';
+    END IF;
+
+    DELETE FROM recenzije_proizvoda
+    WHERE id = p_recenzija_id;
+END //
+
+DELIMITER ;
+
+/*
+CALL obrisi_recenziju_proizvoda(33);
+*/
+
+
+
+
 
 
 -- Triger: Status isporuke određene narudžbe: (Morena)
