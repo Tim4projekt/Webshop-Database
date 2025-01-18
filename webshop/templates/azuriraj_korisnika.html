@@ -24,6 +24,11 @@
         <input type="text" id="grad" name="grad" value="{{ korisnik[5] }}">
         <label for="telefon">Telefon:</label>
         <input type="text" id="telefon" name="telefon" value="{{ korisnik[6] }}">
+        <label for="tip_korisnika">Tip korisnika:</label>
+        <select name="tip_korisnika" id="tip_korisnika">
+            <option value="kupac" {% if korisnik[7] == 'kupac' %}selected{% endif %}>Kupac</option>
+            <option value="admin" {% if korisnik[7] == 'admin' %}selected{% endif %}>Admin</option>
+        </select><br><br>
         <button type="submit">Ažuriraj Korisnika</button>
     </form>
 </body>

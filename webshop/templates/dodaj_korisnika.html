@@ -10,22 +10,42 @@
         <h1>Dodavanje Korisnika</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
     </header>
+
+    <!-- Prikazivanje flash poruka -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     
     <form method="POST" action="/dodaj_korisnika">
         <label for="ime">Ime:</label>
         <input type="text" id="ime" name="ime" required>
+        
         <label for="prezime">Prezime:</label>
         <input type="text" id="prezime" name="prezime" required>
+        
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
+        
         <label for="lozinka">Lozinka:</label>
         <input type="password" id="lozinka" name="lozinka" required>
+        
         <label for="adresa">Adresa:</label>
         <input type="text" id="adresa" name="adresa">
+        
         <label for="grad">Grad:</label>
         <input type="text" id="grad" name="grad">
+        
         <label for="telefon">Telefon:</label>
         <input type="text" id="telefon" name="telefon">
+        
         <button type="submit">Dodaj Korisnika</button>
     </form>
 </body>

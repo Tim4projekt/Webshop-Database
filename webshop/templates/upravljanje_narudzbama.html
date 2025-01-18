@@ -4,39 +4,98 @@
     <meta charset="UTF-8">
     <title>Upravljanje Narudžbama</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        let currentOrderId = null;
+
+        function otvoriModal(narudzbaId) {
+            currentOrderId = narudzbaId; // Postavi ID narudžbe za koju menjamo status
+            document.getElementById('statusModal').style.display = 'block';
+        }
+
+        function zatvoriModal() {
+            currentOrderId = null;
+            document.getElementById('statusModal').style.display = 'none';
+        }
+
+        function promijeniStatus() {
+            const noviStatus = document.getElementById('statusDropdown').value;
+
+            if (noviStatus) {
+                fetch(`/promijeni_status/${currentOrderId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: noviStatus }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Status uspešno promenjen!");
+                        location.reload(); // Osvježavanje stranice
+                    } else {
+                        alert("Došlo je do greške pri promeni statusa.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Greška:", error);
+                    alert("Došlo je do greške pri slanju zahteva.");
+                })
+                .finally(() => zatvoriModal());
+            }
+        }
+    </script>
 </head>
 <body>
     <header>
         <h1>Upravljanje Narudžbama</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
     </header>
-    
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID Narudžbe</th>
-                <th>Korisnik</th>
-                <th>Datum Narudžbe</th>
-                <th>Status</th>
-                <th>Ukupna Cijena</th>
-                <th>Akcije</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for narudzba in narudzbe %}
-            <tr>
-                <td>{{ narudzba[0] }}</td>
-                <td>{{ narudzba[1] }} {{ narudzba[2] }}</td>
-                <td>{{ narudzba[3] }}</td>
-                <td>{{ narudzba[4] }}</td>
-                <td>{{ narudzba[5] }}</td>
-                <td>
-                    <button onclick="promijeniStatus({{ narudzba[0] }})">Promijeni Status</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Narudžbe</th>
+                    <th>Korisnik</th>
+                    <th>Datum Narudžbe</th>
+                    <th>Status</th>
+                    <th>Ukupna Cijena</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for narudzba in narudzbe %}
+                <tr>
+                    <td>{{ narudzba[0] }}</td>
+                    <td>{{ narudzba[1] }} {{ narudzba[2] }}</td>
+                    <td>{{ narudzba[3] }}</td>
+                    <td>{{ narudzba[4] }}</td>
+                    <td>{{ narudzba[5] }}</td>
+                    <td>
+                        <button onclick="otvoriModal({{ narudzba[0] }})">Promijeni Status</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Modal za promenu statusa -->
+    <div id="statusModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Promjena Statusa</h2>
+            <label for="statusDropdown">Odaberite novi status:</label>
+            <select id="statusDropdown">
+                <option value="">Odaberite status</option>
+                <option value="u obradi">U obradi</option>
+                <option value="poslano">Poslano</option>
+                <option value="dostavljeno">Dostavljeno</option>
+            </select>
+            <div style="margin-top: 20px;">
+                <button onclick="promijeniStatus()">Spremi</button>
+                <button onclick="zatvoriModal()">Zatvori</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -2,15 +2,30 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <title>Upravljanje Korisnicima</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upravljanje korisnicima</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <header>
-        <h1>Upravljanje Korisnicima</h1>
+        <h1>Upravljanje korisnicima</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
     </header>
-    <button onclick="window.location.href='/dodaj_korisnika'">Dodaj Korisnika</button>
+
+    <div class="actions">
+        <button onclick="window.location.href='/dodaj_korisnika'">Dodaj korisnika</button>
+        <form method="GET" action="{{ url_for('upravljanje_korisnicima') }}">
+            <input type="text" name="ime" placeholder="Pretraži po imenu" value="{{ request.args.get('ime', '') }}">
+            <input type="text" name="prezime" placeholder="Pretraži po prezimenu" value="{{ request.args.get('prezime', '') }}">
+            <select name="tip_korisnika">
+                <option value="">Svi tipovi</option>
+                <option value="kupac" {% if request.args.get('tip_korisnika') == 'kupac' %}selected{% endif %}>Kupac</option>
+                <option value="admin" {% if request.args.get('tip_korisnika') == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+            <button type="submit">Filtriraj</button>
+        </form>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -18,7 +33,7 @@
                 <th>Ime</th>
                 <th>Prezime</th>
                 <th>Email</th>
-                <th>Tip Korisnika</th>
+                <th>Tip korisnika</th>
                 <th>Akcije</th>
             </tr>
         </thead>
@@ -39,31 +54,30 @@
         </tbody>
     </table>
 
-
     <script>
-        function obrisiKorisnika(korisnikId) {
-            if (confirm('Jeste li sigurni da želite obrisati ovog korisnika?')) {
-                fetch(`/obrisi_korisnika/${korisnikId}`, {
-                    method: 'POST'
-                })
-                .then(response => response.text())
-                .then(data => {
-                    alert('Korisnik je uspješno obrisan!');
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Greška:', error);
-                    alert('Došlo je do greške pri brisanju korisnika.');
-                });
+function obrisiKorisnika(korisnikId) {
+    if (confirm('Jeste li sigurni da želite obrisati ovog korisnika?')) {
+        fetch(`/obrisi_korisnika/${korisnikId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())  // Dohvatimo JSON odgovor
+        .then(data => {
+            // Provjeravamo status odgovora
+            if (data.status === 'success') {
+                alert(data.message);  // Ako je uspješno, prikaži poruku
+                location.reload();  // Osvježavanje stranice
+            } else {
+                alert(data.message);  // Ako je došlo do greške, prikaži poruku
             }
-        }
+        })
+        .catch(error => {
+            console.error('Greška:', error);
+            alert('Došlo je do greške pri brisanju korisnika.');
+        });
+    }
+}
+
     </script>
-    
 
 </body>
-
-
-
 </html>
-
-
