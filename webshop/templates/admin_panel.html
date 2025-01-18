@@ -45,7 +45,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 60px); /* Oduzimanje visine headera */
+            height: calc(100vh - 60px);
             padding: 20px;
         }
 
@@ -55,7 +55,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 600px; /* Širina sekcije */
             text-align: center;
         }
 
@@ -65,28 +65,35 @@
             color: #333;
         }
 
-        ul {
+        .link-columns {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .link-column {
+            flex: 1;
             list-style: none;
             padding: 0;
         }
 
-        ul li {
+        .link-column li {
             margin-bottom: 15px;
         }
 
-        ul li a {
+        .link-column li a {
             display: block;
             text-decoration: none;
-            padding: 10px 15px;
-            font-size: 16px;
+            padding: 10px;
+            font-size: 18px;
             color: white;
             background-color: #28a745;
             border-radius: 5px;
             transition: background-color 0.3s ease;
         }
 
-        ul li a:hover {
-            background-color: #28a745;
+        .link-column li a:hover {
+            background-color: #218838;
         }
     </style>
 </head>
@@ -99,15 +106,27 @@
     <main>
         <section>
             <h2>Opcije</h2>
-            <ul>
-                <li><a href="/upravljanje_korisnicima">Upravljanje Korisnicima</a></li>
-                <li><a href="/upravljanje_proizvodima">Upravljanje Proizvodima</a></li>
-                <li><a href="/upravljanje_kategorijama">Upravljanje Kategorijama</a></li>
-                <li><a href="/upravljanje_narudzbama">Upravljanje Narudžbama</a></li>
-                <li><a href="/statistike">Pregled Statistika</a></li>
-                <li><a href="/upravljanje_popustima">Upravljanje Popustima</a></li>
-                <li><a href="/upravljanje_recenzijama">Upravljanje Recenzijama</a></li>
-            </ul>
+            <div class="link-columns">
+                <!-- Prva kolona -->
+                <ul class="link-column">
+                    <li><a href="/upravljanje_korisnicima">Upravljanje Korisnicima</a></li>
+                    <li><a href="/upravljanje_proizvodima">Upravljanje Proizvodima</a></li>
+                    <li><a href="/upravljanje_kategorijama">Upravljanje Kategorijama</a></li>
+                    <li><a href="/upravljanje_narudzbama">Upravljanje Narudžbama</a></li>
+                    <li><a href="/statistike">Pregled Statistika</a></li>
+                    <li><a href="/upravljanje_popustima">Upravljanje Popustima</a></li>
+                </ul>
+                <!-- Druga kolona -->
+                <ul class="link-column">
+                    <li><a href="/upravljanje_recenzijama">Upravljanje Recenzijama</a></li>
+                    <li><a href="/pregled_placanja">Pregled Plaćanja</a></li>
+                    <li><a href="/pregled_stavki_narudzbe">Pregled Stavki Narudžbe</a></li>
+                    <li><a href="/pregled_racuna">Pregled Računa</a></li>
+                    <li><a href="/upravljanje_kuponima">Upravljanje Kuponima</a></li>
+                    <li><a href="/upravljanje_povratima">Upravljanje Povratima proizvoda</a></li>
+                    <li><a href="/upravljanje_podrskom">Upravljanje Podrškom za korisnike</a></li>
+                </ul>
+            </div>
         </section>
     </main>
 </body>
