@@ -172,8 +172,35 @@ CREATE TABLE kosarica (
     FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id)
 );
 
+CREATE TABLE Povrati_proizvoda (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    narudzba_id INT NOT NULL,
+    datum_povrata DATE NOT NULL,
+    razlog TEXT NOT NULL,
+    status_povrata ENUM('u obradi', 'odobreno', 'odbijeno') NOT NULL,
+    admin_biljeska TEXT,
+    FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id)
+);
 
+CREATE TABLE Praćenje_isporuka (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    narudzba_id INT NOT NULL,
+    status_isporuke ENUM('priprema', 'poslano', 'dostavljeno') NOT NULL,
+    datum_promjene DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id)
+);
 
+CREATE TABLE Podrška_za_korisnike (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    korisnik_id INT NOT NULL,
+    tema VARCHAR(255) NOT NULL,
+    poruka TEXT NOT NULL,
+    status ENUM('otvoreno', 'riješeno', 'zatvoreno') NOT NULL,
+    datum_upita DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    datum_odgovora DATETIME,
+    povijest_komunikacije TEXT,
+    FOREIGN KEY (korisnik_id) REFERENCES korisnici(id)
+);
 
 INSERT INTO kategorije_proizvoda (id, naziv, opis) VALUES
 	(1,'Laptopi', 'Različiti modeli prijenosnih računala.'),
@@ -2719,3 +2746,96 @@ SELECT *
 CALL azuriraj_popust(1, 10);
 CREATE TEMPORARY TABLE privremene_obavijesti (     poruka TEXT,     vrijeme_kreiranja DATETIME )
 
+--  Pogled: Pregled proizvoda sa statusom popusta (Fran)
+
+CREATE VIEW proizvodi_sa_statusom_popusta AS
+SELECT 
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    p.cijena AS originalna_cijena,
+    COALESCE((p.cijena - (p.cijena * pop.postotak_popusta / 100)), p.cijena) AS cijena_sa_popustom,
+    pop.postotak_popusta,
+    CASE 
+        WHEN CURRENT_DATE BETWEEN pop.datum_pocetka AND pop.datum_zavrsetka THEN 'Aktivan'
+        ELSE 'Neaktivan'
+    END AS status_popusta
+FROM proizvodi p
+LEFT JOIN popusti pop ON p.id = pop.proizvod_id
+ORDER BY status_popusta DESC, p.naziv;
+
+--  Pogled: Pregled narudzbi sa statusom isporuke (Fran)
+
+CREATE VIEW narudzbe_sa_statusom_isporuke AS
+SELECT 
+    n.id AS narudzba_id,
+    n.datum_narudzbe,
+    n.status_narudzbe,
+    i.status_isporuke,
+    i.datum_promjene AS datum_statusa
+FROM narudzbe n
+LEFT JOIN Praćenje_isporuka i ON n.id = i.narudzba_id
+ORDER BY n.datum_narudzbe DESC, i.datum_promjene DESC;
+
+--  Pogled: Pregled proizvoda po kategoriji s prosjecnim ocjenama (Fran)
+
+CREATE VIEW proizvodi_po_kategorijama_sa_ocjenama AS
+SELECT 
+    k.naziv AS kategorija,
+    p.id AS proizvod_id,
+    p.naziv AS proizvod_naziv,
+    AVG(r.ocjena) AS prosjecna_ocjena,
+    COUNT(r.id) AS broj_recenzija
+FROM proizvodi p
+JOIN kategorije_proizvoda k ON p.kategorija_id = k.id
+LEFT JOIN recenzije_proizvoda r ON p.id = r.proizvod_id
+GROUP BY k.naziv, p.id, p.naziv
+ORDER BY k.naziv, prosjecna_ocjena DESC;
+
+-- Okidač: Automatsko postavljanje statusa narudzbe (Fran)
+
+DELIMITER //
+CREATE TRIGGER postavi_status_narudzbe
+BEFORE INSERT ON narudzbe
+FOR EACH ROW
+BEGIN
+    IF NEW.status_narudzbe IS NULL THEN
+        SET NEW.status_narudzbe = 'u obradi';
+    END IF;
+END//
+DELIMITER ;
+
+-- Okidač: Azuriranje kolicine na skladistu (Fran)
+
+DELIMITER //
+CREATE TRIGGER azuriraj_kolicinu_na_skladistu
+AFTER INSERT ON stavke_narudzbe
+FOR EACH ROW
+BEGIN
+    UPDATE proizvodi
+    SET kolicina_na_skladistu = kolicina_na_skladistu - NEW.kolicina
+    WHERE id = NEW.proizvod_id;
+END//
+DELIMITER ;
+
+-- Funkcija: Povrata proizvoda (Fran)
+
+DELIMITER //
+
+CREATE FUNCTION DohvatiPovrateZaNarudzbu(narudzbaId INT)
+RETURNS TEXT
+DETERMINISTIC
+BEGIN
+    DECLARE povrati_info TEXT;
+
+    SELECT GROUP_CONCAT(
+               CONCAT(DATE_FORMAT(datum_povrata, '%Y-%m-%d'), ': ', status_povrata)
+               SEPARATOR '\n'
+           )
+    INTO povrati_info
+    FROM Povrati_proizvoda
+    WHERE narudzba_id = narudzbaId;
+
+    RETURN IFNULL(povrati_info, 'Nema povrata za odabranu narudžbu.');
+END //
+
+DELIMITER ;
