@@ -1224,7 +1224,6 @@ VALUES
 
 INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
 VALUES
-(1, 101, 2),
 (1, 102, 1),
 (2, 103, 3),
 (2, 104, 2),
@@ -1393,23 +1392,48 @@ END//
 
 DELIMITER ;
 
--- Procedura: Brisanje korisnika (Leo)
+-- Procedura: Dodaj u wishlist (Leo)
 DELIMITER //
 
+CREATE PROCEDURE dodaj_u_wishlist(korisnik_id INT, proizvod_id INT, grupa VARCHAR(255))
+BEGIN
+    -- Dodavanje proizvoda u wishlist (pretpostavljamo da je provjera duplikata već obavljena kroz triger)
+    INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
+    VALUES (korisnik_id, proizvod_id, grupa);
+END//
+
+DELIMITER ;
+
+-- Procedura: Ukloni u wishlist (Leo)
+DELIMITER //
+
+CREATE PROCEDURE ukloni_proizvod_iz_wishliste(korisnik_id INT, proizvod_id INT)
+BEGIN
+    -- Brisanje proizvoda iz wishlist-a
+    DELETE FROM wishlist WHERE korisnik_id = korisnik_id AND proizvod_id = proizvod_id;
+END//
+
+DELIMITER ;
+
+-- Procedura: Brisanje korisnika (Leo)
+DELIMITER //
 CREATE PROCEDURE obrisi_korisnika(
     IN p_korisnik_id INT
 )
 BEGIN
     DECLARE korisnik_ima_aktivne_narudzbe BOOLEAN;
 
-    -- Provera da li korisnik ima aktivne narudžbe
-    SELECT EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = p_korisnik_id)
+    -- Provjera da li korisnik ima aktivne narudžbe koje nisu 'dostavljeno'
+    SELECT EXISTS (SELECT 1 FROM narudzbe WHERE korisnik_id = p_korisnik_id AND status_narudzbe != 'dostavljeno')
     INTO korisnik_ima_aktivne_narudzbe;
 
     IF korisnik_ima_aktivne_narudzbe THEN
         SIGNAL SQLSTATE '45001'
         SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
     ELSE
+        -- Brisanje povezanih recenzija
+        DELETE FROM recenzije_proizvoda WHERE korisnik_id = p_korisnik_id;
+
         -- Brisanje povezanih podataka
         DELETE FROM placanja WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
         DELETE FROM stavke_narudzbe WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
@@ -1419,9 +1443,9 @@ BEGIN
         -- Na kraju, brisanje korisnika
         DELETE FROM korisnici WHERE id = p_korisnik_id;
     END IF;
-END//
-
+END //
 DELIMITER ;
+
 
 -- Procedura: Ažuriranje korsinika(Leo)
 DELIMITER //
@@ -1445,6 +1469,17 @@ BEGIN
         telefon = p_telefon
     WHERE id = p_korisnik_id;
 END//
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE azuriraj_tip_korisnika(IN p_korisnik_id INT, IN p_tip_korisnika ENUM('kupac', 'admin'))
+BEGIN
+    UPDATE korisnici
+    SET tip_korisnika = p_tip_korisnika
+    WHERE id = p_korisnik_id;
+END//
+
 DELIMITER ;
 
 -- Okidač: Automatsko postavljanje datuma registracije korisnika (Leo)
@@ -2682,3 +2717,5 @@ DELIMITER ;
 SELECT *
 	FROM popusti;
 CALL azuriraj_popust(1, 10);
+CREATE TEMPORARY TABLE privremene_obavijesti (     poruka TEXT,     vrijeme_kreiranja DATETIME )
+
