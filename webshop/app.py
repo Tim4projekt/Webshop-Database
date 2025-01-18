@@ -829,55 +829,63 @@ def dodaj_popust():
 
 @app.route('/recenzije', methods=['GET', 'POST'])
 def recenzije():
-    message = ""  # Početno postavljanje poruke na prazan string
-    proizvodi = []  # Lista proizvoda koja će biti prikazana u formi
-
+    proizvodi = []
+    
     if request.method == 'POST':
-        # Provjeravamo je li korisnik prijavljen
         korisnik_id = session.get('user_id')
         if not korisnik_id:
-            message = "Morate biti prijavljeni!"  # Greška ako nije prijavljen
-            return render_template('recenzije.html', message=message, proizvodi=proizvodi)
+            flash("Morate biti prijavljeni za ostavljanje recenzije.", "error")
+            return redirect(url_for('prijava'))
 
-        # Dohvaćamo podatke iz forme
         proizvod_id = request.form.get('proizvod_id')
         ocjena = request.form.get('ocjena')
         komentar = request.form.get('komentar')
 
-        # Provjera da su svi podaci uneseni
         if not proizvod_id or not ocjena or not komentar:
-            message = "Proizvod, ocjena i komentar su obavezni!"  # Greška ako nisu uneseni podaci
-            return render_template('recenzije.html', message=message, proizvodi=proizvodi)
+            flash("Proizvod, ocjena i komentar su obavezni!", "error")
+            return redirect(url_for('recenzije'))
 
-        # Provjera da je ocjena u validnom rasponu (1-5)
-        if int(ocjena) < 1 or int(ocjena) > 5:
-            message = "Ocjena mora biti između 1 i 5!"  # Greška ako ocjena nije u ispravnom rasponu
-            return render_template('recenzije.html', message=message, proizvodi=proizvodi)
+        try:
+            ocjena = int(ocjena)
+            if ocjena < 1 or ocjena > 5:
+                flash("Ocjena mora biti između 1 i 5!", "error")
+                return redirect(url_for('recenzije'))
+        except ValueError:
+            flash("Ocjena mora biti broj!", "error")
+            return redirect(url_for('recenzije'))
 
-        # Spremanje podataka u bazu
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         try:
-            cursor.execute(
-                "INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar, datum_recenzije) "
-                "VALUES (%s, %s, %s, %s, CURDATE())",
-                (proizvod_id, korisnik_id, ocjena, komentar)
-            )
+            cursor.execute("""
+                INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar, datum_recenzije)
+                VALUES (%s, %s, %s, %s, CURDATE())
+            """, (proizvod_id, korisnik_id, ocjena, komentar))
             db.commit()
-            message = "Recenzija je uspješno poslana!"  # Uspješan unos
+            flash("Recenzija je uspješno poslana!", "success")
+        except MySQLdb.MySQLError as e:
+            if e.args[0] == 1644:  # SQL SIGNAL greška
+                flash(f"Greška: {e.args[1]}", "error")
+            else:
+                flash("Dogodila se greška pri dodavanju recenzije.", "error")
+            db.rollback()
         finally:
             db.close()
 
-        return render_template('recenzije.html', message=message, proizvodi=proizvodi)  # Vraćamo poruku korisniku
+        return redirect(url_for('recenzije'))
 
-    # Ako je GET metoda, dohvaćamo proizvode za prikazivanje u formi
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
-    cursor.execute("SELECT id, naziv FROM proizvodi")  # Dohvaćamo ID i naziv proizvoda
-    proizvodi = cursor.fetchall()  # Pohranjujemo proizvode u listu
-    db.close()
+    try:
+        cursor.execute("SELECT id, naziv FROM proizvodi")
+        proizvodi = cursor.fetchall()
+    except MySQLdb.MySQLError:
+        flash("Dogodila se greška prilikom dohvaćanja proizvoda.", "error")
+    finally:
+        db.close()
 
-    return render_template('recenzije.html', message=message, proizvodi=proizvodi)
+    return render_template('recenzije.html', proizvodi=proizvodi)
+
 
 @app.route('/lista_preporuka', methods=['GET'])
 def lista_preporuka():
