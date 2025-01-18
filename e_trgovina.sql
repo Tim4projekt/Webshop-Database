@@ -2744,10 +2744,10 @@ SELECT
     n.datum_narudzbe,
     n.status_narudzbe,
     i.status_isporuke,
-    i.datum_promjene AS datum_statusa
+    i.datum_isporuke AS datum_statusa
 FROM narudzbe n
-LEFT JOIN Praćenje_isporuka i ON n.id = i.narudzba_id
-ORDER BY n.datum_narudzbe DESC, i.datum_promjene DESC;
+LEFT JOIN pracenje_isporuka i ON n.id = i.narudzba_id
+ORDER BY n.datum_narudzbe DESC, i.datum_isporuke DESC;
 
 --  Pogled: Pregled proizvoda po kategoriji s prosjecnim ocjenama (Fran)
 
