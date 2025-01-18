@@ -8,6 +8,7 @@
 <body>
     <header>
         <h1>Profil Korisnika</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
     </header>
 
     <main>
@@ -22,6 +23,10 @@
             <p><strong>Datum Registracije:</strong> {{ korisnik[7] }}</p>
             <button onclick="otvoriFormuZaAzuriranje()">Ažuriraj Podatke</button>
             <button onclick="obrisiRacun()">Obriši Račun</button>
+
+            {% if korisnik[8] == 'admin' %}
+        <button onclick="window.location.href='/admin_panel'">Administracija</button>
+            {% endif %}
         </section>
 
         <div id="azuriranje-form-container" style="display: none;">
