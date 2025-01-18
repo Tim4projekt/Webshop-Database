@@ -2246,7 +2246,7 @@ AFTER INSERT ON narudzbe
 FOR EACH ROW
 BEGIN
     INSERT INTO pracenje_isporuka (narudzba_id, status_isporuke, datum_isporuke)
-    VALUES (NEW.id, 'Na čekanju', NULL);
+    VALUES (NEW.id, 'u pripremi', NULL);
 END//
 
 DELIMITER ;
