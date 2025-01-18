@@ -2805,26 +2805,22 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE PovratProizvoda (
-    IN p_stavka_id INT,  -- ID stavke narudžbe
-    IN p_razlog TEXT     -- Razlog povrata
+    IN p_stavka_id INT,  
+    IN p_razlog TEXT     
 )
 BEGIN
     DECLARE v_datum_narudzbe DATE;
 
-    -- Dohvati datum narudžbe za odabranu stavku
     SELECT n.datum_narudzbe
     INTO v_datum_narudzbe
     FROM stavke_narudzbe sn
     JOIN narudzbe n ON sn.narudzba_id = n.id
     WHERE sn.id = p_stavka_id;
 
-    -- Provjeri da li je narudžba izvršena unutar zadnjih 15 dana
     IF DATEDIFF(CURDATE(), v_datum_narudzbe) <= 15 THEN
-        -- Ako je proizvod kupljen unutar 15 dana, omogućiti povrat
-        INSERT INTO povrati_proizvoda (stavka_id, datum_povrata, razlog, status_povrata)
+                INSERT INTO povrati_proizvoda (stavka_id, datum_povrata, razlog, status_povrata)
         VALUES (p_stavka_id, CURDATE(), p_razlog, 'u obradi');
     ELSE
-        -- Ako nije kupljen unutar 15 dana, odbiti povrat
         SIGNAL SQLSTATE '45400' SET MESSAGE_TEXT = 'Povrat nije moguć jer je prošlo više od 15 dana.';
     END IF;
 END //
