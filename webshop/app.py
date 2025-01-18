@@ -904,7 +904,8 @@ def profil():
                 adresa, 
                 grad, 
                 telefon, 
-                formatiraj_datum(datum_registracije) AS datum_registracije 
+                formatiraj_datum(datum_registracije) AS datum_registracije,
+                tip_korisnika 
             FROM profil_korisnika 
             WHERE korisnik_id = %s
         """, (korisnik_id,))
@@ -989,6 +990,212 @@ def preporuke():
         db.close()
 
     return render_template('preporuke.html', preporuke=preporuke)
+
+
+@app.route('/admin_panel', methods=['GET'])
+def admin_panel():
+    # Provjera je li korisnik prijavljen
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))  # Preusmjeravanje na prijavu
+
+    # Dohvaćanje korisnika iz baze podataka
+    korisnik_id = session['user_id']
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT tip_korisnika FROM korisnici WHERE id = %s
+        """, (korisnik_id,))
+        tip_korisnika = cursor.fetchone()
+
+        # Provjera je li korisnik admin
+        if not tip_korisnika or tip_korisnika[0] != 'admin':
+            flash('Nemate prava pristupa administrativnom panelu.', 'error')
+            return redirect(url_for('home'))  # Preusmjeravanje na početnu stranicu
+
+    finally:
+        db.close()
+
+    # Ako je korisnik admin, prikazujemo admin panel
+    return render_template('admin_panel.html')
+
+
+@app.route('/upravljanje_korisnicima', methods=['GET', 'POST'])
+def upravljanje_korisnicima():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    korisnik_id = session['user_id']
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje svih korisnika
+    cursor.execute("SELECT id, ime, prezime, email, tip_korisnika FROM korisnici")
+    korisnici = cursor.fetchall()
+    db.close()
+
+    return render_template('upravljanje_korisnicima.html', korisnici=korisnici)
+
+@app.route('/upravljanje_proizvodima', methods=['GET'])
+def upravljanje_proizvodima():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje svih proizvoda
+    cursor.execute("SELECT id, naziv, opis, cijena, kolicina_na_skladistu FROM proizvodi")
+    proizvodi = cursor.fetchall()
+    db.close()
+
+    return render_template('upravljanje_proizvodima.html', proizvodi=proizvodi)
+
+@app.route('/upravljanje_narudzbama', methods=['GET'])
+def upravljanje_narudzbama():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje svih narudžbi
+    cursor.execute("""
+        SELECT n.id, k.ime, k.prezime, n.datum_narudzbe, n.status_narudzbe, n.ukupna_cijena
+        FROM narudzbe n
+        JOIN korisnici k ON n.korisnik_id = k.id
+    """)
+    narudzbe = cursor.fetchall()
+    db.close()
+
+    return render_template('upravljanje_narudzbama.html', narudzbe=narudzbe)
+
+
+@app.route('/statistike', methods=['GET'])
+def statistike():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje osnovnih statistika
+    cursor.execute("SELECT COUNT(*) FROM korisnici")
+    broj_korisnika = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM proizvodi")
+    broj_proizvoda = cursor.fetchone()[0]
+
+    cursor.execute("SELECT SUM(ukupna_cijena) FROM narudzbe")
+    ukupna_zarada = cursor.fetchone()[0]
+
+    db.close()
+
+    return render_template('statistike.html', broj_korisnika=broj_korisnika, broj_proizvoda=broj_proizvoda, ukupna_zarada=ukupna_zarada)
+
+@app.route('/upravljanje_popustima', methods=['GET', 'POST'])
+def upravljanje_popustima():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje popusta
+    cursor.execute("""
+        SELECT p.id, pr.naziv, p.postotak_popusta, p.datum_pocetka, p.datum_zavrsetka
+        FROM popusti p
+        JOIN proizvodi pr ON p.proizvod_id = pr.id
+    """)
+    popusti = cursor.fetchall()
+    db.close()
+
+    return render_template('upravljanje_popustima.html', popusti=popusti)
+
+@app.route('/dodaj_korisnika', methods=['GET', 'POST'])
+def dodaj_korisnika():
+    if request.method == 'GET':
+        return render_template('dodaj_korisnika.html')
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            db = MySQLdb.connect(**db_config)
+            cursor = db.cursor()
+            
+            cursor.callproc('dodaj_korisnika', (
+                data['ime'], 
+                data['prezime'], 
+                data['email'], 
+                bcrypt.hashpw(data['lozinka'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), 
+                data['adresa'], 
+                data['grad'], 
+                data['telefon']
+            ))
+            db.commit()
+            flash('Korisnik uspješno dodan!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_korisnicima'))
+
+
+@app.route('/azuriraj_korisnika/<int:korisnik_id>', methods=['GET', 'POST'])
+def azuriraj_korisnika(korisnik_id):
+    print(f"Primljen zahtjev za korisnika ID: {korisnik_id}")  # Debugging
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'GET':
+        print("GET metoda")  # Debugging
+        cursor.execute("SELECT id, ime, prezime, email, adresa, grad, telefon FROM korisnici WHERE id = %s", (korisnik_id,))
+        korisnik = cursor.fetchone()
+        print(f"Dohvaćen korisnik: {korisnik}")  # Debugging
+        db.close()
+        return render_template('azuriraj_korisnika.html', korisnik=korisnik)
+
+    if request.method == 'POST':
+        print("POST metoda")  # Debugging
+        data = request.form
+        print(f"Primljeni podaci: {data}")  # Debugging
+        try:
+            cursor.callproc('azuriraj_korisnika', (
+                korisnik_id,
+                data['ime'],
+                data['prezime'],
+                data['email'],
+                data['adresa'],
+                data['grad'],
+                data['telefon']
+            ))
+            db.commit()
+            print("Korisnik uspješno ažuriran")  # Debugging
+        except MySQLdb.MySQLError as e:
+            print(f"Greška: {e}")  # Debugging
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_korisnicima'))
+
+
+@app.route('/obrisi_korisnika/<int:korisnik_id>', methods=['POST'])
+def obrisi_korisnika(korisnik_id):
+    try:
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        cursor.callproc('obrisi_korisnika', (korisnik_id,))
+        db.commit()
+        flash('Korisnik uspješno obrisan!', 'success')
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_korisnicima'))
 
 
 
