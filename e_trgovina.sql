@@ -1730,6 +1730,8 @@ BEGIN
 END //
 DELIMITER ;
 
+DROP TEMPORARY TABLE IF EXISTS privremene_obavijesti;
+
 /*
 UPDATE proizvodi 
 SET kolicina_na_skladistu = 3
@@ -2714,7 +2716,8 @@ DELIMITER ;
 SELECT *
 	FROM popusti;
 CALL azuriraj_popust(1, 10);
-CREATE TEMPORARY TABLE privremene_obavijesti (     poruka TEXT,     vrijeme_kreiranja DATETIME )
+CREATE TEMPORARY TABLE privremene_obavijesti (     poruka TEXT,     vrijeme_kreiranja DATETIME );
+DROP TEMPORARY TABLE IF EXISTS privremene_obavijesti;
 
 --  Pogled: Pregled proizvoda sa statusom popusta (Fran)
 
@@ -2726,7 +2729,7 @@ SELECT
     COALESCE((p.cijena - (p.cijena * pop.postotak_popusta / 100)), p.cijena) AS cijena_sa_popustom,
     pop.postotak_popusta,
     CASE 
-        WHEN CURRENT_DATE BETWEEN pop.datum_pocetka AND pop.datum_zavrsetka THEN 'Aktivan'
+        WHEN CURRENT_TIMESTAMP BETWEEN pop.datum_pocetka AND pop.datum_zavrsetka THEN 'Aktivan'
         ELSE 'Neaktivan'
     END AS status_popusta
 FROM proizvodi p
@@ -2774,18 +2777,6 @@ BEGIN
 END//
 DELIMITER ;
 
--- Okidač: Azuriranje kolicine na skladistu (Fran)
-
-DELIMITER //
-CREATE TRIGGER azuriraj_kolicinu_na_skladistu
-AFTER INSERT ON stavke_narudzbe
-FOR EACH ROW
-BEGIN
-    UPDATE proizvodi
-    SET kolicina_na_skladistu = kolicina_na_skladistu - NEW.kolicina
-    WHERE id = NEW.proizvod_id;
-END//
-DELIMITER ;
 
 -- Funkcija: Povrata proizvoda (Fran)
 
@@ -2802,7 +2793,7 @@ BEGIN
                SEPARATOR '\n'
            )
     INTO povrati_info
-    FROM Povrati_proizvoda
+    FROM povrati_proizvoda
     WHERE narudzba_id = narudzbaId;
 
     RETURN IFNULL(povrati_info, 'Nema povrata za odabranu narudžbu.');
