@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Korisnicima</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Korisnicima</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    <button onclick="window.location.href='/dodaj_korisnika'">Dodaj Korisnika</button>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Ime</th>
+                <th>Prezime</th>
+                <th>Email</th>
+                <th>Tip Korisnika</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for korisnik in korisnici %}
+            <tr>
+                <td>{{ korisnik[0] }}</td>
+                <td>{{ korisnik[1] }}</td>
+                <td>{{ korisnik[2] }}</td>
+                <td>{{ korisnik[3] }}</td>
+                <td>{{ korisnik[4] }}</td>
+                <td>
+                    <button onclick="window.location.href='/azuriraj_korisnika/{{ korisnik[0] }}'">Ažuriraj</button>
+                    <button onclick="obrisiKorisnika({{ korisnik[0] }})">Obriši</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <script>
+        function obrisiKorisnika(korisnikId) {
+            if (confirm('Jeste li sigurni da želite obrisati ovog korisnika?')) {
+                fetch(`/obrisi_korisnika/${korisnikId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert('Korisnik je uspješno obrisan!');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Greška:', error);
+                    alert('Došlo je do greške pri brisanju korisnika.');
+                });
+            }
+        }
+    </script>
+    
+
+</body>
+
+
+
+</html>
+
+

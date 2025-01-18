@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Proizvodima</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Proizvodima</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    
+    <button onclick="window.location.href='/dodaj_proizvod'">Dodaj Proizvod</button>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Naziv</th>
+                <th>Opis</th>
+                <th>Cijena</th>
+                <th>Količina na Skladištu</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proizvod in proizvodi %}
+            <tr>
+                <td>{{ proizvod[0] }}</td>
+                <td>{{ proizvod[1] }}</td>
+                <td>{{ proizvod[2] }}</td>
+                <td>{{ proizvod[3] }}</td>
+                <td>{{ proizvod[4] }}</td>
+                <td>
+                    <button onclick="azurirajProizvod({{ proizvod[0] }})">Ažuriraj</button>
+                    <button onclick="obrisiProizvod({{ proizvod[0] }})">Obriši</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

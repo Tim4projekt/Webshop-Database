@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Popustima</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Popustima</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    <button onclick="window.location.href='/dodaj_popust'">Dodaj Popust</button>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Popusta</th>
+                <th>Proizvod</th>
+                <th>Postotak Popusta</th>
+                <th>Datum Početka</th>
+                <th>Datum Završetka</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for popust in popusti %}
+            <tr>
+                <td>{{ popust[0] }}</td>
+                <td>{{ popust[1] }}</td>
+                <td>{{ popust[2] }}</td>
+                <td>{{ popust[3] }}</td>
+                <td>{{ popust[4] }}</td>
+                <td>
+                    <button onclick="obrisiPopust({{ popust[0] }})">Obriši</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Korisnika</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Ažuriranje Korisnika</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    
+    <form method="POST" action="/azuriraj_korisnika/{{ korisnik[0] }}">
+        <label for="ime">Ime:</label>
+        <input type="text" id="ime" name="ime" value="{{ korisnik[1] }}" required>
+        <label for="prezime">Prezime:</label>
+        <input type="text" id="prezime" name="prezime" value="{{ korisnik[2] }}" required>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="{{ korisnik[3] }}" required>
+        <label for="adresa">Adresa:</label>
+        <input type="text" id="adresa" name="adresa" value="{{ korisnik[4] }}">
+        <label for="grad">Grad:</label>
+        <input type="text" id="grad" name="grad" value="{{ korisnik[5] }}">
+        <label for="telefon">Telefon:</label>
+        <input type="text" id="telefon" name="telefon" value="{{ korisnik[6] }}">
+        <button type="submit">Ažuriraj Korisnika</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Narudžbama</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Narudžbama</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Narudžbe</th>
+                <th>Korisnik</th>
+                <th>Datum Narudžbe</th>
+                <th>Status</th>
+                <th>Ukupna Cijena</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for narudzba in narudzbe %}
+            <tr>
+                <td>{{ narudzba[0] }}</td>
+                <td>{{ narudzba[1] }} {{ narudzba[2] }}</td>
+                <td>{{ narudzba[3] }}</td>
+                <td>{{ narudzba[4] }}</td>
+                <td>{{ narudzba[5] }}</td>
+                <td>
+                    <button onclick="promijeniStatus({{ narudzba[0] }})">Promijeni Status</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
