@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregled Plaćanja</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Pregled Plaćanja</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Narudžba ID</th>
+                <th>Iznos</th>
+                <th>Način Plaćanja</th>
+                <th>Datum Plaćanja</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for placanje in placanja %}
+            <tr>
+                <td>{{ placanje[0] }}</td>
+                <td>{{ placanje[1] }}</td>
+                <td>{{ placanje[2] }} HRK</td>
+                <td>{{ placanje[3] }}</td>
+                <td>{{ placanje[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

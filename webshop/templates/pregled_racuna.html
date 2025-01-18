@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregled Računa</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Pregled Računa</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+    
+    <section>
+        <h2>Lista Računa</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Račun ID</th>
+                    <th>Korisnik</th>
+                    <th>Ukupna Cijena</th>
+                    <th>Datum Izdavanja</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for racun_id, racun in racuni.items() %}
+                <tr>
+                    <td>{{ racun_id }}</td>
+                    <td>{{ racun['korisnik'] }}</td>
+                    <td>{{ racun['ukupna_cijena'] }} HRK</td>
+                    <td>{{ racun['datum_izdavanja'] }}</td>
+                    <td><a href="/racun/{{ racun_id }}" class="btn btn-primary">Prikaži Detalje</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</body>
+</html>

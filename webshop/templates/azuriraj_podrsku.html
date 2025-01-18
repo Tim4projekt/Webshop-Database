@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Podršku</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Ažuriraj Podršku</h1>
+    <form method="POST">
+        <p><strong>Tema:</strong> {{ podrska[4] }}</p>
+        <p><strong>Poruka:</strong> {{ podrska[5] }}</p>
+        <p><strong>Status:</strong> {{ podrska[6] }}</p>
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="otvoreno" {% if podrska[6] == 'otvoreno' %}selected{% endif %}>Otvoreno</option>
+            <option value="riješeno" {% if podrska[6] == 'riješeno' %}selected{% endif %}>Riješeno</option>
+        </select>
+        <button type="submit">Spremi Promjene</button>
+    </form>
+</body>
+</html>

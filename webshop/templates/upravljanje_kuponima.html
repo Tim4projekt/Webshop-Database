@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Kuponima</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Kuponima</h1>
+        <button onclick="location.href='/admin_panel'">Natrag na Admin Panel</button>
+        <button onclick="location.href='/dodaj_kupon'">Dodaj Kupon</button>
+    </header>
+    
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Kod</th>
+                    <th>Postotak Popusta</th>
+                    <th>Datum Početka</th>
+                    <th>Datum Završetka</th>
+                    <th>Maksimalna Iskorištenja</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for kupon in kuponi %}
+                <tr>
+                    <td>{{ kupon.id }}</td>
+                    <td>{{ kupon.kod }}</td>
+                    <td>{{ kupon.postotak_popusta }}%</td>
+                    <td>{{ kupon.datum_pocetka }}</td>
+                    <td>{{ kupon.datum_zavrsetka }}</td>
+                    <td>{{ kupon.max_iskoristenja }}</td>
+                    <td>
+                        <button onclick="location.href='/azuriraj_kupon/{{ kupon.id }}'">Ažuriraj</button>
+                        <button onclick="obrisiKupon({{ kupon.id }})">Obriši</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+
+    <script>
+        function obrisiKupon(kuponId) {
+            if (confirm('Jeste li sigurni da želite obrisati kupon?')) {
+                fetch(`/obrisi_kupon/${kuponId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) location.reload();
+                })
+                .catch(error => console.error('Greška:', error));
+            }
+        }
+    </script>
+</body>
+</html>

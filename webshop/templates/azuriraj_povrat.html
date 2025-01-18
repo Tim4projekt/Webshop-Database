@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Povrat</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Ažuriraj Povrat</h1>
+    <form method="POST">
+        <p><strong>Proizvod:</strong> {{ povrat[6] }}</p>
+        <p><strong>Razlog:</strong> {{ povrat[3] }}</p>
+        <p><strong>Trenutni Status:</strong> {{ povrat[4] }}</p>
+        <label for="status_povrata">Status:</label>
+        <select id="status_povrata" name="status_povrata">
+            <option value="u obradi" {% if povrat[4] == 'u obradi' %}selected{% endif %}>U Obradi</option>
+            <option value="odobreno" {% if povrat[4] == 'odobreno' %}selected{% endif %}>Odobreno</option>
+            <option value="odbijeno" {% if povrat[4] == 'odbijeno' %}selected{% endif %}>Odbijeno</option>
+        </select>
+        <button type="submit">Spremi Promjene</button>
+    </form>
+</body>
+</html>

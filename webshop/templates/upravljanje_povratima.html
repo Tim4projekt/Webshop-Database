@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Povratima</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Upravljanje Povratima</h1>
+    <a href="/admin_panel">Natrag na Admin Panel</a>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Povrata</th>
+                <th>Proizvod</th>
+                <th>Datum Povrata</th>
+                <th>Razlog</th>
+                <th>Status Povrata</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for povrat in povrati %}
+            <tr>
+                <td>{{ povrat[0] }}</td>
+                <td>{{ povrat[6] }}</td>
+                <td>{{ povrat[2] }}</td>
+                <td>{{ povrat[3] }}</td>
+                <td>{{ povrat[4] }}</td>
+                <td><a href="/azuriraj_povrat/{{ povrat[0] }}">Ažuriraj</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

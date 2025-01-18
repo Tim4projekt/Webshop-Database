@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregled Stavki Narudžbe</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Pregled Stavki Narudžbe</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+    <h1>Pregled Stavki Narudžbi</h1>
+    {% for narudzba_id, narudzba in narudzbe.items() %}
+    <section>
+        <h2>Narudžba ID: {{ narudzba_id }}</h2>
+        <p><strong>Korisnik:</strong> {{ narudzba['korisnik'] }}</p>
+        <p><strong>Datum Narudžbe:</strong> {{ narudzba['datum_narudzbe'] }}</p>
+        <p><strong>Ukupna Cijena:</strong> {{ narudzba['ukupna_cijena'] }} HRK</p>
+
+        <h3>Stavke:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Proizvod</th>
+                    <th>Količina</th>
+                    <th>Ukupno (stavka)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stavka in narudzba['stavke'] %}
+                <tr>
+                    <td>{{ stavka['proizvod'] }}</td>
+                    <td>{{ stavka['kolicina'] }}</td>
+                    <td>{{ stavka['ukupno_stavka'] }} HRK</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    <hr>
+    {% endfor %}
+</body>
+</html>

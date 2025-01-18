@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Podrškom</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Upravljanje Podrškom</h1>
+    <a href="/admin_panel">Natrag na Admin Panel</a>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Korisnik</th>
+                <th>Tema</th>
+                <th>Poruka</th>
+                <th>Status</th>
+                <th>Datum Upita</th>
+                <th>Datum Odgovora</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for upit in podrska %}
+            <tr>
+                <td>{{ upit[0] }}</td>
+                <td>{{ upit[1] }} {{ upit[2] }}</td>
+                <td>{{ upit[4] }}</td>
+                <td>{{ upit[5] }}</td>
+                <td>{{ upit[6] }}</td>
+                <td>{{ upit[7] }}</td>
+                <td>{{ upit[8] or 'N/A' }}</td>
+                <td><a href="/azuriraj_podrsku/{{ upit[0] }}">Ažuriraj</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

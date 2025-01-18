@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Račun {{ racun.racun_id }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Račun ID: {{ racun.racun_id }}</h1>
+        <button onclick="location.href='/pregled_racuna'">Natrag na Račune</button>
+    </header>
+    
+    <main>
+        <section>
+            <h2>Podaci o korisniku</h2>
+            <p><strong>Ime:</strong> {{ racun.korisnik_ime }}</p>
+            <p><strong>Prezime:</strong> {{ racun.korisnik_prezime }}</p>
+            <p><strong>Email:</strong> {{ racun.korisnik_email }}</p>
+            <p><strong>Adresa:</strong> {{ racun.korisnik_adresa }}</p>
+            <p><strong>Telefon:</strong> {{ racun.korisnik_telefon }}</p>
+        </section>
+        
+        <section>
+            <h2>Podaci o narudžbi</h2>
+            <p><strong>ID Narudžbe:</strong> {{ racun.narudzba_id }}</p>
+            <p><strong>Ukupna cijena:</strong> {{ racun.ukupna_cijena }} HRK</p>
+            <p><strong>Datum izdavanja:</strong> {{ racun.datum_izdavanja }}</p>
+            <p><strong>Način plaćanja:</strong> {{ racun.nacin_placanja }}</p>
+            <p><strong>Način isporuke:</strong> {{ racun.nacin_isporuke }} ({{ racun.trajanje_isporuke }} dana)</p>
+            <p><strong>Kupon:</strong> {{ racun.kupon }}</p>
+            <p><strong>Popust:</strong> {{ racun.popust }}%</p>
+        </section>
+        
+        <section>
+            <h2>Stavke narudžbe</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Proizvod</th>
+                        <th>Količina</th>
+                        <th>Ukupno (stavka)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stavka in racun.stavke %}
+                    <tr>
+                        <td>{{ stavka.proizvod }}</td>
+                        <td>{{ stavka.kolicina }}</td>
+                        <td>{{ stavka.ukupno_stavka }} HRK</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        
+        <button onclick="window.print()">Ispis Računa</button>
+        <button onclick="location.href='/pregled_racuna'">Natrag</button>
+    </main>
+</body>
+</html>
