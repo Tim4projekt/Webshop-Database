@@ -2236,20 +2236,6 @@ CALL obrisi_recenziju_proizvoda(33);
 
 
 
-
-
--- Triger: Status isporuke određene narudžbe: (Morena)
-DELIMITER //
-
-CREATE TRIGGER dodaj_pracenje_nakon_narudzbe
-AFTER INSERT ON narudzbe
-FOR EACH ROW
-BEGIN
-    INSERT INTO pracenje_isporuka (narudzba_id, status_isporuke, datum_isporuke)
-    VALUES (NEW.id, 'u pripremi', NULL);
-END//
-
-DELIMITER ;
 -- Pogled: Prikazuje stavke u košarici korsinika: (Morena)
 CREATE VIEW pogled_kosarica_korisnika AS
 SELECT 
@@ -2327,6 +2313,8 @@ BEGIN
 END //
 DELIMITER ; 
 
+
+
 -- procedura:omogućuje administraciji da ažurira status narudžbe (npr. 'u obradi', 'poslano', 'dostavljeno') prema ID-u narudžbe. (Morena)
 
 DELIMITER //
@@ -2376,6 +2364,125 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- procedura:omogućuje korisnicima dodavanje stavke u svoju košaricu, povećavajući količinu proizvoda u košarici ako je proizvod već prisutan.(Morena)
+
+DELIMITER //
+
+DELIMITER // 
+CREATE PROCEDURE dodaj_proizvod_u_kosaricu( IN p_korisnik_id INT, IN p_proizvod_id INT, IN p_kolicina INT ) 
+BEGIN DECLARE v_kolicina_na_skladistu INT; 
+DECLARE v_postojeca_kolicina INT DEFAULT 0; 
+-- Dohvati trenutnu količinu proizvoda na skladištu 
+SELECT kolicina_na_skladistu INTO v_kolicina_na_skladistu 
+FROM proizvodi 
+WHERE id = p_proizvod_id; 
+-- Provjeri da li proizvod postoji i ima dovoljno na skladištu 
+IF v_kolicina_na_skladistu IS NULL 
+THEN SIGNAL SQLSTATE '45300' SET MESSAGE_TEXT = 'Proizvod s navedenim ID-em ne postoji.'; 
+ELSEIF v_kolicina_na_skladistu < p_kolicina 
+THEN SIGNAL SQLSTATE '45300' SET MESSAGE_TEXT = 'Nedovoljna količina proizvoda na skladištu.'; 
+ELSE 
+-- Provjeri da li proizvod već postoji u košarici 
+SELECT kolicina INTO v_postojeca_kolicina 
+FROM kosarica 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id; 
+-- Ako proizvod već postoji, ažuriraj količinu u košarici 
+IF v_postojeca_kolicina > 0 
+THEN UPDATE kosarica SET kolicina = kolicina + p_kolicina 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id; 
+ELSE 
+-- Ako proizvod ne postoji, dodaj ga u košaricu 
+INSERT INTO kosarica (korisnik_id, proizvod_id, kolicina) VALUES (p_korisnik_id, p_proizvod_id, p_kolicina); 
+END IF; 
+-- Smanji količinu proizvoda na skladištu 
+UPDATE proizvodi SET kolicina_na_skladistu = kolicina_na_skladistu - p_kolicina 
+WHERE id = p_proizvod_id; 
+END IF; 
+END; // 
+DELIMITER ;
+
+-- procedura:za ažuriranje proizvoda u košarici (Morena)
+
+DELIMITER // 
+CREATE PROCEDURE azuriraj_proizvod_u_kosarici( IN p_korisnik_id INT, IN p_proizvod_id INT, IN p_nova_kolicina INT ) 
+BEGIN 
+DECLARE v_trenutna_kolicina INT DEFAULT 0; 
+DECLARE v_kolicina_na_skladistu INT DEFAULT 0; 
+DECLARE v_razlika INT; 
+-- Dohvati trenutnu količinu proizvoda u košarici 
+SELECT kolicina INTO v_trenutna_kolicina 
+FROM kosarica 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id; 
+-- Provjeri postoji li proizvod u košarici 
+IF v_trenutna_kolicina IS NULL 
+THEN SIGNAL SQLSTATE '45310' SET MESSAGE_TEXT = 'Proizvod nije pronađen u košarici.'; 
+END IF; 
+-- Dohvati količinu proizvoda na skladištu 
+SELECT kolicina_na_skladistu INTO v_kolicina_na_skladistu 
+FROM proizvodi 
+WHERE id = p_proizvod_id; 
+-- Izračunaj razliku između nove i trenutne količine 
+SET v_razlika = p_nova_kolicina - v_trenutna_kolicina; 
+-- Provjeri je li nova količina veća i ima li dovoljno na skladištu 
+IF v_razlika > 0 
+THEN IF v_razlika > v_kolicina_na_skladistu 
+THEN SIGNAL SQLSTATE '45311' SET MESSAGE_TEXT = 'Nedovoljna količina proizvoda na skladištu za ažuriranje.'; 
+END IF; 
+-- Smanji količinu na skladištu 
+UPDATE proizvodi 
+SET kolicina_na_skladistu = kolicina_na_skladistu - v_razlika 
+WHERE id = p_proizvod_id; 
+-- Ako je nova količina manja, vrati razliku na skladište 
+ELSEIF v_razlika < 0 
+THEN UPDATE proizvodi 
+SET kolicina_na_skladistu = kolicina_na_skladistu + ABS(v_razlika) WHERE id = p_proizvod_id; 
+END IF; 
+-- Ažuriraj količinu proizvoda u košarici 
+UPDATE kosarica 
+SET kolicina = p_nova_kolicina 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id; 
+END; // 
+DELIMITER ;
+
+-- procedura:za brisanje proizvoda iz košarice (Morena)
+
+DELIMITER // 
+CREATE PROCEDURE obrisi_proizvod_iz_kosarice( IN p_korisnik_id INT, IN p_proizvod_id INT ) 
+BEGIN DECLARE v_kolicina_u_kosarici INT DEFAULT 0; 
+-- Dohvati količinu proizvoda u košarici
+ SELECT kolicina INTO v_kolicina_u_kosarici 
+FROM kosarica 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id;
+ -- Provjeri postoji li proizvod u košarici
+ IF v_kolicina_u_kosarici 
+IS NULL THEN SIGNAL SQLSTATE '45312' SET MESSAGE_TEXT = 'Proizvod nije pronađen u košarici.'; 
+END IF; 
+-- Vrati količinu natrag na skladište 
+UPDATE proizvodi 
+SET kolicina_na_skladistu = kolicina_na_skladistu + v_kolicina_u_kosarici 
+WHERE id = p_proizvod_id; 
+-- Obriši proizvod iz košarice 
+DELETE FROM kosarica 
+WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id;
+ END; // 
+DELIMITER ;
+
+
+
+-- Okidač: Status isporuke određene narudžbe: (Morena)
+DELIMITER //
+
+CREATE TRIGGER dodaj_pracenje_nakon_narudzbe
+AFTER INSERT ON narudzbe
+FOR EACH ROW
+BEGIN
+    INSERT INTO pracenje_isporuka (narudzba_id, status_isporuke, datum_isporuke)
+    VALUES (NEW.id, 'Na čekanju', NULL);
+END//
+
+DELIMITER ;
+
 
 -- okidač: automatski ažurira status narudžbe u tablici narudzbe na 'dostavljeno' kada se status isporuke u tablici pracenje_isporuka 
 -- promijeni na 'dostavljeno'.(Morena)
@@ -2472,65 +2579,30 @@ FROM popusti pop
 JOIN proizvodi p ON pop.proizvod_id = p.id
 WHERE pop.datum_pocetka <= CURDATE() AND pop.datum_zavrsetka >= CURDATE();
 
--- upit:dohvaća sve narudžbe koje su koristile kupon i izračunava ukupnu cijenu s uključenim popustom.(Morena)
+-- Upita za provjeru trenutnog statusa narudžbe i isporuke na temelju ID-a narudžbe 
 
-SELECT 
-    n.id AS narudzba_id,
-    n.korisnik_id,
-    n.datum_narudzbe,
-    n.ukupna_cijena,
-    k.kod AS kupon_kod,
-    k.postotak_popusta,
-    (n.ukupna_cijena - (n.ukupna_cijena * k.postotak_popusta / 100)) AS ukupna_cijena_sa_popustom
+SELECT n.id AS narudzba_id, 
+	n.status_narudzbe,
+	p.status_isporuke,
+	p.datum_isporuke, 
+	n.datum_narudzbe,
+	n.ukupna_cijena,
+	n.nacin_isporuke_id
 FROM narudzbe n
-JOIN kuponi k ON n.kupon_id = k.id
-WHERE n.kupon_id IS NOT NULL;
+LEFT JOIN pracenje_isporuka p 
+ON n.id = p.narudzba_id 
+WHERE n.id =1 ;
 
+-- Upit za prikaz najprodavanijih proizvoda koji se nalaze u stavke_narudzbe
 
--- funkcija: vraća broj proizvoda u košarici određenog korisnika. Broj proizvoda je zbroj svih količina proizvoda u košarici. (Morena)
-
-DELIMITER //
-
-CREATE FUNCTION brojProizvodaUKosarici(korisnikId INT)
-RETURNS INT
-DETERMINISTIC
-BEGIN
-    DECLARE brojProizvoda INT DEFAULT 0;
-
-    SELECT SUM(kolicina) INTO brojProizvoda
-    FROM kosarica
-    WHERE korisnik_id = korisnikId;
-
-    RETURN brojProizvoda;
-END//
-
-DELIMITER ;
-
-SELECT brojProizvodaUKosarici(1)
-
--- funkcija: izračunava ukupnu cijenu narudžbe na temelju stavki narudžbe. Uzimajući u obzir količinu proizvoda i 
--- cijenu svakog proizvoda, funkcija vraća ukupnu cijenu za zadanu narudžbu.(Morena)
-
-DELIMITER //
-
-CREATE FUNCTION izracunajUkupnuCijenuNarudzbe(narudzbaId INT)
-RETURNS DECIMAL(10, 2)
-DETERMINISTIC
-BEGIN
-    DECLARE ukupnaCijena DECIMAL(10, 2) DEFAULT 0.00;
-
-    SELECT SUM(p.cijena * sn.kolicina) INTO ukupnaCijena
-    FROM stavke_narudzbe sn
-    JOIN proizvodi p ON sn.proizvod_id = p.id
-    WHERE sn.narudzba_id = narudzbaId;
-
-    RETURN ukupnaCijena;
-END//
-
-DELIMITER ;
-
-SELECT izracunajUkupnuCijenuNarudzbe(1);
-
+SELECT p.id AS proizvod_id,
+ 	 p.naziv AS naziv_proizvoda, 
+ SUM(sn.kolicina) AS ukupno_prodano 
+FROM stavke_narudzbe sn 
+JOIN proizvodi p ON sn.proizvod_id = p.id 
+GROUP BY p.id, p.naziv 
+ORDER BY ukupno_prodano DESC 
+LIMIT 5;
 
 
 
