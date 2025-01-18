@@ -297,13 +297,38 @@ def izbrisi_stavku():
 def proizvod_detail(proizvod_id):
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM proizvodi WHERE id = %s", (proizvod_id,))
-    proizvod = cursor.fetchone()
-    cursor.close()
-    db.close()
-    
+
+    try:
+        # Dohvati detalje o proizvodu
+        cursor.execute("""
+            SELECT id, naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije, datum_kreiranja
+            FROM proizvodi WHERE id = %s
+        """, (proizvod_id,))
+        proizvod = cursor.fetchone()
+
+        # Dohvati recenzije za proizvod
+        cursor.execute("""
+            SELECT r.ocjena, r.komentar, r.datum_recenzije, k.ime AS korisnik
+            FROM recenzije_proizvoda r
+            JOIN korisnici k ON r.korisnik_id = k.id
+            WHERE r.proizvod_id = %s
+        """, (proizvod_id,))
+        recenzije = cursor.fetchall()
+
+        # Pretvaranje tuple-a u rječnike za lakšu upotrebu u HTML-u
+        recenzije = [
+            {'ocjena': r[0], 'komentar': r[1], 'datum': r[2], 'korisnik': r[3]}
+            for r in recenzije
+        ]
+    except MySQLdb.MySQLError as e:
+        print(f"Greška prilikom dohvaćanja podataka: {e}")
+        proizvod = None
+        recenzije = []
+    finally:
+        db.close()
+
     if proizvod:
-        return render_template('proizvod_detail.html', proizvod=proizvod)
+        return render_template('proizvod_detail.html', proizvod=proizvod, recenzije=recenzije)
     else:
         return jsonify({"message": "Proizvod nije pronađen."}), 404
     
@@ -1257,6 +1282,254 @@ def promijeni_status(narudzba_id):
         db.close()
 
     return jsonify({'message': 'Status uspješno promijenjen!'})
+
+
+@app.route('/dodaj_proizvod', methods=['GET', 'POST'])
+def dodaj_proizvod():
+    if request.method == 'GET':
+        # Dohvati sve kategorije za prikaz u formi
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        cursor.execute("SELECT id, naziv FROM kategorije_proizvoda")
+        kategorije = cursor.fetchall()
+        db.close()
+        return render_template('dodaj_proizvod.html', kategorije=kategorije)
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            db = MySQLdb.connect(**db_config)
+            cursor = db.cursor()
+            cursor.callproc('DodajProizvod', (
+                data['naziv'],
+                data['opis'],
+                data['cijena'],
+                data['kategorija_id'],
+                data['kolicina'],
+                data['slika'],
+                data['specifikacije']
+            ))
+            db.commit()
+            flash('Proizvod uspješno dodan!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_proizvodima'))
+
+@app.route('/azuriraj_proizvod/<int:proizvod_id>', methods=['GET', 'POST'])
+def azuriraj_proizvod(proizvod_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'GET':
+        # Dohvati proizvod i sve kategorije za prikaz u formi
+        cursor.execute("SELECT * FROM proizvodi WHERE id = %s", (proizvod_id,))
+        proizvod = cursor.fetchone()
+
+        cursor.execute("SELECT id, naziv FROM kategorije_proizvoda")
+        kategorije = cursor.fetchall()
+        db.close()
+
+        return render_template('azuriraj_proizvod.html', proizvod=proizvod, kategorije=kategorije)
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            cursor.callproc('azuriraj_proizvod', (
+                proizvod_id,
+                data['naziv'],
+                data['opis'],
+                data['cijena'],
+                data['kategorija_id'],
+                data['kolicina_na_skladistu'],
+                data['slika'],
+                data['specifikacije']
+            ))
+            db.commit()
+            flash('Proizvod uspješno ažuriran!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_proizvodima'))
+
+
+@app.route('/obrisi_proizvod/<int:proizvod_id>', methods=['POST'])
+def obrisi_proizvod(proizvod_id):
+    try:
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        cursor.callproc('ObrisiProizvod', (proizvod_id,))
+        db.commit()
+        flash('Proizvod uspješno obrisan!', 'success')
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_proizvodima'))
+
+
+@app.route('/dodaj_kategoriju', methods=['GET', 'POST'])
+def dodaj_kategoriju():
+    if request.method == 'GET':
+        return render_template('dodaj_kategoriju.html')
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            db = MySQLdb.connect(**db_config)
+            cursor = db.cursor()
+            cursor.callproc('dodaj_kategoriju_proizvoda', (data['naziv'], data['opis']))
+            db.commit()
+            flash('Kategorija uspješno dodana!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_kategorijama'))
+
+
+@app.route('/azuriraj_kategoriju/<int:kategorija_id>', methods=['GET', 'POST'])
+def azuriraj_kategoriju(kategorija_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'GET':
+        # Dohvati kategoriju za prikaz u formi
+        cursor.execute("SELECT id, naziv, opis FROM kategorije_proizvoda WHERE id = %s", (kategorija_id,))
+        kategorija = cursor.fetchone()
+        db.close()
+        return render_template('azuriraj_kategoriju.html', kategorija=kategorija)
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            cursor.callproc('azuriraj_kategoriju_proizvoda', (
+                kategorija_id,
+                data['naziv'],
+                data['opis']
+            ))
+            db.commit()
+            flash('Kategorija uspješno ažurirana!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_kategorijama'))
+
+
+@app.route('/obrisi_kategoriju/<int:kategorija_id>', methods=['POST'])
+def obrisi_kategoriju(kategorija_id):
+    try:
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        cursor.callproc('obrisi_kategoriju_proizvoda', (kategorija_id,))
+        db.commit()
+        flash('Kategorija uspješno obrisana!', 'success')
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_kategorijama'))
+
+
+@app.route('/upravljanje_kategorijama', methods=['GET'])
+def upravljanje_kategorijama():
+    try:
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        cursor.execute("SELECT id, naziv, opis FROM kategorije_proizvoda")
+        kategorije = cursor.fetchall()  # Dohvaća sve kategorije iz baze
+    except MySQLdb.MySQLError as e:
+        kategorije = []
+        print(f"Greška prilikom dohvaćanja kategorija: {e}")  # Log greške
+    finally:
+        db.close()
+
+    return render_template('upravljanje_kategorijama.html', kategorije=kategorije)
+
+
+@app.route('/azuriraj_recenziju/<int:recenzija_id>', methods=['GET', 'POST'])
+def azuriraj_recenziju(recenzija_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'GET':
+        # Dohvati podatke o recenziji za prikaz u formi
+        cursor.execute("SELECT id, ocjena, komentar FROM recenzije_proizvoda WHERE id = %s", (recenzija_id,))
+        recenzija = cursor.fetchone()
+        db.close()
+        if recenzija:
+            return render_template('azuriraj_recenziju.html', recenzija=recenzija)
+        else:
+            flash('Recenzija nije pronađena!', 'error')
+            return redirect(url_for('upravljanje_recenzijama'))
+
+    if request.method == 'POST':
+        data = request.form
+        try:
+            cursor.callproc('azuriraj_recenziju_proizvoda', (
+                recenzija_id,
+                int(data['ocjena']),
+                data['komentar']
+            ))
+            db.commit()
+            flash('Recenzija uspješno ažurirana!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_recenzijama'))
+
+
+@app.route('/obrisi_recenziju/<int:recenzija_id>', methods=['POST'])
+def obrisi_recenziju(recenzija_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    try:
+        cursor.callproc('obrisi_recenziju_proizvoda', (recenzija_id,))
+        db.commit()
+        flash('Recenzija uspješno obrisana!', 'success')
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_recenzijama'))
+
+
+@app.route('/upravljanje_recenzijama', methods=['GET'])
+def upravljanje_recenzijama():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        # Dohvati sve recenzije s povezanim proizvodima i korisnicima
+        cursor.execute("""
+            SELECT r.id, p.naziv AS proizvod, k.ime AS korisnik, r.ocjena, r.komentar, r.datum_recenzije
+            FROM recenzije_proizvoda r
+            JOIN proizvodi p ON r.proizvod_id = p.id
+            JOIN korisnici k ON r.korisnik_id = k.id
+        """)
+        recenzije = cursor.fetchall()
+    except MySQLdb.MySQLError as e:
+        recenzije = []
+        print(f"Greška prilikom dohvaćanja recenzija: {e}")
+    finally:
+        db.close()
+
+    return render_template('upravljanje_recenzijama.html', recenzije=recenzije)
+
+
+
 
 
 if __name__ == '__main__':
