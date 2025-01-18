@@ -1286,7 +1286,8 @@ SELECT
     adresa,
     grad,
     telefon,
-    datum_registracije
+    datum_registracije,
+	tip_korisnika
 FROM korisnici;
 
 -- Pogled: Popularni proizvodi (najviše puta dodati u wishlist) (Leo)
@@ -1593,7 +1594,7 @@ ORDER BY broj_recenzija DESC;
 SELECT * FROM najpopularniji_proizvodi;
 */
 
--- Pogled: Proizvodi koji su na popustu
+-- Pogled: Proizvodi koji su na popustu (Loren)
 
 CREATE VIEW proizvodi_na_popustu AS
 SELECT 
