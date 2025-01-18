@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Recenziju</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Ažuriranje Recenzije</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/upravljanje_recenzijama'">Natrag na Upravljanje kategorijama</button>
+    </header>
+    
+    <form method="POST" action="/azuriraj_recenziju/{{ recenzija[0] }}">
+        <label for="ocjena">Ocjena:</label>
+        <input type="number" id="ocjena" name="ocjena" value="{{ recenzija[1] }}" min="1" max="5" required>
+
+        <label for="komentar">Komentar:</label>
+        <textarea id="komentar" name="komentar" required>{{ recenzija[2] }}</textarea>
+
+        <button type="submit">Ažuriraj Recenziju</button>
+    </form>
+</body>
+</html>

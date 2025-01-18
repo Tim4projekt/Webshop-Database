@@ -2,48 +2,44 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <title>Upravljanje Proizvodima</title>
+    <title>Upravljanje Kategorijama</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <header>
-        <h1>Upravljanje Proizvodima</h1>
+        <h1>Upravljanje Kategorijama</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
         <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
     </header>
     
-    <button onclick="window.location.href='/dodaj_proizvod'">Dodaj Proizvod</button>
+    <button onclick="window.location.href='/dodaj_kategoriju'">Dodaj Kategoriju</button>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Naziv</th>
                 <th>Opis</th>
-                <th>Cijena</th>
-                <th>Količina na Skladištu</th>
                 <th>Akcije</th>
             </tr>
         </thead>
         <tbody>
-            {% for proizvod in proizvodi %}
+            {% for kategorija in kategorije %}
             <tr>
-                <td>{{ proizvod[0] }}</td>
-                <td>{{ proizvod[1] }}</td>
-                <td>{{ proizvod[2] }}</td>
-                <td>{{ proizvod[3] }}</td>
-                <td>{{ proizvod[4] }}</td>
+                <td>{{ kategorija[0] }}</td>
+                <td>{{ kategorija[1] }}</td>
+                <td>{{ kategorija[2] }}</td>
                 <td>
-                    <button onclick="window.location.href='/azuriraj_proizvod/{{ proizvod[0] }}'">Ažuriraj</button>
-                    <button onclick="obrisiProizvod({{ proizvod[0] }})">Obriši</button>
+                    <button onclick="window.location.href='/azuriraj_kategoriju/{{ kategorija[0] }}'">Ažuriraj</button>
+                    <button onclick="obrisiKategoriju({{ kategorija[0] }})">Obriši</button>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     <script>
-        function obrisiProizvod(proizvodId) {
-            if (confirm('Jeste li sigurni da želite obrisati ovaj proizvod?')) {
-                fetch(`/obrisi_proizvod/${proizvodId}`, { method: 'POST' })
+        function obrisiKategoriju(kategorijaId) {
+            if (confirm('Jeste li sigurni da želite obrisati ovu kategoriju?')) {
+                fetch(`/obrisi_kategoriju/${kategorijaId}`, { method: 'POST' })
                 .then(response => response.text())
                 .then(data => location.reload())
                 .catch(error => console.error('Greška:', error));

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Kategoriju</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Ažuriranje Kategorije</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/upravljanje_kategorijama'">Natrag na Upravljanje recenzijama</button>
+    </header>
+    
+    <form method="POST" action="/azuriraj_kategoriju/{{ kategorija[0] }}">
+        <label for="naziv">Naziv:</label>
+        <input type="text" id="naziv" name="naziv" value="{{ kategorija[1] }}" required>
+
+        <label for="opis">Opis:</label>
+        <textarea id="opis" name="opis" required>{{ kategorija[2] }}</textarea>
+
+        <button type="submit">Ažuriraj Kategoriju</button>
+    </form>
+</body>
+</html>

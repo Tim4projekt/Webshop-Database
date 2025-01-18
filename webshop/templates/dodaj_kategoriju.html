@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj Kategoriju</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Dodavanje Kategorije</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/upravljanje_kategorijama'">Natrag na Upravljanje kategorijama</button>
+    </header>
+    
+    <form method="POST" action="/dodaj_kategoriju">
+        <label for="naziv">Naziv:</label>
+        <input type="text" id="naziv" name="naziv" required>
+
+        <label for="opis">Opis:</label>
+        <textarea id="opis" name="opis" required></textarea>
+
+        <button type="submit">Dodaj Kategoriju</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ažuriraj Proizvod</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Ažuriranje Proizvoda</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/upravljanje_proizvodima'">Natrag na Upravljanje proizvodima</button>
+    </header>
+    
+    <form method="POST" action="/azuriraj_proizvod/{{ proizvod[0] }}">
+        <label for="naziv">Naziv:</label>
+        <input type="text" id="naziv" name="naziv" value="{{ proizvod[1] }}" required>
+
+        <label for="opis">Opis:</label>
+        <textarea id="opis" name="opis" required>{{ proizvod[2] }}</textarea>
+
+        <label for="cijena">Cijena:</label>
+        <input type="number" id="cijena" name="cijena" value="{{ proizvod[3] }}" step="0.01" required>
+
+        <label for="kategorija">Kategorija:</label>
+        <select id="kategorija" name="kategorija_id" required>
+            {% for kategorija in kategorije %}
+            <option value="{{ kategorija[0] }}" {% if proizvod[4] == kategorija[0] %}selected{% endif %}>
+                {{ kategorija[1] }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label for="kolicina">Količina na skladištu:</label>
+        <input type="number" id="kolicina" name="kolicina_na_skladistu" value="{{ proizvod[5] }}" required>
+
+        <label for="slika">URL Slike:</label>
+        <input type="text" id="slika" name="slika" value="{{ proizvod[6] }}">
+
+        <label for="specifikacije">Specifikacije:</label>
+        <textarea id="specifikacije" name="specifikacije">{{ proizvod[7] }}</textarea>
+
+        <button type="submit">Ažuriraj Proizvod</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Recenzijama</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Recenzijama</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Proizvod</th>
+                <th>Korisnik</th>
+                <th>Ocjena</th>
+                <th>Komentar</th>
+                <th>Datum</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recenzija in recenzije %}
+            <tr>
+                <td>{{ recenzija[0] }}</td>
+                <td>{{ recenzija[1] }}</td>
+                <td>{{ recenzija[2] }}</td>
+                <td>{{ recenzija[3] }}</td>
+                <td>{{ recenzija[4] }}</td>
+                <td>{{ recenzija[5] }}</td>
+                <td>
+                    <button onclick="window.location.href='/azuriraj_recenziju/{{ recenzija[0] }}'">Ažuriraj</button>
+                    <button onclick="obrisiRecenziju({{ recenzija[0] }})">Obriši</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function obrisiRecenziju(recenzijaId) {
+            if (confirm('Jeste li sigurni da želite obrisati ovu recenziju?')) {
+                fetch(`/obrisi_recenziju/${recenzijaId}`, { method: 'POST' })
+                .then(response => response.text())
+                .then(data => location.reload())
+                .catch(error => console.error('Greška:', error));
+            }
+        }
+    </script>
+</body>
+</html>
