@@ -5,7 +5,12 @@
     <title>Pregled Statistika</title>
 </head>
 <body>
-    <h1>Statistike</h1>
+    <header>
+        <h1>Statistike</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+    
     <p>Broj Korisnika: {{ broj_korisnika }}</p>
     <p>Broj Proizvoda: {{ broj_proizvoda }}</p>
     <p>Ukupna Zarada: {{ ukupna_zarada }}</p>
