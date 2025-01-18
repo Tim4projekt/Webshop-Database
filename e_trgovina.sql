@@ -172,36 +172,6 @@ CREATE TABLE kosarica (
     FOREIGN KEY (proizvod_id) REFERENCES proizvodi(id)
 );
 
-CREATE TABLE Povrati_proizvoda (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    narudzba_id INT NOT NULL,
-    datum_povrata DATE NOT NULL,
-    razlog TEXT NOT NULL,
-    status_povrata ENUM('u obradi', 'odobreno', 'odbijeno') NOT NULL,
-    admin_biljeska TEXT,
-    FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id)
-);
-
-CREATE TABLE Praćenje_isporuka (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    narudzba_id INT NOT NULL,
-    status_isporuke ENUM('priprema', 'poslano', 'dostavljeno') NOT NULL,
-    datum_promjene DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id)
-);
-
-CREATE TABLE Podrška_za_korisnike (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    korisnik_id INT NOT NULL,
-    tema VARCHAR(255) NOT NULL,
-    poruka TEXT NOT NULL,
-    status ENUM('otvoreno', 'riješeno', 'zatvoreno') NOT NULL,
-    datum_upita DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    datum_odgovora DATETIME,
-    povijest_komunikacije TEXT,
-    FOREIGN KEY (korisnik_id) REFERENCES korisnici(id)
-);
-
 INSERT INTO kategorije_proizvoda (id, naziv, opis) VALUES
 	(1,'Laptopi', 'Različiti modeli prijenosnih računala.'),
 	(2,'Desktop računala', 'Računala za radne stanice i gaming.'),
