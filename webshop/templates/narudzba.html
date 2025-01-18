@@ -9,29 +9,29 @@
     <h1>Narudžba</h1>
         <button onclick="location.href='/'">Natrag na proizvode</button>
         <form method="POST">
-            <h3>Proizvodi u košarici</h3>
+            <h3>Proizvodi u košarici:</h3>
             <ul>
                 {% for proizvod in proizvodi %}
-                <li>{{ proizvod[1] }} - {{ proizvod[2] }} HRK x {{ proizvod[3] }}</li>
+                <li>{{ proizvod[1] }} - {{ proizvod[3] }} x {{ proizvod[2] }} HRK</li>
                 {% endfor %}
             </ul>
+            <p>Ukupna cijena: {{ ukupna_cijena }} HRK</p>
         
-            <h3>Ukupna cijena: {{ ukupna_cijena }} HRK</h3>
-        
-            <h3>Odabir načina isporuke</h3>
-            <select name="nacin_isporuke">
+            <label for="nacin_isporuke">Način isporuke:</label>
+            <select name="nacin_isporuke" id="nacin_isporuke" required>
                 {% for nacin in nacini_isporuke %}
-                <option value="{{ nacin.id }}">{{ nacin.naziv }} - {{ "%.2f"|format(nacin.cijena) }} HRK</option>
+                <option value="{{ nacin[0] }}">{{ nacin[1] }} ({{ nacin[3] }} HRK)</option>
                 {% endfor %}
             </select>
-            <h3>Odabir načina plaćanja</h3>
-            <select name="nacin_placanja">
+
+            <label for="nacin_placanja">Način plaćanja:</label>
+            <select name="nacin_placanja" id="nacin_placanja" required>
                 <option value="kartica">Kartica</option>
-                <option value="pouzeće">Pouzećem</option>
+                <option value="pouzeće">Pouzeće</option>
             </select>
-            <label for="kupon">Kupon (ako imate):</label>
-            <input type="text" id="kupon" name="kupon" placeholder="Unesite kod kupona">
-            <input type="hidden" name="ukupna_cijena" value="{{ ukupna_cijena }}">
+        
+            <label for="kupon">Kupon (opcionalno):</label>
+            <input type="text" id="kupon" name="kupon">
         
             <button type="submit">Kreiraj narudžbu</button>
         </form>
