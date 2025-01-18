@@ -389,105 +389,108 @@ def narudzba():
         return redirect(url_for('prijava'))  # Preusmjerenje na prijavu ako nije prijavljen
     
     korisnik_id = session['user_id']
-    
-    # Preuzimanje podataka iz tablice kosarica za određenog korisnika
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
-    
-    # Prvo uzimamo proizvode u košarici korisnika
-    cursor.execute("SELECT p.id, p.naziv, p.cijena, k.kolicina FROM kosarica k JOIN proizvodi p ON k.proizvod_id = p.id WHERE k.korisnik_id = %s", (korisnik_id,))
-    proizvodi = cursor.fetchall()
-    
-    # Ako forma za kreiranje narudžbe nije poslana, prikazujemo proizvode i načine isporuke
-    if request.method == 'GET':
-        cursor.execute("SELECT * FROM nacini_isporuke")
-        nacini_isporuke = cursor.fetchall()
-        
-        # Pretvaranje tuple-a u rječnik
-        nacini_isporuke = [
-            {'id': nacin[0], 'naziv': nacin[1], 'opis': nacin[2], 'cijena': float(nacin[3]), 'trajanje': nacin[4]}
-            for nacin in nacini_isporuke
-        ]
-        
-        # Izračunavanje ukupne cijene košarice
-        ukupna_cijena = sum(Decimal(proizvod[2]) * proizvod[3] for proizvod in proizvodi)  # Pretvaranje cijene u Decimal
-        
-        db.close()
-        
-        return render_template('narudzba.html', proizvodi=proizvodi, nacini_isporuke=nacini_isporuke, ukupna_cijena=ukupna_cijena)
-    
-    # Ako je forma za narudžbu poslana
-    if request.method == 'POST':
-        # Uzimamo podatke iz forme
-        nacin_isporuke_id = request.form['nacin_isporuke']  # ID odabranog načina isporuke
-        ukupna_cijena = Decimal(request.form['ukupna_cijena'])  # Pretvorba ukupne cijene u Decimal
-        kupon_kod = request.form.get('kupon', '').strip()  # Uneseni kupon
-        
-        # Dohvati cijenu dostave iz načina isporuke
-        cursor.execute("SELECT cijena FROM nacini_isporuke WHERE id = %s", (nacin_isporuke_id,))
-        cijena_dostave = Decimal(cursor.fetchone()[0])  # Pretvaramo cijenu dostave u Decimal
-        
-        # Izračunaj ukupni iznos (košarica + dostava)
-        ukupni_iznos = ukupna_cijena + cijena_dostave
-        
-        # Provjeravamo je li kupon unesen i postoji li u bazi
-        if kupon_kod:
+
+    try:
+        if request.method == 'GET':
             cursor.execute("""
-                SELECT * FROM kuponi WHERE kod = %s AND datum_pocetka <= %s AND datum_zavrsetka >= %s
-            """, (kupon_kod, date.today(), date.today()))
-            kupon = cursor.fetchone()
-            
-            if kupon:
-                # Ako je kupon valjan, primjenjujemo popust
-                popust = Decimal(kupon[2])  # postotak popusta
-                popust_iznos = (popust / 100) * ukupni_iznos
-                ukupni_iznos -= popust_iznos  # Smanjujemo ukupni iznos za popust
-                kupon_id = kupon[0]  # ID kupona za spremanje u narudžbu
-            else:
-                kupon_id = None  # Ako kupon nije valjan
-        else:
-            kupon_id = None  # Ako kupon nije unesen
-        
-        # Kreiramo novu narudžbu
-        cursor.execute(""" 
-            INSERT INTO narudzbe (korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id) 
-            VALUES (%s, %s, 'u obradi', %s, %s, %s)
-        """, (korisnik_id, date.today(), ukupni_iznos, nacin_isporuke_id, kupon_id))
-        
-        # Dobijamo ID nove narudžbe
-        cursor.execute("SELECT LAST_INSERT_ID()")
-        narudzba_id = cursor.fetchone()[0]
-        
-        # Prebacujemo stavke iz košarice u stavke_narudzbe
-        for proizvod in proizvodi:
-            proizvod_id = proizvod[0]  # id proizvoda
-            kolicina = proizvod[3]     # količina proizvoda
-            
+                SELECT p.id, p.naziv, p.cijena, k.kolicina
+                FROM kosarica k
+                JOIN proizvodi p ON k.proizvod_id = p.id
+                WHERE k.korisnik_id = %s
+            """, (korisnik_id,))
+            proizvodi = cursor.fetchall()
+            if not proizvodi:
+                flash('Vaša košarica je prazna.', 'error')
+                return redirect(url_for('home'))
+
+            cursor.execute("SELECT * FROM nacini_isporuke")
+            nacini_isporuke = cursor.fetchall()
+            ukupna_cijena = sum(Decimal(proizvod[2]) * proizvod[3] for proizvod in proizvodi)
+
+            return render_template(
+                'narudzba.html',
+                proizvodi=proizvodi,
+                nacini_isporuke=nacini_isporuke,
+                ukupna_cijena=ukupna_cijena
+            )
+
+        elif request.method == 'POST':
             cursor.execute("""
-                INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina) 
-                VALUES (%s, %s, %s)
-            """, (narudzba_id, proizvod_id, kolicina))
-        
-        # Unos u tablicu placanja
-        cursor.execute("""
-            INSERT INTO placanja (narudzba_id, iznos, datum_placanja)
-            VALUES (%s, %s, %s)
-        """, (narudzba_id, ukupni_iznos, date.today()))
-        
-        # Unos u tablicu racuni
-        cursor.execute("""
-            INSERT INTO racuni (korisnik_id, narudzba_id, iznos, datum_izdavanja)
-            VALUES (%s, %s, %s, %s)
-        """, (korisnik_id, narudzba_id, ukupni_iznos, date.today()))
-        
-        # Brisanje svih stavki iz košarice nakon što je narudžba kreirana
-        cursor.execute("DELETE FROM kosarica WHERE korisnik_id = %s", (korisnik_id,))
-        
-        # Potvrda i preusmjeravanje
-        db.commit()
+                SELECT p.id, p.naziv, p.cijena, k.kolicina
+                FROM kosarica k
+                JOIN proizvodi p ON k.proizvod_id = p.id
+                WHERE k.korisnik_id = %s
+            """, (korisnik_id,))
+            proizvodi = cursor.fetchall()
+            if not proizvodi:
+                flash('Vaša košarica je prazna.', 'error')
+                return redirect(url_for('home'))
+
+            nacin_isporuke_id = request.form['nacin_isporuke']
+            nacin_placanja = request.form['nacin_placanja']  # Odabrani način plaćanja
+            kupon_kod = request.form.get('kupon', '').strip()
+
+            cursor.execute("SELECT cijena FROM nacini_isporuke WHERE id = %s", (nacin_isporuke_id,))
+            cijena_dostave = Decimal(cursor.fetchone()[0])
+
+            ukupna_cijena = sum(Decimal(proizvod[2]) * proizvod[3] for proizvod in proizvodi)
+            ukupni_iznos = ukupna_cijena + cijena_dostave
+
+            kupon_id = None
+            if kupon_kod:
+                cursor.execute("""
+                    SELECT id, postotak_popusta
+                    FROM kuponi
+                    WHERE kod = %s AND datum_pocetka <= CURDATE() AND datum_zavrsetka >= CURDATE()
+                """, (kupon_kod,))
+                kupon = cursor.fetchone()
+                if kupon:
+                    kupon_id = kupon[0]
+                    ukupni_iznos -= ukupni_iznos * Decimal(kupon[1]) / 100
+
+            cursor.execute("""
+                INSERT INTO narudzbe (korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id)
+                VALUES (%s, CURDATE(), 'u obradi', %s, %s, %s)
+            """, (korisnik_id, ukupni_iznos, nacin_isporuke_id, kupon_id))
+            db.commit()
+
+            cursor.execute("SELECT LAST_INSERT_ID()")
+            narudzba_id = cursor.fetchone()[0]
+
+            for proizvod in proizvodi:
+                proizvod_id, _, cijena, kolicina = proizvod
+                cursor.execute("""
+                    INSERT INTO stavke_narudzbe (narudzba_id, proizvod_id, kolicina)
+                    VALUES (%s, %s, %s)
+                """, (narudzba_id, proizvod_id, kolicina))
+
+            cursor.execute("""
+                INSERT INTO placanja (narudzba_id, iznos, nacin_placanja, datum_placanja)
+                VALUES (%s, %s, %s, CURDATE())
+            """, (narudzba_id, ukupni_iznos, nacin_placanja))  # Unos načina plaćanja
+
+            cursor.execute("""
+                INSERT INTO racuni (korisnik_id, narudzba_id, iznos, datum_izdavanja)
+                VALUES (%s, %s, %s, CURDATE())
+            """, (korisnik_id, narudzba_id, ukupni_iznos))
+
+            cursor.execute("DELETE FROM kosarica WHERE korisnik_id = %s", (korisnik_id,))
+            db.commit()
+
+            flash('Narudžba uspješno kreirana!', 'success')
+
+    except MySQLdb.MySQLError as e:
+        print(f"MySQL greška: {e}")
+        flash('Dogodila se greška prilikom kreiranja narudžbe.', 'error')
+        db.rollback()
+
+    finally:
         db.close()
-        
-        return redirect(url_for('home'))  # Preusmjeravamo na početnu stranicu nakon uspješne narudžbe
+
+    return redirect(url_for('home'))
+
 
 
 @app.route('/wishlist', methods=['GET'])
@@ -1527,6 +1530,379 @@ def upravljanje_recenzijama():
         db.close()
 
     return render_template('upravljanje_recenzijama.html', recenzije=recenzije)
+
+@app.route('/pregled_placanja')
+def pregled_placanja():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT p.id, n.id AS narudzba_id, p.iznos, p.nacin_placanja, p.datum_placanja
+            FROM placanja p
+            JOIN narudzbe n ON p.narudzba_id = n.id
+        """)
+        placanja = cursor.fetchall()
+    finally:
+        db.close()
+
+    return render_template('pregled_placanja.html', placanja=placanja)
+
+
+@app.route('/pregled_stavki_narudzbe')
+def pregled_stavki_narudzbe():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        # Dohvat podataka za narudžbe i pripadajuće stavke
+        cursor.execute("""
+            SELECT
+                n.id AS narudzba_id,
+                k.ime AS korisnik_ime,
+                k.prezime AS korisnik_prezime,
+                n.datum_narudzbe,
+                n.ukupna_cijena,
+                p.naziv AS proizvod,
+                sn.kolicina,
+                (sn.kolicina * p.cijena) AS ukupno_stavka
+            FROM narudzbe n
+            JOIN korisnici k ON n.korisnik_id = k.id
+            JOIN stavke_narudzbe sn ON n.id = sn.narudzba_id
+            JOIN proizvodi p ON sn.proizvod_id = p.id
+            ORDER BY n.id, p.naziv
+        """)
+        stavke_narudzbi = cursor.fetchall()
+    finally:
+        db.close()
+
+    # Grupiranje stavki po narudžbama za prikaz
+    narudzbe = {}
+    for stavka in stavke_narudzbi:
+        narudzba_id = stavka[0]
+        if narudzba_id not in narudzbe:
+            narudzbe[narudzba_id] = {
+                'korisnik': f"{stavka[1]} {stavka[2]}",
+                'datum_narudzbe': stavka[3],
+                'ukupna_cijena': stavka[4],
+                'stavke': []
+            }
+        narudzbe[narudzba_id]['stavke'].append({
+            'proizvod': stavka[5],
+            'kolicina': stavka[6],
+            'ukupno_stavka': stavka[7]
+        })
+
+    return render_template('pregled_stavki_narudzbe.html', narudzbe=narudzbe)
+
+@app.route('/pregled_racuna')
+def pregled_racuna():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        # Dohvat računa i povezanih podataka
+        cursor.execute("""
+            SELECT
+                r.id AS racun_id,
+                k.ime AS korisnik_ime,
+                k.prezime AS korisnik_prezime,
+                n.datum_narudzbe,
+                n.ukupna_cijena,
+                r.datum_izdavanja,
+                p.naziv AS proizvod,
+                sn.kolicina,
+                (sn.kolicina * p.cijena) AS ukupno_stavka
+            FROM racuni r
+            JOIN korisnici k ON r.korisnik_id = k.id
+            JOIN narudzbe n ON r.narudzba_id = n.id
+            JOIN stavke_narudzbe sn ON n.id = sn.narudzba_id
+            JOIN proizvodi p ON sn.proizvod_id = p.id
+            ORDER BY r.id, p.naziv
+        """)
+        racuni_podaci = cursor.fetchall()
+    finally:
+        db.close()
+
+    # Grupiranje računa po ID-u
+    racuni = {}
+    for stavka in racuni_podaci:
+        racun_id = stavka[0]
+        if racun_id not in racuni:
+            racuni[racun_id] = {
+                'korisnik': f"{stavka[1]} {stavka[2]}",
+                'datum_narudzbe': stavka[3],
+                'ukupna_cijena': stavka[4],
+                'datum_izdavanja': stavka[5],
+                'stavke': []
+            }
+        racuni[racun_id]['stavke'].append({
+            'proizvod': stavka[6],
+            'kolicina': stavka[7],
+            'ukupno_stavka': stavka[8]
+        })
+
+    return render_template('pregled_racuna.html', racuni=racuni)
+
+
+
+@app.route('/racun/<int:racun_id>')
+def prikazi_racun(racun_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+
+    try:
+        # Glavni podaci o računu
+        cursor.execute("""
+            SELECT 
+                r.id AS racun_id,
+                r.narudzba_id,
+                r.iznos AS ukupna_cijena,
+                r.datum_izdavanja,
+                k.ime AS korisnik_ime,
+                k.prezime AS korisnik_prezime,
+                k.email AS korisnik_email,
+                k.adresa AS korisnik_adresa,
+                k.telefon AS korisnik_telefon,
+                p.nacin_placanja,
+                IFNULL(pop.postotak_popusta, 0) AS popust,
+                IFNULL(kup.kod, 'Nema kupona') AS kupon,
+                ni.naziv AS nacin_isporuke,
+                ni.trajanje AS trajanje_isporuke
+            FROM racuni r
+            JOIN korisnici k ON r.korisnik_id = k.id
+            JOIN narudzbe n ON r.narudzba_id = n.id
+            LEFT JOIN placanja p ON n.id = p.narudzba_id
+            LEFT JOIN popusti pop ON n.id = pop.proizvod_id
+            LEFT JOIN kuponi kup ON n.kupon_id = kup.id
+            LEFT JOIN nacini_isporuke ni ON n.nacin_isporuke_id = ni.id
+            WHERE r.id = %s
+        """, (racun_id,))
+        racun = cursor.fetchone()
+
+        # Stavke narudžbe
+        cursor.execute("""
+            SELECT 
+                p.naziv AS proizvod,
+                sn.kolicina,
+                ROUND(p.cijena * sn.kolicina, 2) AS ukupno_stavka
+            FROM stavke_narudzbe sn
+            JOIN proizvodi p ON sn.proizvod_id = p.id
+            WHERE sn.narudzba_id = %s
+        """, (racun['narudzba_id'],))
+        stavke = cursor.fetchall()
+
+        # Ako račun nije pronađen
+        if not racun:
+            flash('Račun nije pronađen!', 'error')
+            return redirect(url_for('pregled_racuna'))
+
+        racun['stavke'] = stavke
+
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška prilikom dohvaćanja računa: {e}', 'error')
+        return redirect(url_for('pregled_racuna'))
+
+    finally:
+        cursor.close()
+        db.close()
+
+    # Render predloška s računom
+    return render_template('racun_detalji.html', racun=racun)
+
+
+@app.route('/upravljanje_kuponima', methods=['GET'])
+def upravljanje_kuponima():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    
+    try:
+        cursor.execute("SELECT * FROM kuponi")
+        kuponi = cursor.fetchall()
+    except MySQLdb.MySQLError as e:
+        flash(f'Greška prilikom dohvaćanja kupona: {e}', 'error')
+        kuponi = []
+    finally:
+        cursor.close()
+        db.close()
+    
+    return render_template('upravljanje_kuponima.html', kuponi=kuponi)
+
+
+@app.route('/dodaj_kupon', methods=['GET', 'POST'])
+def dodaj_kupon():
+    if request.method == 'GET':
+        return render_template('dodaj_kupon.html')
+    
+    elif request.method == 'POST':
+        data = request.form
+        kod = data['kod']
+        postotak_popusta = data['postotak_popusta']
+        datum_pocetka = data['datum_pocetka']
+        datum_zavrsetka = data['datum_zavrsetka']
+        max_iskoristenja = data['max_iskoristenja']
+        
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO kuponi (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja))
+            db.commit()
+            flash('Kupon uspješno dodan!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška prilikom dodavanja kupona: {e}', 'error')
+        finally:
+            cursor.close()
+            db.close()
+        
+        return redirect(url_for('upravljanje_kuponima'))
+
+
+@app.route('/azuriraj_kupon/<int:kupon_id>', methods=['GET', 'POST'])
+def azuriraj_kupon(kupon_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    
+    if request.method == 'GET':
+        cursor.execute("SELECT * FROM kuponi WHERE id = %s", (kupon_id,))
+        kupon = cursor.fetchone()
+        if not kupon:
+            flash('Kupon nije pronađen!', 'error')
+            return redirect(url_for('upravljanje_kuponima'))
+        return render_template('azuriraj_kupon.html', kupon=kupon)
+    
+    elif request.method == 'POST':
+        data = request.form
+        kod = data['kod']
+        postotak_popusta = data['postotak_popusta']
+        datum_pocetka = data['datum_pocetka']
+        datum_zavrsetka = data['datum_zavrsetka']
+        max_iskoristenja = data['max_iskoristenja']
+        
+        try:
+            cursor.execute("""
+                UPDATE kuponi
+                SET kod = %s, postotak_popusta = %s, datum_pocetka = %s, datum_zavrsetka = %s, max_iskoristenja = %s
+                WHERE id = %s
+            """, (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja, kupon_id))
+            db.commit()
+            flash('Kupon uspješno ažuriran!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška prilikom ažuriranja kupona: {e}', 'error')
+        finally:
+            cursor.close()
+            db.close()
+        
+        return redirect(url_for('upravljanje_kuponima'))
+
+@app.route('/obrisi_kupon/<int:kupon_id>', methods=['DELETE'])
+def obrisi_kupon(kupon_id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        cursor.execute("DELETE FROM kuponi WHERE id = %s", (kupon_id,))
+        db.commit()
+        return jsonify({'success': True, 'message': 'Kupon uspješno obrisan!'})
+    except MySQLdb.MySQLError as e:
+        return jsonify({'success': False, 'message': f'Greška prilikom brisanja kupona: {e}'}), 500
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route('/upravljanje_povratima', methods=['GET'])
+def upravljanje_povratima():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    cursor.execute("""
+        SELECT p.id, s.narudzba_id, p.datum_povrata, p.razlog, p.status_povrata, s.proizvod_id, pr.naziv AS proizvod_naziv
+        FROM povrati_proizvoda p
+        JOIN stavke_narudzbe s ON p.stavka_id = s.id
+        JOIN proizvodi pr ON s.proizvod_id = pr.id
+    """)
+    povrati = cursor.fetchall()
+
+    db.close()
+
+    return render_template('upravljanje_povratima.html', povrati=povrati)
+
+
+
+@app.route('/azuriraj_povrat/<int:id>', methods=['GET', 'POST'])
+def azuriraj_povrat(id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        status_povrata = request.form['status_povrata']
+        cursor.execute("""
+            UPDATE povrati_proizvoda
+            SET status_povrata = %s
+            WHERE id = %s
+        """, (status_povrata, id))
+        db.commit()
+        db.close()
+        flash('Povrat ažuriran.', 'success')
+        return redirect(url_for('upravljanje_povratima'))
+
+    cursor.execute("""
+        SELECT p.id, s.narudzba_id, p.datum_povrata, p.razlog, p.status_povrata, s.proizvod_id, pr.naziv AS proizvod_naziv
+        FROM povrati_proizvoda p
+        JOIN stavke_narudzbe s ON p.stavka_id = s.id
+        JOIN proizvodi pr ON s.proizvod_id = pr.id
+        WHERE p.id = %s
+    """, (id,))
+    povrat = cursor.fetchone()
+    db.close()
+
+    return render_template('azuriraj_povrat.html', povrat=povrat)
+
+
+@app.route('/upravljanje_podrskom', methods=['GET'])
+def upravljanje_podrskom():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    cursor.execute("""
+        SELECT p.id, k.ime, k.prezime, k.email, p.tema, p.poruka, p.status, p.datum_upita, p.datum_odgovora
+        FROM podrska_za_korisnike p
+        JOIN korisnici k ON p.korisnik_id = k.id
+    """)
+    podrska = cursor.fetchall()
+
+    db.close()
+
+    return render_template('upravljanje_podrskom.html', podrska=podrska)
+
+
+@app.route('/azuriraj_podrsku/<int:id>', methods=['GET', 'POST'])
+def azuriraj_podrsku(id):
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        status = request.form['status']
+        datum_odgovora = date.today() if status == 'riješeno' else None
+        cursor.execute("""
+            UPDATE podrska_za_korisnike
+            SET status = %s, datum_odgovora = %s
+            WHERE id = %s
+        """, (status, datum_odgovora, id))
+        db.commit()
+        db.close()
+        flash('Status podrške ažuriran.', 'success')
+        return redirect(url_for('upravljanje_podrskom'))
+
+    cursor.execute("""
+        SELECT p.id, k.ime, k.prezime, k.email, p.tema, p.poruka, p.status, p.datum_upita, p.datum_odgovora
+        FROM podrska_za_korisnike p
+        JOIN korisnici k ON p.korisnik_id = k.id
+        WHERE p.id = %s
+    """, (id,))
+    podrska = cursor.fetchone()
+    db.close()
+
+    return render_template('azuriraj_podrsku.html', podrska=podrska)
 
 
 
