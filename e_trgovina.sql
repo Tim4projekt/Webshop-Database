@@ -2478,7 +2478,7 @@ AFTER INSERT ON narudzbe
 FOR EACH ROW
 BEGIN
     INSERT INTO pracenje_isporuka (narudzba_id, status_isporuke, datum_isporuke)
-    VALUES (NEW.id, 'Na čekanju', NULL);
+    VALUES (NEW.id, 'u pripremi', NULL);
 END//
 
 DELIMITER ;
@@ -2603,6 +2603,51 @@ JOIN proizvodi p ON sn.proizvod_id = p.id
 GROUP BY p.id, p.naziv 
 ORDER BY ukupno_prodano DESC 
 LIMIT 5;
+
+-- funkcija: vraća broj proizvoda u košarici određenog korisnika. Broj proizvoda je zbroj svih količina proizvoda u košarici. (Morena)
+
+DELIMITER //
+
+CREATE FUNCTION brojProizvodaUKosarici(korisnikId INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE brojProizvoda INT DEFAULT 0;
+
+    SELECT SUM(kolicina) INTO brojProizvoda
+    FROM kosarica
+    WHERE korisnik_id = korisnikId;
+
+    RETURN brojProizvoda;
+END//
+
+DELIMITER ;
+
+SELECT brojProizvodaUKosarici(1)
+
+-- funkcija: izračunava ukupnu cijenu narudžbe na temelju stavki narudžbe. Uzimajući u obzir količinu proizvoda i 
+-- cijenu svakog proizvoda, funkcija vraća ukupnu cijenu za zadanu narudžbu.(Morena)
+
+DELIMITER //
+
+CREATE FUNCTION izracunajUkupnuCijenuNarudzbe(narudzbaId INT)
+RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE ukupnaCijena DECIMAL(10, 2) DEFAULT 0.00;
+
+    SELECT SUM(p.cijena * sn.kolicina) INTO ukupnaCijena
+    FROM stavke_narudzbe sn
+    JOIN proizvodi p ON sn.proizvod_id = p.id
+    WHERE sn.narudzba_id = narudzbaId;
+
+    RETURN ukupnaCijena;
+END//
+
+DELIMITER ;
+
+SELECT izracunajUkupnuCijenuNarudzbe(1);
+
 
 
 
