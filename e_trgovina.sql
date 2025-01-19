@@ -3262,3 +3262,116 @@ BEGIN
     WHERE id_korisnika = p_id_korisnika;
 END //
 DELIMITER ;
+
+-- Josip: Pogled za pregled računa s kuponima
+CREATE VIEW racuni_sa_kuponima AS
+SELECT 
+    r.id AS racun_id,
+    r.iznos AS ukupni_iznos_racuna,
+    k.kod AS kupon_kod,
+    k.postotak_popusta,
+    (r.iznos - (r.iznos * k.postotak_popusta / 100)) AS iznos_sa_popustom
+FROM racuni r
+LEFT JOIN narudzbe n ON r.narudzba_id = n.id
+LEFT JOIN kuponi k ON n.kupon_id = k.id
+ORDER BY r.datum_izdavanja DESC;
+
+-- Josip: Pogled za plaćanja po načinu plaćanja
+CREATE VIEW placanja_po_nacinu AS
+SELECT 
+    p.nacin_placanja,
+    COUNT(p.id) AS broj_placanja,
+    SUM(p.iznos) AS ukupni_iznos
+FROM placanja p
+GROUP BY p.nacin_placanja
+ORDER BY ukupni_iznos DESC;
+
+-- Josip: Funkcija za preostalo iskorištenje kupona
+DELIMITER //
+CREATE FUNCTION preostalo_iskoristenje_kupona(kupon_id INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE preostalo INT;
+    SELECT (k.max_iskoristenja - COUNT(n.id))
+    INTO preostalo
+    FROM kuponi k
+    LEFT JOIN narudzbe n ON k.id = n.kupon_id
+    WHERE k.id = kupon_id;
+    RETURN IFNULL(preostalo, k.max_iskoristenja);
+END //
+DELIMITER ;
+
+-- Josip: Funkcija za ukupni prihod po korisniku
+DELIMITER //
+CREATE FUNCTION ukupni_prihod_po_korisniku(korisnik_id INT)
+RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE ukupno DECIMAL(10, 2);
+    SELECT SUM(iznos)
+    INTO ukupno
+    FROM racuni
+    WHERE korisnik_id = korisnik_id;
+    RETURN IFNULL(ukupno, 0.00);
+END //
+DELIMITER ;
+
+-- Josip: Okidač za automatsko postavljanje datuma izdavanja računa
+DELIMITER //
+CREATE TRIGGER postavi_datum_izdavanja
+BEFORE INSERT ON racuni
+FOR EACH ROW
+BEGIN
+    IF NEW.datum_izdavanja IS NULL THEN
+        SET NEW.datum_izdavanja = CURDATE();
+    END IF;
+END //
+DELIMITER ;
+
+-- Josip: Okidač za ograničenje maksimalnog iskorištenja kupona
+DELIMITER //
+CREATE TRIGGER ograničenje_iskorištenja_kupona
+BEFORE INSERT ON narudzbe
+FOR EACH ROW
+BEGIN
+    DECLARE iskorištenja INT;
+    SELECT COUNT(id)
+    INTO iskorištenja
+    FROM narudzbe
+    WHERE kupon_id = NEW.kupon_id;
+    IF iskorištenja >= (SELECT max_iskoristenja FROM kuponi WHERE id = NEW.kupon_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Kupon je dosegao maksimalan broj iskorištenja!';
+    END IF;
+END //
+DELIMITER ;
+
+-- Josip: Procedura za dodavanje plaćanja
+DELIMITER //
+CREATE PROCEDURE dodaj_placanje (
+    IN p_narudzba_id INT,
+    IN p_nacin_placanja ENUM('kartica', 'pouzeće'),
+    IN p_iznos DECIMAL(10, 2),
+    IN p_datum_placanja DATE
+)
+BEGIN
+    INSERT INTO placanja (narudzba_id, nacin_placanja, iznos, datum_placanja)
+    VALUES (p_narudzba_id, p_nacin_placanja, p_iznos, p_datum_placanja);
+END //
+DELIMITER ;
+
+-- Josip: Procedura za dodavanje kupona
+DELIMITER //
+CREATE PROCEDURE dodaj_kupon (
+    IN p_kod VARCHAR(50),
+    IN p_postotak_popusta DECIMAL(5, 2),
+    IN p_datum_pocetka DATE,
+    IN p_datum_zavrsetka DATE,
+    IN p_max_iskoristenja INT
+)
+BEGIN
+    INSERT INTO kuponi (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja)
+    VALUES (p_kod, p_postotak_popusta, p_datum_pocetka, p_datum_zavrsetka, p_max_iskoristenja);
+END //
+DELIMITER ;
+
