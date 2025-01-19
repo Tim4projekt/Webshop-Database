@@ -104,7 +104,7 @@
         }
 
         a {
-    text-decoration: none;  /* Uklanja podcrtavanje (liniju ispod) */
+    text-decoration: none; 
 }
 
     </style>
@@ -123,9 +123,9 @@
             <div class="proizvodi-lista">
                 {% for proizvod in proizvodi %}
                 <div class="proizvod">
-                    <h3>{{ proizvod[1] }}</h3>  <!-- Prikazujemo naziv proizvoda -->
-                    <p>{{ proizvod[2] }}</p>    <!-- Prikazujemo opis proizvoda -->
-                    <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p>  <!-- Prikazujemo cijenu proizvoda -->
+                    <h3>{{ proizvod[1] }}</h3>  
+                    <p>{{ proizvod[2] }}</p>  
+                    <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p>
                 </div>
                 {% endfor %}
             </div>
@@ -134,7 +134,6 @@
             {% endif %}
         </section>
 
-        <!-- Paginacija -->
         <section>
             <div class="pagination">
                 {% if page > 1 %}
