@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Praćenjem Isporuka</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Praćenjem Isporuka</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+        <button class="back-button" onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+    </header>
+
+    <main>
+        <h2>Popis Isporuka</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ID Narudžbe</th>
+                    <th>Datum Narudžbe</th>
+                    <th>Status Narudžbe</th>
+                    <th>Status Isporuke</th>
+                    <th>Datum Isporuke</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pracenje in pracenje_list %}
+                <tr>
+                    <td>{{ pracenje.id }}</td>
+                    <td>{{ pracenje.narudzba_id }}</td>
+                    <td>{{ pracenje.datum_narudzbe }}</td>
+                    <td>{{ pracenje.status_narudzbe }}</td>
+                    <td>{{ pracenje.status_isporuke }}</td>
+                    <td>{{ pracenje.datum_isporuke or "N/A" }}</td>
+                    <td>
+                        <form method="POST" action="/azuriraj_pracenje/{{ pracenje.id }}">
+                            <select name="status_isporuke">
+                                <option value="u pripremi" {% if pracenje.status_isporuke == 'u pripremi' %}selected{% endif %}>U pripremi</option>
+                                <option value="poslano" {% if pracenje.status_isporuke == 'poslano' %}selected{% endif %}>Poslano</option>
+                                <option value="dostavljeno" {% if pracenje.status_isporuke == 'dostavljeno' %}selected{% endif %}>Dostavljeno</option>
+                            </select>
+                            <button type="submit">Ažuriraj</button>
+                        </form>                        
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

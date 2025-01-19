@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj Popust</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Dodaj Popust</h1>
+    <form method="POST">
+        <label for="proizvod_id">Proizvod:</label>
+        <select id="proizvod_id" name="proizvod_id" required>
+            {% for proizvod in proizvodi %}
+            <option value="{{ proizvod[0] }}">{{ proizvod[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="postotak_popusta">Postotak Popusta:</label>
+        <input type="number" id="postotak_popusta" name="postotak_popusta" step="0.01" required>
+
+        <label for="datum_pocetka">Datum Početka:</label>
+        <input type="date" id="datum_pocetka" name="datum_pocetka" required>
+
+        <label for="datum_zavrsetka">Datum Završetka:</label>
+        <input type="date" id="datum_zavrsetka" name="datum_zavrsetka" required>
+
+        <button type="submit">Dodaj Popust</button>
+    </form>
+</body>
+</html>

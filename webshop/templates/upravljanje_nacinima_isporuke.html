@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravljanje Načinima Isporuke</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Upravljanje Načinima Isporuke</h1>
+        <button onclick="location.href='/admin_panel'">Natrag na Administraciju</button>
+        <button onclick="location.href='/dodaj_nacin_isporuke'">Dodaj Način Isporuke</button>
+    </header>
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Naziv</th>
+                    <th>Opis</th>
+                    <th>Cijena</th>
+                    <th>Trajanje (dana)</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nacin in nacini_isporuke %}
+                <tr>
+                    <td>{{ nacin[0] }}</td>
+                    <td>{{ nacin[1] }}</td>
+                    <td>{{ nacin[2] }}</td>
+                    <td>{{ nacin[3] }}</td>
+                    <td>{{ nacin[4] }}</td>
+                    <td>
+                        <button onclick="location.href='/azuriraj_nacin_isporuke/{{ nacin[0] }}'">Ažuriraj</button>
+                        <form method="POST" action="/obrisi_nacin_isporuke/{{ nacin[0] }}" style="display:inline;">
+                            <button type="submit">Obriši</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
