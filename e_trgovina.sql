@@ -1632,6 +1632,7 @@ DELIMITER ;
 
 DELIMITER //
 
+-- Procedura: Ažuriranje tipa korsinika(Leo)	
 CREATE PROCEDURE azuriraj_tip_korisnika(IN p_korisnik_id INT, IN p_tip_korisnika ENUM('kupac', 'admin'))
 BEGIN
     UPDATE korisnici
