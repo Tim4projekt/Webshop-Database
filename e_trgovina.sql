@@ -2656,7 +2656,7 @@ SELECT izracunajUkupnuCijenuNarudzbe(1);
 
 -- Upiti (Bruno)
 
--- Prikaži sve narudžbe gdje se narudžba isporučila u manje od 3 dana (uključujući i preuzimanje)
+-- Prikaži sve narudžbe gdje se narudžba isporučila u manje od 3 dana (uključujući i preuzimanje) (Bruno)
 SELECT *
 	FROM narudzbe
     INNER JOIN (SELECT *
@@ -2666,7 +2666,7 @@ SELECT *
     HAVING narudzbe.status_narudzbe = "dostavljeno";
 
 
--- Prikaži sve proizvode koji su bili sniženi 20% ili više u zadnjih godinu dana
+-- Prikaži sve proizvode koji su bili sniženi 20% ili više u zadnjih godinu dana (Bruno)
 SELECT proizvodi.*, temp_popusti.postotak_popusta, temp_popusti.datum_pocetka, temp_popusti.datum_zavrsetka
 	FROM proizvodi
     INNER JOIN (SELECT *
@@ -2675,7 +2675,7 @@ SELECT proizvodi.*, temp_popusti.postotak_popusta, temp_popusti.datum_pocetka, t
     ON proizvodi.id = temp_popusti.proizvod_id;
 
 
--- Prikaži broj kupaca koji su preuzeli svoju narudzbu u trgovini
+-- Prikaži broj kupaca koji su preuzeli svoju narudzbu u trgovini (Bruno)
 SELECT COUNT(*) AS broj_kupaca
 	FROM narudzbe
     INNER JOIN (SELECT id
@@ -2687,7 +2687,7 @@ SELECT COUNT(*) AS broj_kupaca
 
     
 -- Pogledi (Bruno)
--- Napravi pogled koji prikazuje sve proizvode sa sniženom cijenom kad se primjeni popust
+-- Napravi pogled koji prikazuje sve proizvode sa sniženom cijenom kad se primjeni popust (Bruno)
 CREATE VIEW proizvodi_sa_snizenom_cijenom AS
 SELECT proizvodi.*, ROUND((cijena * (1 - popusti.postotak_popusta / 100)), 2) AS snizena_cijena
 	FROM popusti
@@ -2696,7 +2696,7 @@ SELECT proizvodi.*, ROUND((cijena * (1 - popusti.postotak_popusta / 100)), 2) AS
 SELECT * FROM proizvodi_sa_snizenom_cijenom;
 
 
--- Napravi pogled koji prikazuje trenutno aktivne popuste na proizvodima
+-- Napravi pogled koji prikazuje trenutno aktivne popuste na proizvodima (Bruno)
 CREATE VIEW proizvodi_sa_aktivnim_popustom AS
 SELECT proizvodi.*, popusti.postotak_popusta, popusti.datum_pocetka, popusti.datum_zavrsetka
 	FROM popusti
@@ -2709,7 +2709,7 @@ SELECT * FROM proizvodi_sa_aktivnim_popustom;
 
 -- Funkcije (Bruno)
 
--- Funkcija koja računa konačnu cijenu proizvoda nakon popusta
+-- Funkcija koja računa konačnu cijenu proizvoda nakon popusta (Bruno)
 DELIMITER //
 CREATE FUNCTION cijena_s_popustom(cijena DECIMAL(10,2), postotak_popusta DECIMAL(5,2)) RETURNS DECIMAL(10,2)
 DETERMINISTIC
@@ -2723,7 +2723,7 @@ SELECT proizvodi.*, cijena_s_popustom(cijena, postotak_popusta) AS snizena_cijen
     INNER JOIN popusti ON proizvodi.id = popusti.proizvod_id;
     
     
--- Funkcija koja dohvaća naziv načina isporuke po unesenom ID-u
+-- Funkcija koja dohvaća naziv načina isporuke po unesenom ID-u (Bruno)
 DELIMITER //
 CREATE FUNCTION naziv_isporuke(isporuka_id INTEGER) RETURNS VARCHAR(255)
 DETERMINISTIC
@@ -2742,7 +2742,7 @@ SELECT *, naziv_isporuke(nacin_isporuke_id) AS naziv_isporuke
 	FROM narudzbe;
     
 
--- Funkcija koja računa koliko je pojedinih načina isporuke narudžbi
+-- Funkcija koja računa koliko je pojedinih načina isporuke narudžbi (Bruno)
 DELIMITER //
 CREATE FUNCTION broj_nacina_isporuke(isporuka_id INTEGER) RETURNS INTEGER
 DETERMINISTIC
@@ -2764,36 +2764,57 @@ SELECT *, broj_nacina_isporuke(id) AS broj_nacina_isporuke
     
 
 -- Procedure (Bruno)
--- Procedura za dodavanje načina isporuke
+-- Procedura za dodavanje načina isporuke (Bruno)
 DELIMITER //
 CREATE PROCEDURE dodaj_nacin_isporuke(naziv_p VARCHAR(255), opis_p TEXT, cijena_p DECIMAL(10,2), trajanje_p INTEGER)
 BEGIN
-    INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES (naziv_p, opis_p, cijena_p, trajanje_p);
+	DECLARE brojac INTEGER DEFAULT 0;
+	SELECT COUNT(*) INTO brojac
+		FROM nacini_isporuke
+        WHERE naziv = naziv_p;
+	
+    IF brojac > 0 THEN
+		SIGNAL SQLSTATE "45102" SET MESSAGE_TEXT = "Greška u unosu, način isporuke već postoji!";
+	ELSE 
+		INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje) VALUES (naziv_p, opis_p, cijena_p, trajanje_p);
+	END IF;
+    
 END //
 DELIMITER ;
 
+/*
 CALL dodaj_nacin_isporuke("Express dostava", "Dostava u roku 3 sata", 150, 0);
 SELECT *
 	FROM nacini_isporuke;
+*/
     
-    
--- Procedura za brisanje načina isporuke po ID-u
+-- Procedura za brisanje načina isporuke po ID-u (Bruno)
 DELIMITER //
 CREATE PROCEDURE obrisi_nacin_isporuke(id_p INTEGER)
 BEGIN
-	DELETE
+	DECLARE brojac INTEGER DEFAULT 0;
+	SELECT COUNT(*) INTO brojac
 		FROM nacini_isporuke
         WHERE id = id_p;
+	
+    IF brojac = 0 THEN
+		SIGNAL SQLSTATE "45102" SET MESSAGE_TEXT = "Greška u brisanju, način isporuke ne postoji!";
+	ELSE 
+		DELETE
+			FROM nacini_isporuke
+			WHERE id = id_p;
+	END IF;
+
 END //
 DELIMITER ;
 
-
+/*
 CALL obrisi_nacin_isporuke(7);
 SELECT *
 	FROM nacini_isporuke;
+*/
 
-
--- Procedura za dodavanje popusta 
+-- Procedura za dodavanje popusta (Bruno)
 DELIMITER //
 CREATE PROCEDURE dodaj_popust(proizvod_id_p INTEGER, postotak_popusta_p DECIMAL(5,2), datum_pocetka_p DATE, datum_zavrsetka_p DATE)
 BEGIN
@@ -2801,40 +2822,125 @@ BEGIN
 END //
 DELIMITER ;
 
+/*
 CALL dodaj_popust(56, 30, '2025-01-01', '2025-01-10');
 SELECT *
 	FROM popusti;
+*/
     
-    
--- Procedura za brisanje popusta po ID-u
+-- Procedura za brisanje popusta po ID-u (Bruno)
 DELIMITER //
 CREATE PROCEDURE obrisi_popust(id_p INTEGER)
 BEGIN
-	DELETE
+	DECLARE brojac INTEGER DEFAULT 0;
+	SELECT COUNT(*) INTO brojac
 		FROM popusti
         WHERE id = id_p;
+	
+    IF brojac = 0 THEN
+		SIGNAL SQLSTATE "45103" SET MESSAGE_TEXT = "Greška u brisanju, popust ne postoji!";
+	ELSE 
+		DELETE
+			FROM popusti
+			WHERE id = id_p;
+	END IF;
+
 END //
 DELIMITER ;
 
-
+/*
 CALL obrisi_popust(41);
 SELECT *
 	FROM popusti;
+*/
     
-    
--- Procedura za ažuriranje popusta
+-- Procedura za ažuriranje popusta (Bruno)
 DELIMITER //
 CREATE PROCEDURE azuriraj_popust(popust_id INTEGER, novi_postotak DECIMAL(5,2))
 BEGIN
-    UPDATE popusti SET postotak_popusta = novi_postotak WHERE id = popust_id;
+	DECLARE brojac INTEGER DEFAULT 0;
+	SELECT COUNT(*) INTO brojac
+		FROM popusti
+        WHERE id = popust_id;
+	
+    IF brojac = 0 THEN
+		SIGNAL SQLSTATE "45103" SET MESSAGE_TEXT = "Greška u ažuriranju, popust ne postoji!";
+	ELSE 
+		UPDATE popusti SET postotak_popusta = novi_postotak WHERE id = popust_id;
+	END IF;
 END //
 DELIMITER ;
 
+/*
 SELECT *
 	FROM popusti;
-CALL azuriraj_popust(1, 10);
-CREATE TEMPORARY TABLE privremene_obavijesti (     poruka TEXT,     vrijeme_kreiranja DATETIME );
-DROP TEMPORARY TABLE IF EXISTS privremene_obavijesti;
+CALL azuriraj_popust(41, 10);
+*/
+
+-- Okidači -- (Bruno)
+
+-- Okidač koji osigurava da proizvod može imati samo jedan aktivni popust (Bruno)
+DELIMITER //
+CREATE TRIGGER bi_popusti
+BEFORE INSERT ON popusti 
+FOR EACH ROW 
+BEGIN 
+	DECLARE brojac INTEGER;
+    
+	SELECT COUNT(*) INTO brojac 
+		FROM popusti 
+		WHERE NEW.proizvod_id = proizvod_id AND NEW.datum_pocetka <= datum_zavrsetka AND NEW.datum_zavrsetka >= datum_pocetka; 
+        
+        
+		IF brojac > 0 THEN 
+		SIGNAL SQLSTATE '45100' 
+		SET MESSAGE_TEXT = 'Popust za ovaj proizvod već postoji u 
+		zadanom razdoblju.'; 
+		END IF; 
+        
+END; //
+DELIMITER ;
+
+/*
+-- provjera okidača
+INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka) VALUES 
+(1, 20.00, '2023-12-05', '2023-12-20');
+*/
+
+
+-- okidač koji osigurava automatsko brisanje popusta na proizvode kada istekne datum završetka (Bruno)
+DELIMITER //
+CREATE TRIGGER bu_popusti
+BEFORE INSERT ON popusti 
+FOR EACH ROW 
+BEGIN 
+	IF NEW.datum_zavrsetka < CURDATE() THEN
+        DELETE FROM popusti WHERE id = NEW.id;
+    END IF;
+END; //
+DELIMITER ;
+
+-- Okidač koji sprječava unos negativne cijene isporuke (Bruno)
+DELIMITER //
+CREATE TRIGGER bi_nacini_isporuke
+BEFORE INSERT ON nacini_isporuke
+FOR EACH ROW
+BEGIN
+	IF NEW.cijena < 0 THEN
+		SIGNAL SQLSTATE "45101" SET MESSAGE_TEXT= "Cijena isporuke ne može biti negativna";
+	END IF;
+END//
+DELIMITER ;
+
+/*
+-- provjera okidača
+INSERT INTO nacini_isporuke (naziv,opis,cijena,trajanje) VALUES
+("Express dostava","Dostava u roku 3 sata",-20,0);
+*/
+
+
+
+
 
 --  Pogled: Pregled proizvoda sa statusom popusta (Fran)
 
