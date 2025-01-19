@@ -1728,7 +1728,8 @@ ORDER BY ukupna_zarada DESC;
 
 SHOW TRIGGERS;
 SHOW WARNINGS;
-
+ALTER TABLE racuni
+ADD CONSTRAINT racuni_ibfk_2 FOREIGN KEY (korisnik_id) REFERENCES korisnici(id) ON DELETE CASCADE;
 
 
 ######## Loren ###########
