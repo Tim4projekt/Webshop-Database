@@ -1359,16 +1359,75 @@ INSERT INTO racuni (korisnik_id, narudzba_id, iznos, datum_izdavanja) VALUES
 
 
 
--- Umetanje u tabelu wishlist
-INSERT INTO wishlist (korisnik_id, proizvod_id)
+ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
+INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
+VALUES
+    (1, 1, 'Gaming oprema'),
+    (1, 2, 'Za posao'),
+    (2, 3, 'Gaming oprema'),
+    (3, 4, 'Kućna elektronika'),
+    (2, 5, 'Hobi'),
+    (4, 6, 'Za posao'),
+    (5, 7, 'Gaming oprema'),
+    (6, 8, 'Kućna elektronika'),
+    (7, 9, 'Hobi'),
+    (8, 10, 'Gaming oprema'),
+    (9, 11, 'Za posao'),
+    (10, 12, 'Kućna elektronika'),
+    (11, 13, 'Hobi'),
+    (12, 14, 'Gaming oprema'),
+    (13, 15, 'Za posao'),
+    (14, 16, 'Kućna elektronika'),
+    (15, 17, 'Hobi'),
+    (16, 18, 'Gaming oprema'),
+    (17, 19, 'Za posao'),
+    (18, 20, 'Kućna elektronika'),
+    (19, 21, 'Hobi'),
+    (20, 22, 'Gaming oprema'),
+    (21, 23, 'Za posao'),
+    (22, 24, 'Kućna elektronika'),
+    (23, 25, 'Hobi'),
+    (24, 26, 'Gaming oprema'),
+    (25, 27, 'Za posao'),
+    (26, 28, 'Kućna elektronika'),
+    (27, 29, 'Hobi'),
+    (28, 30, 'Gaming oprema');
+
+
+INSERT INTO preporuceni_proizvodi (korisnik_id, proizvod_id, razlog_preporuke)
 VALUES 
-    (1, 1),  -- Korisnik sa ID 1 dodaje Proizvod sa ID 1
-    (1, 2),  -- Korisnik sa ID 1 dodaje Proizvod sa ID 2
-    (2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 1
-    (3, 3),  -- Korisnik sa ID 3 dodaje Proizvod sa ID 3
-    (2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 2
-	(2, 1),  -- Korisnik sa ID 2 dodaje Proizvod sa ID 2
-    (4, 1);
+    (1, 1, 'Proizvod je popularan među korisnicima i dobro je ocijenjen.'),
+    (1, 2, 'Sviđa mi se dizajn ovog proizvoda, mislim da bi ti odgovarao.'),
+    (2, 3, 'Proizvod ima dobru funkcionalnost i odličnu cijenu.'),
+    (3, 4, 'Preporučujem ga jer je sličan proizvodu koji sam već kupio.'),
+    (2, 5, 'Ovaj proizvod je vrlo korisna stvar za svakodnevnu upotrebu.'),
+    (4, 6, 'Dobar je za kolekciju, mislim da bi ti bio zanimljiv.'),
+    (5, 1, 'Kvaliteta ovog proizvoda je izvrsna, vrlo je popularan.'),
+    (6, 2, 'Ovaj proizvod je visoko ocijenjen i dobro se prodaje.'),
+    (7, 3, 'Sviđa mi se kako ovaj proizvod radi, mislim da će ti koristiti.'),
+    (8, 4, 'Preporučujem ga jer ima dobre karakteristike za cijenu.'),
+    (9, 5, 'Moj prijatelj ga koristi i veoma je zadovoljan.'),
+    (10, 6, 'Ovaj proizvod je odličan za tvoje potrebe, mogao bi ga isprobati.'),
+    (11, 7, 'Već sam ga isprobao i bio sam impresioniran, trebao bi ga imati.'),
+    (12, 8, 'Poznajem ljude koji koriste ovaj proizvod, kažu da je odličan.'),
+    (13, 9, 'Ovaj proizvod se često koristi za tvoju vrstu posla, mislim da bi bio koristan.'),
+    (14, 10, 'Veoma je popularan i ima puno pozitivnih recenzija.'),
+    (15, 11, 'Isprobao sam ga i siguran sam da bi ti odgovarao.'),
+    (16, 12, 'Sviđa mi se njegova funkcionalnost, mislim da bi ti bio koristan.'),
+    (17, 13, 'Ovaj proizvod je idealan za tvoje potrebe, preporučujem ga.'),
+    (18, 14, 'Vrlo kvalitetan proizvod, mislim da bi ti mogao odgovarati.'),
+    (19, 15, 'Prijatelj ga koristi i preporučuje ga svima.'),
+    (20, 16, 'Ovaj proizvod je zaista povoljan za cijenu, mislim da bi ga volio.'),
+    (21, 17, 'Dobar je izbor za tvoje tehničke zahtjeve, sigurno bi ti odgovarao.'),
+    (22, 18, 'Veoma kvalitetan proizvod, teško je naći bolji za ovu cijenu.'),
+    (23, 19, 'Poznajem nekoliko korisnika koji ga koriste i svi su zadovoljni.'),
+    (24, 20, 'Sviđa mi se funkcionalnost, preporučujem ga za tvoje svakodnevne potrebe.'),
+    (25, 21, 'Proizvod je vrlo izdržljiv i ima pozitivne recenzije, preporučujem.'),
+    (26, 22, 'Čuo sam mnogo dobrih stvari o njemu, mislim da bi ti bio koristan.'),
+    (27, 23, 'Veoma je popularan među korisnicima tvoje kategorije, mislim da ti odgovara.'),
+    (28, 24, 'Ovaj proizvod je odličan za korištenje u tvojoj industriji.'),
+    (29, 25, 'Kvaliteta je na vrhu, mislim da bi ti bio vrlo koristan.'),
+    (30, 26, 'Veoma je svestran i mislim da bi ti mogao koristiti za više svrha.');
 
 
 -- Pogled: Pregled korisnika s najčešće korištenim kuponima
@@ -1712,7 +1771,6 @@ JOIN narudzbe n ON k.id = n.korisnik_id
 GROUP BY k.id, k.ime, k.prezime
 ORDER BY ukupna_zarada DESC;
 
-ALTER TABLE wishlist ADD grupa VARCHAR(255) DEFAULT 'Bez grupe'; -- (Leo)
 SELECT * FROM popularni_proizvodi;
 SHOW TRIGGERS;
 SHOW WARNINGS;
