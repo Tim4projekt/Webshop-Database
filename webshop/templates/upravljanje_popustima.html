@@ -55,7 +55,7 @@
                 .then(response => {
                     if (response.ok) {
                         alert("Popust je uspješno obrisan!");
-                        location.reload(); // Osvježavanje stranice nakon brisanja
+                        location.reload(); 
                     } else {
                         response.json().then(data => {
                             alert(data.message || "Dogodila se greška prilikom brisanja popusta.");
