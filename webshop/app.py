@@ -777,55 +777,77 @@ def pracenje_isporuka():
 
 
 
-@app.route('/povrat', methods=['POST'])
+@app.route('/povrat', methods=['GET', 'POST'])
 def povrat_proizvoda():
-    data = request.get_json()
-    stavka_id = data.get('stavka_id')
-    razlog = data.get('razlog')
-    datum_povrata = data.get('datum_povrata')
+    if request.method == 'GET':
+        # Dohvaćanje podataka o stavkama narudžbi koje korisnik može vratiti
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        try:
+            # Pretpostavljamo da korisnik ima sesiju sa `user_id` (proverite je)
+            korisnik_id = session.get('user_id')
+            if not korisnik_id:
+                flash("Morate biti prijavljeni za pristup povratu proizvoda!", "error")
+                return redirect(url_for('prijava'))
 
-    if not stavka_id or not razlog or not datum_povrata:
-        return jsonify({'message': 'Svi podaci moraju biti uneseni!'}), 400
+            # Dohvaćamo stavke narudžbi korisnika
+            cursor.execute("""
+                SELECT sn.id, p.naziv, sn.kolicina
+                FROM stavke_narudzbe sn
+                JOIN narudzbe n ON sn.narudzba_id = n.id
+                JOIN proizvodi p ON sn.proizvod_id = p.id
+                WHERE n.korisnik_id = %s
+            """, (korisnik_id,))
+            stavke = cursor.fetchall()
+        finally:
+            db.close()
 
+        # Vraćanje HTML stranice s formom
+        return render_template('povrati_proizvoda.html', stavke=stavke)
+
+    elif request.method == 'POST':
+        # POST metoda za unos povrata (kao što je već implementirano)
+        data = request.get_json()
+        stavka_id = data.get('stavka_id')
+        razlog = data.get('razlog')
+        datum_povrata = data.get('datum_povrata')
+
+        if not stavka_id or not razlog or not datum_povrata:
+            return jsonify({'message': 'Svi podaci moraju biti uneseni!'}), 400
+
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO povrati_proizvoda (stavka_id, datum_povrata, razlog, status_povrata) "
+                "VALUES (%s, %s, %s, 'u obradi')",
+                (stavka_id, datum_povrata, razlog)
+            )
+            db.commit()
+        finally:
+            db.close()
+
+        return jsonify({'message': 'Povrat proizvoda je uspješno poslan!'})
+
+
+
+@app.route('/popust', methods=['GET'])
+def pregled_popusta():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
+
     try:
-        cursor.execute(
-            "INSERT INTO povrati_proizvoda (stavka_id, datum_povrata, razlog, status_povrata) "
-            "VALUES (%s, %s, %s, 'u obradi')",
-            (stavka_id, datum_povrata, razlog)
-        )
-        db.commit()
+        cursor.execute("""
+            SELECT p.id, pr.naziv, p.postotak_popusta, p.datum_pocetka, p.datum_zavrsetka
+            FROM popusti p
+            JOIN proizvodi pr ON p.proizvod_id = pr.id
+        """)
+        popusti = cursor.fetchall()
     finally:
         db.close()
 
-    return jsonify({'message': 'Povrat proizvoda je uspješno poslan!'})
+    return render_template('popusti.html', popusti=popusti)
 
-
-@app.route('/popust', methods=['POST'])
-def dodaj_popust():
-    data = request.get_json()
-    proizvod_id = data.get('proizvod_id')
-    postotak_popusta = data.get('postotak_popusta')
-    datum_pocetka = data.get('datum_pocetka')
-    datum_zavrsetka = data.get('datum_zavrsetka')
-
-    if not proizvod_id or not postotak_popusta or not datum_pocetka or not datum_zavrsetka:
-        return jsonify({'message': 'Svi podaci moraju biti uneseni!'}), 400
-
-    db = MySQLdb.connect(**db_config)
-    cursor = db.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka) "
-            "VALUES (%s, %s, %s, %s)",
-            (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka)
-        )
-        db.commit()
-    finally:
-        db.close()
-
-    return jsonify({'message': 'Popust je uspješno dodan!'})
 
 @app.route('/recenzije', methods=['GET', 'POST'])
 def recenzije():
@@ -883,8 +905,53 @@ def recenzije():
         flash("Dogodila se greška prilikom dohvaćanja proizvoda.", "error")
     finally:
         db.close()
-
+ 
     return render_template('recenzije.html', proizvodi=proizvodi)
+
+
+@app.route('/dodaj_recenziju/<int:proizvod_id>', methods=['POST'])
+def dodaj_recenziju(proizvod_id):
+    korisnik_id = session.get('user_id')
+    if not korisnik_id:
+        flash("Morate biti prijavljeni za ostavljanje recenzije.", "error")
+        return redirect(url_for('prijava'))
+
+    ocjena = request.form.get('ocjena')
+    komentar = request.form.get('komentar')
+
+    if not ocjena or not komentar:
+        flash("Ocjena i komentar su obavezni!", "error")
+        return redirect(request.referrer)
+
+    try:
+        ocjena = int(ocjena)
+        if ocjena < 1 or ocjena > 5:
+            flash("Ocjena mora biti između 1 i 5!", "error")
+            return redirect(request.referrer)
+    except ValueError:
+        flash("Ocjena mora biti broj!", "error")
+        return redirect(request.referrer)
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO recenzije_proizvoda (proizvod_id, korisnik_id, ocjena, komentar, datum_recenzije)
+            VALUES (%s, %s, %s, %s, CURDATE())
+        """, (proizvod_id, korisnik_id, ocjena, komentar))
+        db.commit()
+        flash("Recenzija je uspješno dodana!", "success")
+    except MySQLdb.MySQLError as e:
+        if e.args[0] == 1644:  # SQL SIGNAL greška
+            flash(f"Greška: {e.args[1]}", "error")
+        else:
+            flash("Dogodila se greška pri dodavanju recenzije.", "error")
+        db.rollback()
+    finally:
+        db.close()
+
+    return redirect(request.referrer)
+
 
 
 @app.route('/lista_preporuka', methods=['GET'])
@@ -1231,6 +1298,108 @@ def upravljanje_popustima():
     db.close()
 
     return render_template('upravljanje_popustima.html', popusti=popusti)
+
+
+@app.route('/dodaj_popust', methods=['GET', 'POST'])
+def dodaj_popust():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    if request.method == 'POST':
+        proizvod_id = request.form['proizvod_id']
+        postotak_popusta = request.form['postotak_popusta']
+        datum_pocetka = request.form['datum_pocetka']
+        datum_zavrsetka = request.form['datum_zavrsetka']
+
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka)
+                VALUES (%s, %s, %s, %s)
+            """, (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka))
+            db.commit()
+            flash('Popust uspješno dodan!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+            db.rollback()
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_popustima'))
+
+    # Dohvaćanje svih proizvoda za prikaz u formi
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    cursor.execute("SELECT id, naziv FROM proizvodi")
+    proizvodi = cursor.fetchall()
+    db.close()
+
+    return render_template('dodaj_popust.html', proizvodi=proizvodi)
+
+
+
+@app.route('/obrisi_popust/<int:popust_id>', methods=['POST'])
+def obrisi_popust(popust_id):
+    if 'user_id' not in session:
+        return jsonify({'message': 'Morate biti prijavljeni!'}), 403
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        cursor.execute("DELETE FROM popusti WHERE id = %s", (popust_id,))
+        db.commit()
+        return jsonify({'message': 'Popust uspješno obrisan!'}), 200
+    except MySQLdb.MySQLError as e:
+        db.rollback()
+        return jsonify({'message': f'Greška: {e.args[1]}'}), 500
+    finally:
+        db.close()
+
+
+
+@app.route('/azuriraj_popust/<int:popust_id>', methods=['GET', 'POST'])
+def azuriraj_popust(popust_id):
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        proizvod_id = request.form['proizvod_id']
+        postotak_popusta = request.form['postotak_popusta']
+        datum_pocetka = request.form['datum_pocetka']
+        datum_zavrsetka = request.form['datum_zavrsetka']
+
+        try:
+            cursor.execute("""
+                UPDATE popusti
+                SET proizvod_id = %s, postotak_popusta = %s, datum_pocetka = %s, datum_zavrsetka = %s
+                WHERE id = %s
+            """, (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrsetka, popust_id))
+            db.commit()
+            flash('Popust uspješno ažuriran!', 'success')
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+            db.rollback()
+        finally:
+            db.close()
+
+        return redirect(url_for('upravljanje_popustima'))
+
+    # Dohvaćanje postojećih podataka za popust i proizvode
+    cursor.execute("SELECT id, naziv FROM proizvodi")
+    proizvodi = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM popusti WHERE id = %s", (popust_id,))
+    popust = cursor.fetchone()
+
+    db.close()
+
+    return render_template('azuriraj_popust.html', popust=popust, proizvodi=proizvodi)
+
+
 
 @app.route('/dodaj_korisnika', methods=['GET', 'POST'])
 def dodaj_korisnika():
@@ -1962,6 +2131,242 @@ def azuriraj_podrsku(id):
 
     return render_template('azuriraj_podrsku.html', podrska=podrska)
 
+@app.route('/upravljanje_isporukama', methods=['GET', 'POST'])
+def upravljanje_isporukama():
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        # Preuzimanje podataka iz forme
+        isporuka_id = request.form['isporuka_id']
+        novi_status = request.form['status_isporuke']
+
+        try:
+            # SQL za ažuriranje statusa isporuke i automatski izračun datuma isporuke
+            cursor.execute("""
+                UPDATE pracenje_isporuka pi
+                JOIN narudzbe n ON pi.narudzba_id = n.id
+                JOIN nacini_isporuke ni ON n.nacin_isporuke_id = ni.id
+                SET pi.status_isporuke = %s,
+                    pi.datum_isporuke = CASE
+                        WHEN %s = 'poslano' THEN DATE_ADD(CURDATE(), INTERVAL ni.trajanje DAY)
+                        ELSE NULL
+                    END
+                WHERE pi.id = %s
+            """, (novi_status, novi_status, isporuka_id))
+            db.commit()
+            flash('Status isporuke uspješno ažuriran!', 'success')
+
+        except MySQLdb.MySQLError as e:
+            flash(f'Greška: {e.args[1]}', 'error')
+            db.rollback()
+
+    # Dohvaćanje svih isporuka za prikaz
+    cursor.execute("""
+        SELECT pi.id, pi.narudzba_id, n.datum_narudzbe, pi.status_isporuke, pi.datum_isporuke
+        FROM pracenje_isporuka pi
+        JOIN narudzbe n ON pi.narudzba_id = n.id
+    """)
+    isporuke = cursor.fetchall()
+
+    db.close()
+    return render_template('upravljanje_isporukama.html', isporuke=isporuke)
+
+
+@app.route('/azuriraj_isporuku/<int:isp_id>', methods=['POST'])
+def azuriraj_isporuku(isp_id):
+    # Preuzimamo novi status iz forme
+    novi_status = request.form['status_isporuke']
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        # Ažuriranje statusa i datuma isporuke, ako je status "poslano"
+        cursor.execute("""
+            UPDATE pracenje_isporuka pi
+            JOIN narudzbe n ON pi.narudzba_id = n.id
+            JOIN nacini_isporuke ni ON n.nacin_isporuke_id = ni.id
+            SET pi.status_isporuke = %s,
+                pi.datum_isporuke = CASE
+                    WHEN %s = 'poslano' THEN DATE_ADD(CURDATE(), INTERVAL ni.trajanje DAY)
+                    ELSE NULL
+                END
+            WHERE pi.id = %s
+        """, (novi_status, novi_status, isp_id))
+        db.commit()
+        flash('Status isporuke uspješno ažuriran!', 'success')
+    except MySQLdb.MySQLError as e:
+        db.rollback()
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_isporukama'))
+
+
+@app.route('/upravljanje_nacinima_isporuke', methods=['GET'])
+def upravljanje_nacinima_isporuke():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    # Dohvaćanje svih načina isporuke
+    cursor.execute("SELECT * FROM nacini_isporuke")
+    nacini_isporuke = cursor.fetchall()
+
+    db.close()
+    return render_template('upravljanje_nacinima_isporuke.html', nacini_isporuke=nacini_isporuke)
+
+
+
+@app.route('/dodaj_nacin_isporuke', methods=['GET', 'POST'])
+def dodaj_nacin_isporuke():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    if request.method == 'POST':
+        naziv = request.form['naziv']
+        opis = request.form.get('opis', '')
+        cijena = request.form['cijena']
+        trajanje = request.form['trajanje']
+
+        db = MySQLdb.connect(**db_config)
+        cursor = db.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO nacini_isporuke (naziv, opis, cijena, trajanje)
+                VALUES (%s, %s, %s, %s)
+            """, (naziv, opis, cijena, trajanje))
+            db.commit()
+            flash('Način isporuke uspješno dodan!', 'success')
+        except MySQLdb.MySQLError as e:
+            db.rollback()
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+        return redirect(url_for('upravljanje_nacinima_isporuke'))
+
+    return render_template('dodaj_nacin_isporuke.html')
+
+
+@app.route('/azuriraj_nacin_isporuke/<int:id>', methods=['GET', 'POST'])
+def azuriraj_nacin_isporuke(id):
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        naziv = request.form['naziv']
+        opis = request.form.get('opis', '')
+        cijena = request.form['cijena']
+        trajanje = request.form['trajanje']
+
+        try:
+            cursor.execute("""
+                UPDATE nacini_isporuke
+                SET naziv = %s, opis = %s, cijena = %s, trajanje = %s
+                WHERE id = %s
+            """, (naziv, opis, cijena, trajanje, id))
+            db.commit()
+            flash('Način isporuke uspješno ažuriran!', 'success')
+        except MySQLdb.MySQLError as e:
+            db.rollback()
+            flash(f'Greška: {e.args[1]}', 'error')
+        finally:
+            db.close()
+        return redirect(url_for('upravljanje_nacinima_isporuke'))
+
+    # Dohvaćanje podataka za popunjavanje forme
+    cursor.execute("SELECT * FROM nacini_isporuke WHERE id = %s", (id,))
+    nacin_isporuke = cursor.fetchone()
+    db.close()
+
+    return render_template('azuriraj_nacin_isporuke.html', nacin_isporuke=nacin_isporuke)
+
+@app.route('/obrisi_nacin_isporuke/<int:id>', methods=['POST'])
+def obrisi_nacin_isporuke(id):
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        cursor.execute("DELETE FROM nacini_isporuke WHERE id = %s", (id,))
+        db.commit()
+        flash('Način isporuke uspješno obrisan!', 'success')
+    except MySQLdb.MySQLError as e:
+        db.rollback()
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_nacinima_isporuke'))
+
+
+@app.route('/upravljanje_pracenjem', methods=['GET', 'POST'])
+def upravljanje_pracenjem():
+    if 'user_id' not in session:
+        return redirect(url_for('prijava'))
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        pracenje_id = request.form.get('pracenje_id')
+        novi_status = request.form.get('status_isporuke')
+
+        try:
+            # Ažuriranje statusa isporuke
+            cursor.execute("""
+                UPDATE pracenje_isporuka
+                SET status_isporuke = %s
+                WHERE id = %s
+            """, (novi_status, pracenje_id))
+            db.commit()
+            flash('Status isporuke uspješno ažuriran!', 'success')
+        except MySQLdb.MySQLError as e:
+            db.rollback()
+            flash(f'Greška: {e.args[1]}', 'error')
+
+    # Dohvaćanje podataka za prikaz
+    cursor.execute("""
+        SELECT pi.id, pi.narudzba_id, n.datum_narudzbe, n.status_narudzbe, 
+               pi.status_isporuke, pi.datum_isporuke
+        FROM pracenje_isporuka pi
+        JOIN narudzbe n ON pi.narudzba_id = n.id
+    """)
+    pracenje_list = cursor.fetchall()
+    db.close()
+
+    return render_template('upravljanje_pracenjem.html', pracenje_list=pracenje_list)
+
+
+@app.route('/azuriraj_pracenje/<int:pracenje_id>', methods=['POST'])
+def azuriraj_pracenje(pracenje_id):
+    novi_status = request.form['status_isporuke']
+
+    db = MySQLdb.connect(**db_config)
+    cursor = db.cursor()
+    try:
+        # Ažuriranje statusa isporuke
+        cursor.execute("""
+            UPDATE pracenje_isporuka
+            SET status_isporuke = %s
+            WHERE id = %s
+        """, (novi_status, pracenje_id))
+        db.commit()
+        flash('Status isporuke uspješno ažuriran!', 'success')
+    except MySQLdb.MySQLError as e:
+        db.rollback()
+        flash(f'Greška: {e.args[1]}', 'error')
+    finally:
+        db.close()
+
+    return redirect(url_for('upravljanje_pracenjem'))
 
 
 
