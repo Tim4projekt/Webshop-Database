@@ -3070,7 +3070,7 @@ INSERT INTO popusti (proizvod_id, postotak_popusta, datum_pocetka, datum_zavrset
 
 -- okidač koji osigurava automatsko brisanje popusta na proizvode kada istekne datum završetka (Bruno)
 DELIMITER //
-CREATE TRIGGER bi_popusti
+CREATE TRIGGER bi_1_popusti
 BEFORE INSERT ON popusti 
 FOR EACH ROW 
 BEGIN 
