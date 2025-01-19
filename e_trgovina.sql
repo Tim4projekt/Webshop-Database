@@ -1575,6 +1575,7 @@ DELIMITER ;
 
 -- Procedura: Brisanje korisnika (Leo)
 DELIMITER //
+
 CREATE PROCEDURE obrisi_korisnika(
     IN p_korisnik_id INT
 )
@@ -1589,6 +1590,9 @@ BEGIN
         SIGNAL SQLSTATE '45001'
         SET MESSAGE_TEXT = 'Korisnik ima aktivne narudžbe i ne može se obrisati!';
     ELSE
+        -- Brisanje povezanih podataka u preporuceni_proizvodi
+        DELETE FROM preporuceni_proizvodi WHERE korisnik_id = p_korisnik_id;
+
         -- Brisanje povezanih recenzija
         DELETE FROM recenzije_proizvoda WHERE korisnik_id = p_korisnik_id;
 
@@ -1602,6 +1606,7 @@ BEGIN
         DELETE FROM korisnici WHERE id = p_korisnik_id;
     END IF;
 END //
+
 DELIMITER ;
 
 
