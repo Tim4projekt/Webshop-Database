@@ -1,4 +1,4 @@
-/* Postojeći stilovi */
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -122,7 +122,6 @@ h2 {
     background-color: #218838;
 }
 
-/* Novi stilovi za prijavu i registraciju */
 form {
     background: #fff;
     padding: 20px 30px;
@@ -189,12 +188,11 @@ form .alt-link:hover {
     text-decoration: underline;
 }
 
-/* Poravnanje za prijavu i registraciju */
 #prijava-container, #registracija-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: calc(100vh - 60px); /* Oduzimamo visinu headera */
+    height: calc(100vh - 60px);
     background-color: #f9f9f9;
 }
 
@@ -251,8 +249,6 @@ form .alt-link:hover {
     font-size: 14px;
 }
 
-/* Stilovi za container proizvoda */
-/* Stilovi za container proizvoda */
 #proizvod-container {
     background: #fff;
     padding: 20px 30px;
@@ -325,7 +321,6 @@ header h1 {
     background-color: #218838;
 }
 
-/* General header styling */
 header {
     background: #333;
     color: white;
@@ -354,8 +349,6 @@ header h1 {
     background-color: #218838;
 }
 
-/* Container for cart items */
-/* Kosarica container styling */
 #kosarica-container {
     display: flex;
     justify-content: center;
@@ -365,7 +358,6 @@ header h1 {
     padding: 40px 20px;
 }
 
-/* Wrapper for kosarica */
 .kosarica-wrapper {
     background: white;
     padding: 30px 40px;
@@ -375,7 +367,6 @@ header h1 {
     max-width: 900px;
 }
 
-/* Header styling */
 .kosarica-wrapper h2 {
     text-align: center;
     font-size: 24px;
@@ -385,7 +376,6 @@ header h1 {
     padding-bottom: 10px;
 }
 
-/* Table styling */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -418,7 +408,6 @@ table tr:hover {
     background-color: #f1f1f1;
 }
 
-/* Aligning the forms in table cells */
 .update-cart-form, .delete-item-form {
     display: inline-flex;
     align-items: center;
@@ -426,7 +415,6 @@ table tr:hover {
     width: 50%;
 }
 
-/* Input field for quantity */
 .update-cart-form input[type="number"] {
     width: 100%;
     padding: 5px;
@@ -436,7 +424,6 @@ table tr:hover {
     margin-right: 10px;
 }
 
-/* Styling for buttons inside forms */
 .update-cart-form button, .delete-item-form button {
     background-color: #28a745;
     color: white;
@@ -451,7 +438,6 @@ table tr:hover {
     background-color: #218838;
 }
 
-/* Action buttons in table */
 .kosarica-actions {
     text-align: right;
 }
@@ -471,8 +457,6 @@ table tr:hover {
     background-color: #218838;
 }
 
-
-/* Stilovi za modal */
 .modal {
     position: fixed;
     top: 0;
@@ -497,15 +481,13 @@ table tr:hover {
     margin: 10px;
 }
 
-/* Kontejner za proizvode */
 .proizvodi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Podesite širinu kolona */
-    gap: 20px; /* Razmak između kartica */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
     padding: 20px;
 }
 
-/* Stil za svaku karticu proizvoda */
 .proizvod-card {
     width: 400px;
     border: 1px solid #ddd;
@@ -540,7 +522,6 @@ table tr:hover {
     background-color: #218838;
 }
 
-/* Razmak između proizvoda */
 .proizvod-card + .proizvod-card {
     margin-left: 20px;
 }
