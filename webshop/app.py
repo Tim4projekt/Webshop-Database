@@ -1174,7 +1174,7 @@ def statistike():
         LEFT JOIN wishlist w ON p.id = w.proizvod_id
         GROUP BY p.id, p.naziv
         ORDER BY broj_dodavanja DESC
-        LIMIT 3
+        LIMIT 5
     """)
     top_proizvodi = cursor.fetchall()
 
