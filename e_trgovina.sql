@@ -3317,18 +3317,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Josip: Okidač za automatsko postavljanje datuma izdavanja računa
-DELIMITER //
-CREATE TRIGGER postavi_datum_izdavanja
-BEFORE INSERT ON racuni
-FOR EACH ROW
-BEGIN
-    IF NEW.datum_izdavanja IS NULL THEN
-        SET NEW.datum_izdavanja = CURDATE();
-    END IF;
-END //
-DELIMITER ;
-
 -- Josip: Okidač za ograničenje maksimalnog iskorištenja kupona
 DELIMITER //
 CREATE TRIGGER ograničenje_iskorištenja_kupona
@@ -3341,7 +3329,19 @@ BEGIN
     FROM narudzbe
     WHERE kupon_id = NEW.kupon_id;
     IF iskorištenja >= (SELECT max_iskoristenja FROM kuponi WHERE id = NEW.kupon_id) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Kupon je dosegao maksimalan broj iskorištenja!';
+        SIGNAL SQLSTATE '45200' SET MESSAGE_TEXT = 'Kupon je dosegao maksimalan broj iskorištenja!';
+    END IF;
+END //
+DELIMITER ;
+
+-- Josip: Okidač za automatsko postavljanje datuma izdavanja računa
+DELIMITER //
+CREATE TRIGGER postavi_datum_izdavanja
+BEFORE INSERT ON racuni
+FOR EACH ROW
+BEGIN
+    IF NEW.datum_izdavanja IS NULL THEN
+        SET NEW.datum_izdavanja = CURDATE();
     END IF;
 END //
 DELIMITER ;
