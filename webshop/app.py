@@ -31,20 +31,17 @@ try:
         korisnik_id = korisnik[0]
         plain_lozinka = korisnik[1]
 
-
         if plain_lozinka.startswith("$2b$"):
             continue
 
-       
         hashed_lozinka = bcrypt.hashpw(plain_lozinka.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        
+
         cursor.execute(
             "UPDATE korisnici SET lozinka = %s WHERE id = %s",
             (hashed_lozinka, korisnik_id)
         )
 
-    
     db.commit()
     print("Sve lozinke su uspješno hashirane.")
 
