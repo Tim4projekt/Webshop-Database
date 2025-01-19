@@ -1565,13 +1565,13 @@ DELIMITER ;
 -- Procedura: Ukloni u wishlist (Leo)
 DELIMITER //
 
-CREATE PROCEDURE ukloni_proizvod_iz_wishliste(korisnik_id INT, proizvod_id INT)
+CREATE PROCEDURE ukloni_proizvod_iz_wishliste(p_korisnik_id INT, p_proizvod_id INT)
 BEGIN
-    -- Brisanje proizvoda iz wishlist-a
-    DELETE FROM wishlist WHERE korisnik_id = korisnik_id AND proizvod_id = proizvod_id;
+    DELETE FROM wishlist WHERE korisnik_id = p_korisnik_id AND proizvod_id = p_proizvod_id;
 END//
 
 DELIMITER ;
+
 
 -- Procedura: Brisanje korisnika (Leo)
 DELIMITER //
