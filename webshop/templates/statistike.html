@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Pregled Statistika</title>
     <style>
-        /* Osnovni stilovi za tijelo */
+      
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -12,7 +12,6 @@
             background-color: #f5f5f5;
         }
 
-        /* Header stil */
         header {
             background-color: #333;
             color: white;
@@ -25,7 +24,6 @@
             font-size: 2em;
         }
 
-        /* Stil za dugmadi */
         .back-button {
             background-color: #28a745;
             color: white;
@@ -41,7 +39,6 @@
             background-color: #218838;
         }
 
-        /* Kontejner za statistiku */
         .statistics-container {
             width: 85%;
             margin: 20px auto;
@@ -62,7 +59,6 @@
             margin: 10px 0;
         }
 
-        /* Stil za tablice */
         .statistics-table {
             width: 100%;
             border-collapse: collapse;
@@ -89,12 +85,10 @@
             background-color: #f1f1f1;
         }
 
-        /* Skriveni sadržaj sekcija */
         .section-content {
             display: none;
         }
 
-        /* Dugme za otvaranje i zatvaranje sekcija */
         button {
             background-color: #28a745;
             color: white;
@@ -110,7 +104,6 @@
             background-color: #218838;
         }
 
-        /* Responsive dizajn za mobilne uređaje */
         @media screen and (max-width: 768px) {
             .statistics-container {
                 width: 95%;
@@ -213,7 +206,6 @@
     </div>
 
     <script>
-        // Funkcija za prikazivanje ili skrivanje sekcija
         function toggleSection(sectionId) {
             var section = document.getElementById(sectionId);
             if (section.style.display === "none" || section.style.display === "") {
