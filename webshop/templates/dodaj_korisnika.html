@@ -12,7 +12,6 @@
         <button class="back-button" onclick="location.href='/upravljanje_korisnicima'">Natrag na Upravljanje korisnicima</button>
     </header>
 
-    <!-- Prikazivanje flash poruka -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-messages">
