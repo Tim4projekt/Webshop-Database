@@ -10,7 +10,6 @@
         <h1>Webshop</h1>
         <nav>
             {% if 'user_id' in session %}
-                <!-- Navigacija za prijavljene korisnike -->
                 <button id="logoutButton" onclick="window.location.href='/logout'">Odjava</button>
                 <a href="/kosarica">Košarica</a>
                 <a href="/wishlist">Vaša Wishlist</a>
@@ -23,7 +22,6 @@
                 <a href="/lista_preporuka">Lista preporuka</a>
                 <a href="/profil">Profil</a>
             {% else %}
-                <!-- Navigacija za neprijavljene korisnike -->
                 <button id="loginButton" onclick="window.location.href='/prijava'">Prijava</button>
                 <button id="registerButton" onclick="window.location.href='/registracija'">Registracija</button>
             {% endif %}
@@ -33,7 +31,7 @@
     </header>
 
     <main>
-        <!-- Kategorije -->
+
         <section>
             <h2>Kategorije proizvoda</h2>
             <div class="kategorije">
@@ -45,7 +43,6 @@
             </div>
         </section>
 
-        <!-- Lista proizvoda sa modalom -->
         <section>
             <h2>Proizvodi</h2>
             <div class="proizvodi">
@@ -62,7 +59,6 @@
             </div>
         </section>
 
-        <!-- Modalni prozor -->
         <div id="wishlistModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <h2>Odaberite grupu</h2>
@@ -78,7 +74,6 @@
             </div>
         </div>
 
-<!-- Paginacija -->
 <div class="pagination">
     {% if page > 1 %}
         <a href="{{ url_for('home', page=1) }}">Prva</a>
@@ -87,11 +82,11 @@
 
     {% for p in pagination %}
         {% if p == page %}
-            <span>{{ p }}</span>  <!-- Ako je trenutna stranica, ne prikazuj link -->
+            <span>{{ p }}</span>  
         {% elif p == '...' %}
-            <span>...</span>  <!-- Ako je to skraćivanje, prikaži ... -->
+            <span>...</span> 
         {% else %}
-            <a href="{{ url_for('home', page=p) }}">{{ p }}</a>  <!-- Ako nije trenutna stranica, prikaži link -->
+            <a href="{{ url_for('home', page=p) }}">{{ p }}</a>
         {% endif %}
     {% endfor %}
 
@@ -106,19 +101,16 @@
     <script>
         let selectedProductId = null;
 
-        // Funkcija za otvaranje modala
         function otvoriModal(proizvodId) {
-            selectedProductId = proizvodId; // Čuvanje ID-a proizvoda
+            selectedProductId = proizvodId; 
             document.getElementById('wishlistModal').style.display = 'flex';
         }
 
-        // Funkcija za zatvaranje modala
         function zatvoriModal() {
             document.getElementById('wishlistModal').style.display = 'none';
-            selectedProductId = null; // Resetovanje ID-a proizvoda
+            selectedProductId = null; 
         }
 
-        // Dodavanje proizvoda u Wishlist sa grupom
         document.getElementById('confirmWishlist').addEventListener('click', function () {
             const grupa = document.getElementById('modal-grupa').value;
 
@@ -131,13 +123,12 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message); // Poruka korisniku
-                zatvoriModal(); // Zatvaranje modala
+                alert(data.message); 
+                zatvoriModal(); 
             })
-            .catch(error => alert('Došlo je do greške pri dodavanju u Wishlist.'));
+            .catch(error => alert('Došlo je do greške prilikom dodavanju u Wishlist.'));
         });
 
-        // Dodavanje eventa za zatvaranje modala
         document.getElementById('closeModal').addEventListener('click', zatvoriModal);
 
         function dodajUKosaricu(proizvodId) {
