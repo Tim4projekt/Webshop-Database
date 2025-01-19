@@ -29,7 +29,7 @@
     
     <script>
         document.getElementById("prijavaForm").addEventListener("submit", function(event) {
-            event.preventDefault();  // Sprečava standardno slanje forme
+            event.preventDefault(); 
     
             let email = event.target.email.value;
             let lozinka = event.target.lozinka.value;
@@ -43,9 +43,9 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);  // Obavijest o uspješnoj prijavi
+                alert(data.message); 
                 if (data.message === "Prijava uspješna!") {
-                    window.location.href = '/';  // Preusmjerenje na početnu stranicu
+                    window.location.href = '/'; 
                 }
             })
             .catch((error) => console.error('Greška:', error));
