@@ -1596,6 +1596,9 @@ BEGIN
         -- Brisanje povezanih recenzija
         DELETE FROM recenzije_proizvoda WHERE korisnik_id = p_korisnik_id;
 
+        -- Brisanje povezanih računa (ako postoji takav vanjski ključ sa ON DELETE CASCADE)
+        DELETE FROM racuni WHERE korisnik_id = p_korisnik_id;
+
         -- Brisanje povezanih podataka
         DELETE FROM placanja WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
         DELETE FROM stavke_narudzbe WHERE narudzba_id IN (SELECT id FROM narudzbe WHERE korisnik_id = p_korisnik_id);
@@ -1608,6 +1611,7 @@ BEGIN
 END //
 
 DELIMITER ;
+
 
 
 -- Procedura: Ažuriranje korsinika(Leo)
