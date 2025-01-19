@@ -1,40 +1,40 @@
-<h1>Dodavanje popusta</h1>
-<form id="popustForm">
-    <label for="proizvod_id">Proizvod ID:</label>
-    <input type="number" id="proizvod_id" name="proizvod_id" required>
-
-    <label for="postotak_popusta">Postotak popusta:</label>
-    <input type="number" id="postotak_popusta" name="postotak_popusta" required>
-
-    <label for="datum_pocetka">Datum početka:</label>
-    <input type="date" id="datum_pocetka" name="datum_pocetka" required>
-
-    <label for="datum_zavrsetka">Datum završetka:</label>
-    <input type="date" id="datum_zavrsetka" name="datum_zavrsetka" required>
-
-    <button type="submit">Dodaj popust</button>
-</form>
-
-<script>
-    document.getElementById('popustForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const proizvod_id = document.getElementById('proizvod_id').value;
-        const postotak_popusta = document.getElementById('postotak_popusta').value;
-        const datum_pocetka = document.getElementById('datum_pocetka').value;
-        const datum_zavrsetka = document.getElementById('datum_zavrsetka').value;
-
-        fetch('/popust', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ proizvod_id: proizvod_id, postotak_popusta: postotak_popusta, datum_pocetka: datum_pocetka, datum_zavrsetka: datum_zavrsetka })
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => console.error('Greška:', error));
-    });
-</script>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregled Popusta</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Pregled Popusta</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+    
+    <main>
+        <h2>Popusti</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Popusta</th>
+                    <th>Proizvod</th>
+                    <th>Postotak Popusta</th>
+                    <th>Datum Početka</th>
+                    <th>Datum Završetka</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for popust in popusti %}
+                <tr>
+                    <td>{{ popust[0] }}</td>
+                    <td>{{ popust[1] }}</td>
+                    <td>{{ popust[2] }}%</td>
+                    <td>{{ popust[3] }}</td>
+                    <td>{{ popust[4] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
