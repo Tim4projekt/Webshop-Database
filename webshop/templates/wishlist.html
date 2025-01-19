@@ -136,7 +136,7 @@
     </header>
 
     <main>
-        <!-- Popularni proizvodi -->
+
         <section>
             <h2>Top 3 najpopularnija proizvoda u wishlisti</h2>
             {% if popularni_proizvodi %}
@@ -152,7 +152,7 @@
             {% endif %}
         </section>
 
-        <!-- Filter forma -->
+
         <form id="filter-form" onsubmit="event.preventDefault(); filterWishlist();">
             <label for="filter-grupa">Grupa:</label>
             <select id="filter-grupa">
@@ -171,7 +171,7 @@
             <button type="submit" class="filter-button">Filtriraj</button>
         </form>
 
-        <!-- Wishlist proizvodi -->
+
         {% if proizvodi_u_wishlistu %}
         <div class="wishlist-container">
             {% for grupa, proizvodi in proizvodi_u_wishlistu.items() %}
@@ -204,8 +204,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
-                    alert(data.message); // Prikaz poruke korisniku (opcionalno)
-                    // Ukloni proizvod iz prikaza
+                    alert(data.message);
+
                     const item = document.getElementById(`wishlist-item-${proizvodId}`);
                     if (item) {
                         item.remove();
@@ -214,7 +214,7 @@
             })
             .catch(error => {
                 console.error('Greška:', error);
-                alert('Došlo je do greške pri uklanjanju proizvoda.');
+                alert('Došlo je do greške prilikom uklanjanja proizvoda.');
             });
         }
 
@@ -231,9 +231,9 @@
 
                 if ((filterGrupa === '' || itemGrupa.includes(filterGrupa)) &&
                     (itemCijena >= filterMinCijena && itemCijena <= filterMaxCijena)) {
-                    item.style.display = 'block'; // Prikaz proizvoda
+                    item.style.display = 'block'; 
                 } else {
-                    item.style.display = 'none'; // Sakrivanje proizvoda
+                    item.style.display = 'none'; 
                 }
             });
         }
