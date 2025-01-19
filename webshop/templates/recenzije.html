@@ -2,7 +2,6 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recenzije proizvoda</title>
     <link rel="stylesheet" href="static/styles.css">
 </head>
@@ -11,14 +10,14 @@
         <h1>Ostavite recenziju za proizvod</h1>
         <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
     </header>
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="messages">
             {% for category, message in messages %}
-                {% if category == "error" %}
+                {% if category == "error_recenzije" %}
                 <div class="alert error">{{ message }}</div>
-                {% elif category == "success" %}
+                {% elif category == "success_recenzije" %}
                 <div class="alert success">{{ message }}</div>
                 {% endif %}
             {% endfor %}
@@ -26,15 +25,7 @@
         {% endif %}
     {% endwith %}
 
-
     <main>
-        <!-- Prikazivanje poruke ako postoji -->
-        {% if message %}
-        <div class="message">
-            {{ message }}
-        </div>
-        {% endif %}
-
         <form id="recenzijaForm" method="POST">
             <div class="form-group">
                 <label for="proizvod_id">Odaberite proizvod:</label>
