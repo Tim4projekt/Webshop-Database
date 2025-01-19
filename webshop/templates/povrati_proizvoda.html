@@ -1,4 +1,17 @@
-<h1>Povrat proizvoda</h1>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Praćenje isporuka</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Povrat proizvoda</h1>
+        <button class="back-button" onclick="location.href='/'">Natrag na početnu</button>
+    </header>
+
+<button onclick="location.href='/'">Natrag na proizvode</button>
 <form id="povratForm">
     <label for="stavka_id">Stavka ID:</label>
     <input type="number" id="stavka_id" name="stavka_id" required>
@@ -34,3 +47,5 @@
         .catch(error => console.error('Greška:', error));
     });
 </script>
+</body>
+</html>
