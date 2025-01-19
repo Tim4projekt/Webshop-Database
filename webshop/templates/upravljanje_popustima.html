@@ -32,11 +32,43 @@
                 <td>{{ popust[3] }}</td>
                 <td>{{ popust[4] }}</td>
                 <td>
+                    <button onclick="location.href='/azuriraj_popust/{{ popust[0] }}'">Ažuriraj</button>
                     <button onclick="obrisiPopust({{ popust[0] }})">Obriši</button>
                 </td>
+                
+                
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+
+    <script>
+        function obrisiPopust(popustId) {
+            if (confirm("Jeste li sigurni da želite obrisati ovaj popust?")) {
+                fetch(`/obrisi_popust/${popustId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Popust je uspješno obrisan!");
+                        location.reload(); // Osvježavanje stranice nakon brisanja
+                    } else {
+                        response.json().then(data => {
+                            alert(data.message || "Dogodila se greška prilikom brisanja popusta.");
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Greška:", error);
+                    alert("Dogodila se greška prilikom brisanja popusta.");
+                });
+            }
+        }
+    </script>
+    
 </body>
 </html>
