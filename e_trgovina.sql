@@ -1596,7 +1596,7 @@ BEGIN
         -- Brisanje povezanih recenzija
         DELETE FROM recenzije_proizvoda WHERE korisnik_id = p_korisnik_id;
 
-        -- Brisanje povezanih računa (ako postoji takav vanjski ključ sa ON DELETE CASCADE)
+        -- Brisanje povezanih računa 
         DELETE FROM racuni WHERE korisnik_id = p_korisnik_id;
 
         -- Brisanje povezanih podataka
