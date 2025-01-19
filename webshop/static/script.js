@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dohvatiProizvode();
 });
 
-// Funkcija za dohvaćanje proizvoda iz API-ja
 async function dohvatiProizvode() {
     const response = await fetch('/api/proizvodi');
     const proizvodi = await response.json();
@@ -18,19 +17,15 @@ async function dohvatiProizvode() {
         listaProizvoda.appendChild(div);
     });
 
-    // Dodavanje event listener-a za dugmad "Dodaj u košaricu"
     document.querySelectorAll('.dodaj-u-kosaricu').forEach(button => {
         button.addEventListener('click', (event) => {
             const proizvodId = event.target.getAttribute('data-id');
             alert(`Proizvod ID ${proizvodId} dodan u košaricu!`);
-            // Ovdje možete dodati logiku za dodavanje u košaricu
         });
     });
 }
 
 
-
-// Funkcija za dodavanje proizvoda u košaricu
 async function dodajUKosaricu(proizvodId, kolicina) {
     const response = await fetch('/api/kosarica', {
         method: 'POST',
@@ -44,11 +39,10 @@ async function dodajUKosaricu(proizvodId, kolicina) {
     alert(data.message);
 }
 
-// Dodavanje event listener-a za dugmad "Dodaj u košaricu"
 document.querySelectorAll('.dodaj-u-kosaricu').forEach(button => {
     button.addEventListener('click', (event) => {
         const proizvodId = event.target.getAttribute('data-id');
-        const kolicina = 1; // Možete dodati opciju za odabir količine
+        const kolicina = 1; 
         dodajUKosaricu(proizvodId, kolicina);
     });
 });
