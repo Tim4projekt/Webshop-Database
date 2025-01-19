@@ -56,8 +56,8 @@
                     <label for="telefon">Telefon:</label>
                     <input type="text" id="telefon" name="telefon" value="{{ korisnik[6] }}" required>
                 </div>
-                <button type="button" onclick="azurirajProfil()">Sačuvaj Promene</button>
-                <button type="button" onclick="zatvoriFormu()">Otkaži</button>
+                <button type="button" onclick="azurirajProfil()">Spremi Promjene</button>
+                <button type="button" onclick="zatvoriFormu()">Odustani</button>
             </form>
         </div>
 
@@ -119,13 +119,13 @@
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                if (data.message === 'Profil uspešno ažuriran!') {
+                if (data.message === 'Profil uspješno ažuriran!') {
                     location.reload();
                 }
             })
             .catch(error => {
                 console.error('Greška:', error);
-                alert('Došlo je do greške pri ažuriranju profila!');
+                alert('Došlo je do greške prilikom ažuriranju profila!');
             });
         }
 
@@ -135,7 +135,7 @@
                     .then(response => response.json())
                     .then(data => {
                         alert(data.message);
-                        if (data.message === 'Račun uspešno obrisan!') {
+                        if (data.message === 'Račun uspješno obrisan!') {
                             window.location.href = '/logout';
                         }
                     })
