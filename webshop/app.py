@@ -16,7 +16,7 @@ app.secret_key = 'neki_skriveni_kljuc_koji_je_jedinstven'
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': 'Babobilka156',
     'database': 'webshop'
 }
 
@@ -1152,7 +1152,7 @@ def upravljanje_narudzbama():
 @app.route('/statistike', methods=['GET'])
 def statistike():
     if 'user_id' not in session:
-        return redirect(url_for('prijava'))
+        return redirect(url_for('prijava'))  # Provjera je li korisnik prijavljen
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
@@ -1167,9 +1167,51 @@ def statistike():
     cursor.execute("SELECT SUM(ukupna_cijena) FROM narudzbe")
     ukupna_zarada = cursor.fetchone()[0]
 
+    # Dohvaćanje top 3 najpopularnija proizvoda (najviše puta dodana u wishlist)
+    cursor.execute("""
+        SELECT p.id AS proizvod_id, p.naziv AS proizvod_naziv, COUNT(w.proizvod_id) AS broj_dodavanja
+        FROM proizvodi p
+        LEFT JOIN wishlist w ON p.id = w.proizvod_id
+        GROUP BY p.id, p.naziv
+        ORDER BY broj_dodavanja DESC
+        LIMIT 3
+    """)
+    top_proizvodi = cursor.fetchall()
+
+    # Dohvaćanje top 5 korisnika sa najviše narudžbi
+    cursor.execute("""
+        SELECT k.id AS korisnik_id, k.ime, k.prezime, COUNT(n.id) AS broj_narudzbi
+        FROM korisnici k
+        JOIN narudzbe n ON k.id = n.korisnik_id
+        GROUP BY k.id, k.ime, k.prezime
+        ORDER BY broj_narudzbi DESC
+        LIMIT 5
+    """)
+    top_korisnici_narudzbe = cursor.fetchall()
+
+    # Dohvaćanje ukupne zarade po korisnicima
+    cursor.execute("""
+        SELECT k.id AS korisnik_id, k.ime, k.prezime, SUM(n.ukupna_cijena) AS ukupna_zarada
+        FROM korisnici k
+        JOIN narudzbe n ON k.id = n.korisnik_id
+        GROUP BY k.id, k.ime, k.prezime
+        ORDER BY ukupna_zarada DESC
+    """)
+    ukupna_zarada_korisnici = cursor.fetchall()
+
     db.close()
 
-    return render_template('statistike.html', broj_korisnika=broj_korisnika, broj_proizvoda=broj_proizvoda, ukupna_zarada=ukupna_zarada)
+    return render_template(
+        'statistike.html', 
+        broj_korisnika=broj_korisnika, 
+        broj_proizvoda=broj_proizvoda, 
+        ukupna_zarada=ukupna_zarada, 
+        top_proizvodi=top_proizvodi, 
+        top_korisnici_narudzbe=top_korisnici_narudzbe, 
+        ukupna_zarada_korisnici=ukupna_zarada_korisnici
+    )
+
+
 
 @app.route('/upravljanje_popustima', methods=['GET', 'POST'])
 def upravljanje_popustima():
