@@ -1430,62 +1430,6 @@ VALUES
     (30, 26, 'Veoma je svestran i mislim da bi ti mogao koristiti za više svrha.');
 
 
--- Pogled: Pregled korisnika s najčešće korištenim kuponima
-CREATE VIEW korisnici_sa_kuponima AS
-SELECT 
-    k.id AS korisnik_id,
-    k.ime AS korisnik_ime,
-    k.prezime AS korisnik_prezime,
-    ku.kod AS kupon_kod,
-    COUNT(n.id) AS broj_koristenja_kupona
-FROM korisnici k
-JOIN narudzbe n ON k.id = n.korisnik_id
-LEFT JOIN kuponi ku ON n.kupon_id = ku.id
-WHERE ku.id IS NOT NULL
-GROUP BY k.id, k.ime, k.prezime, ku.kod
-ORDER BY broj_koristenja_kupona DESC, korisnik_id;
-
-
--- Pogled: Analiza plaćanja prema metodama
-CREATE VIEW analiza_placanja AS
-SELECT 
-    p.nacin_placanja,
-    COUNT(p.id) AS broj_placanja,
-    SUM(p.iznos) AS ukupni_iznos,
-    AVG(p.iznos) AS prosjecni_iznos
-FROM placanja p
-GROUP BY p.nacin_placanja
-ORDER BY ukupni_iznos DESC;
-
--- Upit: Pronalaženje narudžbi s najvećim popustima
-
-SELECT 
-    n.id AS narudzba_id,
-    k.ime AS korisnik_ime,
-    k.prezime AS korisnik_prezime,
-    ku.kod AS kupon_kod,
-    ku.postotak_popusta,
-    n.ukupna_cijena,
-    n.ukupna_cijena * (1 - ku.postotak_popusta / 100) AS cijena_s_popustom
-FROM narudzbe n
-JOIN korisnici k ON n.korisnik_id = k.id
-LEFT JOIN kuponi ku ON n.kupon_id = ku.id
-WHERE ku.id IS NOT NULL
-ORDER BY ku.postotak_popusta DESC
-LIMIT 10;
-
-
--- Upit: Analiza uspješnosti isporuka za aktivne narudžbe
-
-SELECT 
-    pr.status_isporuke,
-    COUNT(pr.id) AS broj_narudzbi,
-    AVG(DATEDIFF(pr.datum_isporuke, n.datum_narudzbe)) AS prosjecno_vrijeme_isporuke
-FROM pracenje_isporuka pr
-JOIN narudzbe n ON pr.narudzba_id = n.id
-WHERE n.status_narudzbe = 'u obradi' OR n.status_narudzbe = 'poslano'
-GROUP BY pr.status_isporuke
-ORDER BY prosjecno_vrijeme_isporuke ASC;
 
 
 
