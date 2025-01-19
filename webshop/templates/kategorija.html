@@ -17,12 +17,11 @@
                 <p>Opis: {{ proizvod[2] }}</p>
                 <button onclick="location.href='/proizvod/{{ proizvod[0] }}'">Pogledaj detalje</button>
                 <button onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
-                <button onclick="otvoriModal({{ proizvod[0] }})">Dodaj u Wishlist</button> <!-- Otvori modal za grupu -->
+                <button onclick="otvoriModal({{ proizvod[0] }})">Dodaj u Wishlist</button>
             </div>
         {% endfor %}
     </div>
 
-    <!-- Modalni prozor za odabir grupe -->
     <div id="wishlistModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Odaberite grupu</h2>
@@ -39,7 +38,6 @@
         </div>
     </div>
 
-    <!-- Navigacija za paginaciju -->
     <div class="pagination">
         {% if page > 1 %}
             <a href="/kategorija/{{ kategorija }}?page={{ page - 1 }}" class="pagination-button">Prethodna</a>
@@ -63,19 +61,16 @@
     <script>
         let selectedProductId = null;
 
-        // Funkcija za otvaranje modala
         function otvoriModal(proizvodId) {
-            selectedProductId = proizvodId; // Čuvanje ID-a proizvoda
+            selectedProductId = proizvodId; 
             document.getElementById('wishlistModal').style.display = 'flex';
         }
 
-        // Funkcija za zatvaranje modala
         function zatvoriModal() {
             document.getElementById('wishlistModal').style.display = 'none';
-            selectedProductId = null; // Resetovanje ID-a proizvoda
+            selectedProductId = null; 
         }
 
-        // Dodavanje proizvoda u Wishlist sa grupom
         document.getElementById('confirmWishlist').addEventListener('click', function () {
             const grupa = document.getElementById('modal-grupa').value; // Dohvat izabrane grupe
 
@@ -88,16 +83,14 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);  // Poruka korisniku
-                zatvoriModal();  // Zatvaranje modala
+                alert(data.message); 
+                zatvoriModal(); 
             })
-            .catch(error => alert('Došlo je do greške pri dodavanju u Wishlist.'));
+            .catch(error => alert('Došlo je do greške prilikom dodavanja u Wishlist.'));
         });
 
-        // Dodavanje eventa za zatvaranje modala
         document.getElementById('closeModal').addEventListener('click', zatvoriModal);
 
-        // Dodavanje proizvoda u košaricu
         function dodajUKosaricu(proizvodId) {
             fetch('/api/kosarica', {
                 method: 'POST',
