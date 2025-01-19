@@ -7,16 +7,16 @@ import bcrypt
 
 
 app = Flask(__name__)
-CORS(app)  # Omogućava CORS
+CORS(app)  
 
-# Postavljanje tajnog ključa (SECRET_KEY) za Flask aplikaciju
+
 app.secret_key = 'neki_skriveni_kljuc_koji_je_jedinstven'
 
-# Konfiguracija baze podataka
+
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': 'Babobilka156',
     'database': 'webshop'
 }
 
@@ -35,16 +35,16 @@ try:
         if plain_lozinka.startswith("$2b$"):
             continue
 
-        # Hashiranje lozinke
+       
         hashed_lozinka = bcrypt.hashpw(plain_lozinka.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Ažuriranje lozinke u bazi
+        
         cursor.execute(
             "UPDATE korisnici SET lozinka = %s WHERE id = %s",
             (hashed_lozinka, korisnik_id)
         )
 
-    # Spremljenje izmjene u bazi
+    
     db.commit()
     print("Sve lozinke su uspješno hashirane.")
 
@@ -59,13 +59,13 @@ finally:
 @app.route('/home')
 @app.route('/')
 def home():
-    page = int(request.args.get('page', 1))  # Preuzimanje trenutne stranice
-    per_page = 5  # Broj proizvoda po stranici
+    page = int(request.args.get('page', 1))  
+    per_page = 5  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvat svih proizvoda sa kategorijama
+    
     cursor.execute("""
         SELECT p.id, p.naziv, p.opis, p.cijena, k.naziv AS kategorija_naziv
         FROM proizvodi p
@@ -73,7 +73,6 @@ def home():
     """)
     proizvodi = cursor.fetchall()
 
-    # Grupiranje proizvoda po kategorijama
     kategorije = {}
     for proizvod in proizvodi:
         kategorija = proizvod[4]
@@ -81,7 +80,7 @@ def home():
             kategorije[kategorija] = []
         kategorije[kategorija].append(proizvod)
 
-    # Paginacija
+    
     cursor.execute("SELECT COUNT(*) FROM proizvodi")
     total_proizvodi = cursor.fetchone()[0]
     total_pages = (total_proizvodi + per_page - 1) // per_page
@@ -95,20 +94,20 @@ def home():
     """, (per_page, offset))
     paginirani_proizvodi = cursor.fetchall()
 
-    # Logika za prikaz paginacije
+    
     pagination = []
-    if total_pages <= 7:  # Ako ima manje od 7 stranica, prikaži sve
+    if total_pages <= 7:  
         pagination = list(range(1, total_pages + 1))
     else:
         if page > 1:
-            pagination.append(1)  # Prva stranica
+            pagination.append(1)  
         if page > 3:
-            pagination.append('...')  # Skraćivanje
+            pagination.append('...')  
         pagination += [p for p in range(max(page - 2, 2), min(page + 3, total_pages))]
         if page < total_pages - 2:
-            pagination.append('...')  # Skraćivanje
+            pagination.append('...')  
         if page < total_pages:
-            pagination.append(total_pages)  # Posljednja stranica
+            pagination.append(total_pages)  
 
     cursor.close()
     db.close()
@@ -126,14 +125,14 @@ def home():
 
 @app.route('/kategorija/<kategorija_naziv>')
 def prikazi_kategoriju(kategorija_naziv):
-    page = int(request.args.get('page', 1))  # Trenutna stranica
-    per_page = 5  # Broj proizvoda po stranici
+    page = int(request.args.get('page', 1))  
+    per_page = 5  
     offset = (page - 1) * per_page
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvat proizvoda sa limitom i offsetom
+    
     cursor.execute("""
         SELECT p.id, p.naziv, p.opis, p.cijena
         FROM proizvodi p
@@ -143,7 +142,7 @@ def prikazi_kategoriju(kategorija_naziv):
     """, (kategorija_naziv, per_page, offset))
     proizvodi = cursor.fetchall()
 
-    # Ukupan broj proizvoda za izračunavanje ukupnih stranica
+    
     cursor.execute("""
         SELECT COUNT(*)
         FROM proizvodi p
@@ -156,7 +155,7 @@ def prikazi_kategoriju(kategorija_naziv):
     cursor.close()
     db.close()
 
-    # Paginacija
+   
     pagination = []
     if total_pages <= 7:
         pagination = list(range(1, total_pages + 1))
@@ -183,7 +182,7 @@ def prikazi_kategoriju(kategorija_naziv):
 
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)  # Briše user_id iz sesije
+    session.pop('user_id', None)  
     return redirect(url_for('prijava'))
 
 @app.route('/prijava', methods=['GET', 'POST'])
@@ -208,12 +207,12 @@ def prijava():
 
 @app.route('/kosarica', methods=['GET'])
 def prikazi_kosaricu():
-    korisnik_id = session.get('user_id', 1)  # Ako korisnik nije prijavljen, postavite korisnik_id na 1
+    korisnik_id = session.get('user_id', 1)  
     
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvatite stavke iz košarice
+    
     cursor.execute("""
         SELECT p.id, p.naziv, p.cijena, k.kolicina 
         FROM proizvodi p 
@@ -231,21 +230,21 @@ def prikazi_kosaricu():
 def dodaj_u_kosaricu():
     data = request.json
     proizvod_id = data['proizvodId']
-    korisnik_id = session.get('user_id', 1)  # Ako korisnik nije prijavljen, koristi korisnik_id = 1
+    korisnik_id = session.get('user_id', 1)  
     
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Provjerite da li proizvod već postoji u košarici
+    
     cursor.execute("SELECT * FROM kosarica WHERE korisnik_id = %s AND proizvod_id = %s", (korisnik_id, proizvod_id))
     stavka = cursor.fetchone()
 
     if stavka:
-        # Ako stavka već postoji, povećajte količinu
+        
         cursor.execute("UPDATE kosarica SET kolicina = kolicina + 1 WHERE korisnik_id = %s AND proizvod_id = %s",
                        (korisnik_id, proizvod_id))
     else:
-        # Ako stavka ne postoji, dodajte novu
+        
         cursor.execute("INSERT INTO kosarica (korisnik_id, proizvod_id, kolicina) VALUES (%s, %s, %s)",
                        (korisnik_id, proizvod_id, 1))
 
@@ -260,12 +259,12 @@ def uredi_kosaricu():
     data = request.form
     proizvod_id = data['proizvodId']
     nova_kolicina = data['kolicina']
-    korisnik_id = session.get('user_id', 1)  # Ako korisnik nije prijavljen, koristi korisnik_id = 1
+    korisnik_id = session.get('user_id', 1)  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Ažurirajte količinu u košarici
+    
     cursor.execute("UPDATE kosarica SET kolicina = %s WHERE korisnik_id = %s AND proizvod_id = %s",
                    (nova_kolicina, korisnik_id, proizvod_id))
 
@@ -279,12 +278,12 @@ def uredi_kosaricu():
 def izbrisi_stavku():
     data = request.json
     proizvod_id = data.get('proizvodId')
-    korisnik_id = session.get('user_id', 1)  # Ako korisnik nije prijavljen, koristi korisnik_id = 1
+    korisnik_id = session.get('user_id', 1)  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Uklonite stavku iz košarice
+    
     cursor.execute("DELETE FROM kosarica WHERE korisnik_id = %s AND proizvod_id = %s", (korisnik_id, proizvod_id))
     db.commit()
 
@@ -299,14 +298,14 @@ def proizvod_detail(proizvod_id):
     cursor = db.cursor()
 
     try:
-        # Dohvati detalje o proizvodu
+        
         cursor.execute("""
             SELECT id, naziv, opis, cijena, kategorija_id, kolicina_na_skladistu, slika, specifikacije, datum_kreiranja
             FROM proizvodi WHERE id = %s
         """, (proizvod_id,))
         proizvod = cursor.fetchone()
 
-        # Dohvati recenzije za proizvod
+        
         cursor.execute("""
             SELECT r.ocjena, r.komentar, r.datum_recenzije, k.ime AS korisnik
             FROM recenzije_proizvoda r
@@ -315,7 +314,7 @@ def proizvod_detail(proizvod_id):
         """, (proizvod_id,))
         recenzije = cursor.fetchall()
 
-        # Pretvaranje tuple-a u rječnike za lakšu upotrebu u HTML-u
+        
         recenzije = [
             {'ocjena': r[0], 'komentar': r[1], 'datum': r[2], 'korisnik': r[3]}
             for r in recenzije
@@ -341,15 +340,15 @@ def registracija():
     elif request.method == 'POST':
         db = None
         try:
-            # Dohvati JSON podatke iz POST zahteva
+            
             data = request.get_json()
             print(f"Primljeni podaci iz JSON-a: {data}")
 
-            # Provjera svih ključnih podataka
+            
             if not all(key in data for key in ['ime', 'prezime', 'email', 'lozinka', 'adresa', 'grad', 'telefon']):
                 return jsonify({'message': 'Nedostaju neki obavezni podaci!'}), 400
 
-            # Ekstrakcija podataka
+        
             ime = data['ime']
             prezime = data['prezime']
             email = data['email']
@@ -358,11 +357,10 @@ def registracija():
             grad = data['grad']
             telefon = data['telefon']
 
-            # Povezivanje sa bazom podataka
             db = MySQLdb.connect(**db_config)
             cursor = db.cursor()
 
-            # Pozivanje procedure za dodavanje korisnika
+         
             cursor.callproc('dodaj_korisnika', (ime, prezime, email, lozinka, adresa, grad, telefon))
             db.commit()
 
@@ -371,9 +369,8 @@ def registracija():
 
         except MySQLdb.MySQLError as e:
             error_message = str(e)
-            print(f"Greška pri registraciji: {error_message}")  # Log greške
+            print(f"Greška pri registraciji: {error_message}")  
 
-            # Provjera za specifičnu grešku iz SQL procedure
             if "Korisnik sa ovim email-om već postoji!" in error_message:
                 return jsonify({'message': 'Korisnik sa ovim email-om već postoji!'}), 409
 
@@ -386,7 +383,7 @@ def registracija():
 @app.route('/narudzba', methods=['GET', 'POST'])
 def narudzba():
     if 'user_id' not in session:
-        return redirect(url_for('prijava'))  # Preusmjerenje na prijavu ako nije prijavljen
+        return redirect(url_for('prijava'))  
     
     korisnik_id = session['user_id']
     db = MySQLdb.connect(**db_config)
@@ -429,7 +426,7 @@ def narudzba():
                 return redirect(url_for('home'))
 
             nacin_isporuke_id = request.form['nacin_isporuke']
-            nacin_placanja = request.form['nacin_placanja']  # Odabrani način plaćanja
+            nacin_placanja = request.form['nacin_placanja']  
             kupon_kod = request.form.get('kupon', '').strip()
 
             cursor.execute("SELECT cijena FROM nacini_isporuke WHERE id = %s", (nacin_isporuke_id,))
@@ -469,7 +466,7 @@ def narudzba():
             cursor.execute("""
                 INSERT INTO placanja (narudzba_id, iznos, nacin_placanja, datum_placanja)
                 VALUES (%s, %s, %s, CURDATE())
-            """, (narudzba_id, ukupni_iznos, nacin_placanja))  # Unos načina plaćanja
+            """, (narudzba_id, ukupni_iznos, nacin_placanja))  
 
             cursor.execute("""
                 INSERT INTO racuni (korisnik_id, narudzba_id, iznos, datum_izdavanja)
@@ -503,11 +500,11 @@ def wishlist():
     cursor = db.cursor()
 
     try:
-        # Dohvat svih dostupnih grupa
+        
         cursor.execute("SELECT DISTINCT grupa FROM wishlist WHERE korisnik_id = %s", (korisnik_id,))
         dostupne_grupe = [row[0] for row in cursor.fetchall()]
 
-        # Dohvati proizvode iz wishlist-a sa filtriranjem
+        
         grupa_filter = request.args.get('grupa', '').strip()
         min_cijena = request.args.get('min_cijena', type=float)
         max_cijena = request.args.get('max_cijena', type=float)
@@ -533,14 +530,14 @@ def wishlist():
         cursor.execute(query, tuple(params))
         proizvodi = cursor.fetchall()
 
-        # Grupiranje proizvoda po grupama
+       
         proizvodi_u_wishlistu = {}
         for grupa, proizvod_id, naziv, cijena in proizvodi:
             if grupa not in proizvodi_u_wishlistu:
                 proizvodi_u_wishlistu[grupa] = []
             proizvodi_u_wishlistu[grupa].append((proizvod_id, naziv, cijena))
 
-        # Dohvat popularnih proizvoda u wishlist top 3 
+         
         cursor.execute("SELECT * FROM popularni_proizvodi LIMIT 3")
         popularni_proizvodi = cursor.fetchall()
 
@@ -563,7 +560,7 @@ def api_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
-    grupa = data.get('grupa', 'Bez grupe')  # Podrazumjevana grupa ako nije definirana
+    grupa = data.get('grupa', 'Bez grupe')  
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
@@ -572,14 +569,14 @@ def api_wishlist():
     cursor = db.cursor()
 
     try:
-        # Direktan unos u wishlist; SQL okidač će se pobrinuti za validaciju
+        
         cursor.execute("""
             INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
             VALUES (%s, %s, %s)
         """, (korisnik_id, proizvod_id, grupa))
         db.commit()
     except MySQLdb.IntegrityError as e:
-        # Obrada greške iz SQL okidača (npr. duplikat)
+        
         if "Duplicate entry" in str(e) or "45002" in str(e):
             return jsonify({'message': 'Proizvod je već u wishlisti!'}), 409
         else:
@@ -606,10 +603,8 @@ def ukloni_iz_wishliste():
     cursor = db.cursor()
 
     try:
-        # Pozivanje SQL procedure za uklanjanje proizvoda iz wishlist
-        cursor.execute("""
-            CALL ukloni_proizvod_iz_wishliste(%s, %s)
-        """, (korisnik_id, proizvod_id))
+
+        cursor.execute("""CALL ukloni_proizvod_iz_wishliste(%s, %s)""", (korisnik_id, proizvod_id))
         db.commit()
     except MySQLdb.Error as e:
         db.rollback()
@@ -621,6 +616,7 @@ def ukloni_iz_wishliste():
 
 
 
+
 @app.route('/wishlist/dodaj', methods=['POST'])
 def dodaj_u_wishlist():
     korisnik_id = session.get('user_id')
@@ -629,7 +625,7 @@ def dodaj_u_wishlist():
 
     data = request.get_json()
     proizvod_id = data.get('proizvod_id')
-    grupa = data.get('grupa', 'Bez grupe')  # Podrazumjevana grupa
+    grupa = data.get('grupa', 'Bez grupe')  
 
     if not proizvod_id:
         return jsonify({'message': 'Proizvod nije definiran!'}), 400
@@ -638,7 +634,7 @@ def dodaj_u_wishlist():
     cursor = db.cursor()
 
     try:
-        # Pozivanje SQL procedure za dodavanje proizvoda u wishlist
+        
         cursor.execute("""
             CALL dodaj_u_wishlist(%s, %s, %s)
         """, (korisnik_id, proizvod_id, grupa))
@@ -655,23 +651,23 @@ def dodaj_u_wishlist():
 
 @app.route('/podrska', methods=['GET', 'POST'])
 def kreiraj_upit():
-    message = ""  # Početno postavljanje poruke na prazan string
+    message = ""  
     if request.method == 'POST':
-        # Provjeravamo je li korisnik prijavljen
+        
         korisnik_id = session.get('user_id')
         if not korisnik_id:
-            message = "Morate biti prijavljeni!"  # Greška ako nije prijavljen
+            message = "Morate biti prijavljeni!"  
             return render_template('podrska.html', message=message)
 
-        # Dohvaćamo podatke iz forme
+        
         tema = request.form.get('tema')
         poruka = request.form.get('poruka')
 
         if not tema or not poruka:
-            message = "Tema i poruka su obavezna!"  # Greška ako nisu uneseni podaci
+            message = "Tema i poruka su obavezna!"  
             return render_template('podrska.html', message=message)
 
-        # Spremanje podataka u bazu
+        
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         try:
@@ -681,38 +677,38 @@ def kreiraj_upit():
                 (korisnik_id, tema, poruka)
             )
             db.commit()
-            message = "Upit je uspješno poslan!"  # Uspješan unos
+            message = "Upit je uspješno poslan!"  
         finally:
             db.close()
 
-        return render_template('podrska.html', message=message)  # Vraćamo poruku korisniku
+        return render_template('podrska.html', message=message)  
 
     # Ako je GET metoda, samo prikazujemo formu
-    return render_template('podrska.html', message=message)  # Poruka u slučaju GET metode
+    return render_template('podrska.html', message=message)  
 
 
 
 @app.route('/preporuceni_proizvodi', methods=['GET', 'POST'])
 def preporuceni_proizvodi():
-    message = ""  # Početno postavljanje poruke na prazan string
-    proizvodi = []  # Lista proizvoda koja će biti prikazana u formi
+    message = ""  
+    proizvodi = []  
 
     if request.method == 'POST':
-        # Provjeravamo je li korisnik prijavljen
+        
         korisnik_id = session.get('user_id')
         if not korisnik_id:
-            message = "Morate biti prijavljeni!"  # Greška ako nije prijavljen
+            message = "Morate biti prijavljeni!"  
             return render_template('preporuceni_proizvodi.html', message=message, proizvodi=proizvodi)
 
-        # Dohvaćamo podatke iz forme
+        
         proizvod_id = request.form.get('proizvod_id')
         razlog_preporuke = request.form.get('razlog_preporuke')
 
         if not proizvod_id or not razlog_preporuke:
-            message = "Proizvod i razlog preporuke su obavezni!"  # Greška ako nisu uneseni podaci
+            message = "Proizvod i razlog preporuke su obavezni!"  
             return render_template('preporuceni_proizvodi.html', message=message, proizvodi=proizvodi)
 
-        # Spremanje podataka u bazu
+        
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         try:
@@ -722,17 +718,16 @@ def preporuceni_proizvodi():
                 (korisnik_id, proizvod_id, razlog_preporuke)
             )
             db.commit()
-            message = "Proizvod je uspješno preporučen!"  # Uspješan unos
+            message = "Proizvod je uspješno preporučen!"  
         finally:
             db.close()
 
-        return render_template('preporuceni_proizvodi.html', message=message, proizvodi=proizvodi)  # Vraćamo poruku korisniku
+        return render_template('preporuceni_proizvodi.html', message=message, proizvodi=proizvodi)  
 
-    # Ako je GET metoda, dohvaćamo proizvode za prikazivanje u formi
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
-    cursor.execute("SELECT id, naziv FROM proizvodi")  # Dohvaćamo ID i naziv proizvoda
-    proizvodi = cursor.fetchall()  # Pohranjujemo proizvode u listu
+    cursor.execute("SELECT id, naziv FROM proizvodi")  
+    proizvodi = cursor.fetchall()  
     db.close()
 
     return render_template('preporuceni_proizvodi.html', message=message, proizvodi=proizvodi)
@@ -745,23 +740,23 @@ def pracenje_isporuka():
     korisnik_id = session.get('user_id')
     if not korisnik_id:
         flash('Morate biti prijavljeni!', 'error')
-        return redirect(url_for('login'))  # Preusmjeri na stranicu za prijavu ako nije prijavljen
+        return redirect(url_for('login'))  
 
-    # Provjeravamo je li korisnik administrator
+
     is_admin = session.get('is_admin', False)
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
     if is_admin:
-        # Ako je admin, dohvaća sve narudžbe i njihov status isporuke
+        
         query = """
         SELECT n.id, n.datum_narudzbe, pi.status_isporuke, pi.datum_isporuke, n.korisnik_id
         FROM narudzbe n
         LEFT JOIN pracenje_isporuka pi ON n.id = pi.narudzba_id
         """
     else:
-        # Ako nije admin, dohvaća samo narudžbe korisnika
+       
         query = """
         SELECT n.id, n.datum_narudzbe, pi.status_isporuke, pi.datum_isporuke
         FROM narudzbe n
@@ -780,17 +775,17 @@ def pracenje_isporuka():
 @app.route('/povrat', methods=['GET', 'POST'])
 def povrat_proizvoda():
     if request.method == 'GET':
-        # Dohvaćanje podataka o stavkama narudžbi koje korisnik može vratiti
+        
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         try:
-            # Pretpostavljamo da korisnik ima sesiju sa `user_id` (proverite je)
+            
             korisnik_id = session.get('user_id')
             if not korisnik_id:
                 flash("Morate biti prijavljeni za pristup povratu proizvoda!", "error")
                 return redirect(url_for('prijava'))
 
-            # Dohvaćamo stavke narudžbi korisnika
+            
             cursor.execute("""
                 SELECT sn.id, p.naziv, sn.kolicina
                 FROM stavke_narudzbe sn
@@ -802,11 +797,11 @@ def povrat_proizvoda():
         finally:
             db.close()
 
-        # Vraćanje HTML stranice s formom
+        
         return render_template('povrati_proizvoda.html', stavke=stavke)
 
     elif request.method == 'POST':
-        # POST metoda za unos povrata (kao što je već implementirano)
+        
         data = request.get_json()
         stavka_id = data.get('stavka_id')
         razlog = data.get('razlog')
@@ -886,7 +881,7 @@ def recenzije():
             db.commit()
             flash("Recenzija je uspješno poslana!", "success")
         except MySQLdb.MySQLError as e:
-            if e.args[0] == 1644:  # SQL SIGNAL greška
+            if e.args[0] == 1644:  
                 flash(f"Greška: {e.args[1]}", "error")
             else:
                 flash("Dogodila se greška pri dodavanju recenzije.", "error")
@@ -942,7 +937,7 @@ def dodaj_recenziju(proizvod_id):
         db.commit()
         flash("Recenzija je uspješno dodana!", "success")
     except MySQLdb.MySQLError as e:
-        if e.args[0] == 1644:  # SQL SIGNAL greška
+        if e.args[0] == 1644:  
             flash(f"Greška: {e.args[1]}", "error")
         else:
             flash("Dogodila se greška pri dodavanju recenzije.", "error")
@@ -956,33 +951,33 @@ def dodaj_recenziju(proizvod_id):
 
 @app.route('/lista_preporuka', methods=['GET'])
 def lista_preporuka():
-    korisnik_id = session.get('user_id')  # Preuzimanje korisnik ID iz sesije
+    korisnik_id = session.get('user_id')  
     if not korisnik_id:
-        return redirect(url_for('prijava'))  # Preusmjerenje ako korisnik nije prijavljen
+        return redirect(url_for('prijava'))  
 
-    page = int(request.args.get('page', 1))  # Preuzimanje trenutne stranice iz GET parametra
-    per_page = 10  # Broj proizvoda po stranici
+    page = int(request.args.get('page', 1))  
+    per_page = 10  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Pozivanje SQL procedure za personalizovane preporuke koristeći korisnik_id
+    
     cursor.execute("""
         CALL prikazi_preporuke(%s, %s, %s)
     """, (korisnik_id, page, per_page))
-    proizvodi = cursor.fetchall()  # Dohvaćanje proizvoda iz procedure
+    proizvodi = cursor.fetchall()  
 
-    # Paginacija: Ukupni broj proizvoda
+   
     cursor.execute("""
         CALL prikazi_preporuke(%s, 1, 9999)
     """, (korisnik_id,))
-    total_proizvodi = len(cursor.fetchall())  # Ukupni broj proizvoda za ovog korisnika
-    total_pages = (total_proizvodi + per_page - 1) // per_page  # Broj stranica
+    total_proizvodi = len(cursor.fetchall())  
+    total_pages = (total_proizvodi + per_page - 1) // per_page  
 
     cursor.close()
     db.close()
 
-    # Prosljeđivanje proizvoda, ukupnog broja stranica, trenutne stranice u šablon
+    
     return render_template('lista_preporuka.html', proizvodi=proizvodi, page=page, total_pages=total_pages)
 
 
@@ -996,7 +991,7 @@ def profil():
     cursor = db.cursor()
 
     try:
-        # Dohvaćanje podataka o korisniku i formatiranje datuma direktno u SQL-u pomoću funkcije
+        
         cursor.execute("""
             SELECT 
                 korisnik_id, 
@@ -1013,7 +1008,6 @@ def profil():
         """, (korisnik_id,))
         korisnik = cursor.fetchone()
 
-        # Dohvaćanje narudžbi korisnika
         cursor.execute("SELECT * FROM narudzbe_korisnika WHERE korisnik_id = %s", (korisnik_id,))
         narudzbe = cursor.fetchall()
 
@@ -1057,36 +1051,36 @@ def obrisi_profil():
     if 'user_id' not in session:
         return jsonify({'message': 'Morate biti prijavljeni!'}), 401
 
-    korisnik_id = session['user_id']  # Dohvat korisnika iz sesije
+    korisnik_id = session['user_id']  
 
     db = None
     try:
-        # Povezivanje sa bazom
+       
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
 
-        # Pozivanje procedure za brisanje korisnika
+        
         cursor.callproc('obrisi_korisnika', (korisnik_id,))
         db.commit()
 
-        # Uklanjanje korisnika iz sesije nakon uspešnog brisanja
+        
         session.pop('user_id', None)
-        return jsonify({'message': 'Račun uspešno obrisan!'}), 200
+        return jsonify({'message': 'Račun uspješno obrisan!'}), 200
 
     except MySQLdb.MySQLError as e:
-        # Obrada prilagođene SQL greške generisane SIGNAL-om
-        if e.args[0] == 1644:  # SIGNAL SQLSTATE '45001' -> kod prilagođene greške
+        
+        if e.args[0] == 1644:  
             return jsonify({'message': e.args[1]}), 400
         else:
-            print(f"Neočekivana greška u MySQL-u: {e}")  # Log za dijagnostiku
+            print(f"Neočekivana greška u MySQL-u: {e}")  
             return jsonify({'message': 'Došlo je do greške pri brisanju računa.'}), 500
 
     except Exception as e:
-        print(f"Neočekivana greška: {e}")  # Log za dijagnostiku
+        print(f"Neočekivana greška: {e}")  
         return jsonify({'message': 'Neočekivana greška na serveru.'}), 500
 
     finally:
-        # Zatvaranje konekcije sa bazom ako je otvorena
+        
         if db:
             db.close()
 
@@ -1097,7 +1091,7 @@ def preporuke():
     cursor = db.cursor()
 
     try:
-        # Dohvat svih preporuka iz pogleda "preporuke_drugih"
+        
         cursor.execute("SELECT ime, prezime, proizvod_naziv, razlog_preporuke FROM preporuke_drugih")
         preporuke = cursor.fetchall()
 
@@ -1109,11 +1103,11 @@ def preporuke():
 
 @app.route('/admin_panel', methods=['GET'])
 def admin_panel():
-    # Provjera je li korisnik prijavljen
+    
     if 'user_id' not in session:
-        return redirect(url_for('prijava'))  # Preusmjeravanje na prijavu
+        return redirect(url_for('prijava'))  
 
-    # Dohvaćanje korisnika iz baze podataka
+   
     korisnik_id = session['user_id']
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
@@ -1124,50 +1118,49 @@ def admin_panel():
         """, (korisnik_id,))
         tip_korisnika = cursor.fetchone()
 
-        # Provjera je li korisnik admin
+       
         if not tip_korisnika or tip_korisnika[0] != 'admin':
             flash('Nemate prava pristupa administrativnom panelu.', 'error')
-            return redirect(url_for('home'))  # Preusmjeravanje na početnu stranicu
+            return redirect(url_for('home'))  
 
     finally:
         db.close()
 
-    # Ako je korisnik admin, prikazujemo admin panel
+  
     return render_template('admin_panel.html')
 
 
 @app.route('/upravljanje_korisnicima', methods=['GET', 'POST'])
 def upravljanje_korisnicima():
     if 'user_id' not in session:
-        return redirect(url_for('prijava'))  # Ako korisnik nije prijavljen, preusmjeren je na prijavu
+        return redirect(url_for('prijava'))  
 
     korisnik_id = session['user_id']
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Preuzimanje parametara za filtriranje iz URL-a
+    
     ime_filter = request.args.get('ime', '')
     prezime_filter = request.args.get('prezime', '')
     tip_korisnika_filter = request.args.get('tip_korisnika', '')
 
-    # Osnovni SQL upit za dohvat korisnika
+    
     query = "SELECT id, ime, prezime, email, tip_korisnika FROM korisnici WHERE id != %s"
-    params = [korisnik_id]  # Isključuje trenutno prijavljenog korisnika
+    params = [korisnik_id]  
 
-    # Dodavanje uvjeta filtriranja u upit
     if ime_filter:
         query += " AND ime LIKE %s"
-        params.append(f'%{ime_filter}%')  # Filtriraj po imenu
+        params.append(f'%{ime_filter}%')  
 
     if prezime_filter:
         query += " AND prezime LIKE %s"
-        params.append(f'%{prezime_filter}%')  # Filtriraj po prezimenu
+        params.append(f'%{prezime_filter}%')  
 
     if tip_korisnika_filter:
         query += " AND tip_korisnika = %s"
-        params.append(tip_korisnika_filter)  # Filtriraj po tipu korisnika
+        params.append(tip_korisnika_filter)  
 
-    # Izvršavanje upita s parametrima filtriranja
+    
     cursor.execute(query, tuple(params))
     korisnici = cursor.fetchall()
     db.close()
@@ -1184,7 +1177,7 @@ def upravljanje_proizvodima():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvaćanje svih proizvoda
+    
     cursor.execute("SELECT id, naziv, opis, cijena, kolicina_na_skladistu FROM proizvodi")
     proizvodi = cursor.fetchall()
     db.close()
@@ -1199,7 +1192,7 @@ def upravljanje_narudzbama():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvaćanje svih narudžbi s ispravnim izračunom ukupne cijene
+   
     cursor.execute("""
         SELECT n.id, k.ime, k.prezime, n.datum_narudzbe, n.status_narudzbe, 
                SUM(s.kolicina * p.cijena) AS ukupna_cijena
@@ -1219,12 +1212,12 @@ def upravljanje_narudzbama():
 @app.route('/statistike', methods=['GET'])
 def statistike():
     if 'user_id' not in session:
-        return redirect(url_for('prijava'))  # Provjera je li korisnik prijavljen
+        return redirect(url_for('prijava'))  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvaćanje osnovnih statistika
+    
     cursor.execute("SELECT COUNT(*) FROM korisnici")
     broj_korisnika = cursor.fetchone()[0]
 
@@ -1234,7 +1227,7 @@ def statistike():
     cursor.execute("SELECT SUM(ukupna_cijena) FROM narudzbe")
     ukupna_zarada = cursor.fetchone()[0]
 
-    # Dohvaćanje top 3 najpopularnija proizvoda (najviše puta dodana u wishlist)
+    
     cursor.execute("""
         SELECT p.id AS proizvod_id, p.naziv AS proizvod_naziv, COUNT(w.proizvod_id) AS broj_dodavanja
         FROM proizvodi p
@@ -1245,7 +1238,7 @@ def statistike():
     """)
     top_proizvodi = cursor.fetchall()
 
-    # Dohvaćanje top 5 korisnika sa najviše narudžbi
+    
     cursor.execute("""
         SELECT k.id AS korisnik_id, k.ime, k.prezime, COUNT(n.id) AS broj_narudzbi
         FROM korisnici k
@@ -1256,7 +1249,7 @@ def statistike():
     """)
     top_korisnici_narudzbe = cursor.fetchall()
 
-    # Dohvaćanje ukupne zarade po korisnicima
+    
     cursor.execute("""
         SELECT k.id AS korisnik_id, k.ime, k.prezime, SUM(n.ukupna_cijena) AS ukupna_zarada
         FROM korisnici k
@@ -1288,7 +1281,7 @@ def upravljanje_popustima():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvaćanje popusta
+   
     cursor.execute("""
         SELECT p.id, pr.naziv, p.postotak_popusta, p.datum_pocetka, p.datum_zavrsetka
         FROM popusti p
@@ -1328,7 +1321,7 @@ def dodaj_popust():
 
         return redirect(url_for('upravljanje_popustima'))
 
-    # Dohvaćanje svih proizvoda za prikaz u formi
+    
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     cursor.execute("SELECT id, naziv FROM proizvodi")
@@ -1388,7 +1381,7 @@ def azuriraj_popust(popust_id):
 
         return redirect(url_for('upravljanje_popustima'))
 
-    # Dohvaćanje postojećih podataka za popust i proizvode
+    
     cursor.execute("SELECT id, naziv FROM proizvodi")
     proizvodi = cursor.fetchall()
 
@@ -1412,7 +1405,7 @@ def dodaj_korisnika():
             db = MySQLdb.connect(**db_config)
             cursor = db.cursor()
 
-            # Pozivanje SQL procedure za dodavanje korisnika
+            
             cursor.callproc('dodaj_korisnika', (
                 data['ime'], 
                 data['prezime'], 
@@ -1425,7 +1418,7 @@ def dodaj_korisnika():
 
             db.commit()
 
-            # Poruka za uspješno dodanog korisnika s tipom 'kupac'
+            
             flash('Korisnik uspješno dodan kao kupac!', 'success')
         except MySQLdb.MySQLError as e:
             flash(f'Greška: {e.args[1]}', 'error')
@@ -1437,7 +1430,7 @@ def dodaj_korisnika():
 
 @app.route('/azuriraj_korisnika/<int:korisnik_id>', methods=['GET', 'POST'])
 def azuriraj_korisnika(korisnik_id):
-    print(f"Primljen zahtjev za korisnika ID: {korisnik_id}")  # Debugging
+    print(f"Primljen zahtjev za korisnika ID: {korisnik_id}")  
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
@@ -1452,9 +1445,9 @@ def azuriraj_korisnika(korisnik_id):
         data = request.form
 
         try:
-            # Pozivanje SQL procedure za ažuriranje korisničkih podataka
+            
             cursor.callproc('azuriraj_korisnika', (
-                korisnik_id,  # ID korisnika kojeg ažuriramo
+                korisnik_id,  
                 data['ime'],
                 data['prezime'],
                 data['email'],
@@ -1463,14 +1456,13 @@ def azuriraj_korisnika(korisnik_id):
                 data['telefon']
             ))
             db.commit()
-            print("Korisnik uspješno ažuriran")  # Debugging
+            print("Korisnik uspješno ažuriran")  
 
-            # Pozivanje SQL procedure za ažuriranje tipa korisnika
             cursor.callproc('azuriraj_tip_korisnika', (korisnik_id, data['tip_korisnika']))
             db.commit()
             
         except MySQLdb.MySQLError as e:
-            print(f"Greška: {e}")  # Debugging
+            print(f"Greška: {e}")  
         finally:
             db.close()
 
@@ -1517,7 +1509,7 @@ def promijeni_status(narudzba_id):
 @app.route('/dodaj_proizvod', methods=['GET', 'POST'])
 def dodaj_proizvod():
     if request.method == 'GET':
-        # Dohvati sve kategorije za prikaz u formi
+        
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         cursor.execute("SELECT id, naziv FROM kategorije_proizvoda")
@@ -1554,7 +1546,7 @@ def azuriraj_proizvod(proizvod_id):
     cursor = db.cursor()
 
     if request.method == 'GET':
-        # Dohvati proizvod i sve kategorije za prikaz u formi
+        
         cursor.execute("SELECT * FROM proizvodi WHERE id = %s", (proizvod_id,))
         proizvod = cursor.fetchone()
 
@@ -1630,7 +1622,7 @@ def azuriraj_kategoriju(kategorija_id):
     cursor = db.cursor()
 
     if request.method == 'GET':
-        # Dohvati kategoriju za prikaz u formi
+        
         cursor.execute("SELECT id, naziv, opis FROM kategorije_proizvoda WHERE id = %s", (kategorija_id,))
         kategorija = cursor.fetchone()
         db.close()
@@ -1676,10 +1668,10 @@ def upravljanje_kategorijama():
         db = MySQLdb.connect(**db_config)
         cursor = db.cursor()
         cursor.execute("SELECT id, naziv, opis FROM kategorije_proizvoda")
-        kategorije = cursor.fetchall()  # Dohvaća sve kategorije iz baze
+        kategorije = cursor.fetchall()  
     except MySQLdb.MySQLError as e:
         kategorije = []
-        print(f"Greška prilikom dohvaćanja kategorija: {e}")  # Log greške
+        print(f"Greška prilikom dohvaćanja kategorija: {e}")  
     finally:
         db.close()
 
@@ -1692,7 +1684,7 @@ def azuriraj_recenziju(recenzija_id):
     cursor = db.cursor()
 
     if request.method == 'GET':
-        # Dohvati podatke o recenziji za prikaz u formi
+        
         cursor.execute("SELECT id, ocjena, komentar FROM recenzije_proizvoda WHERE id = %s", (recenzija_id,))
         recenzija = cursor.fetchone()
         db.close()
@@ -1742,7 +1734,7 @@ def upravljanje_recenzijama():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     try:
-        # Dohvati sve recenzije s povezanim proizvodima i korisnicima
+        
         cursor.execute("""
             SELECT r.id, p.naziv AS proizvod, k.ime AS korisnik, r.ocjena, r.komentar, r.datum_recenzije
             FROM recenzije_proizvoda r
@@ -1780,7 +1772,7 @@ def pregled_stavki_narudzbe():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     try:
-        # Dohvat podataka za narudžbe i pripadajuće stavke
+        
         cursor.execute("""
             SELECT
                 n.id AS narudzba_id,
@@ -1801,7 +1793,7 @@ def pregled_stavki_narudzbe():
     finally:
         db.close()
 
-    # Grupiranje stavki po narudžbama za prikaz
+    
     narudzbe = {}
     for stavka in stavke_narudzbi:
         narudzba_id = stavka[0]
@@ -1825,7 +1817,7 @@ def pregled_racuna():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     try:
-        # Dohvat računa i povezanih podataka
+        
         cursor.execute("""
             SELECT
                 r.id AS racun_id,
@@ -1848,7 +1840,7 @@ def pregled_racuna():
     finally:
         db.close()
 
-    # Grupiranje računa po ID-u
+    
     racuni = {}
     for stavka in racuni_podaci:
         racun_id = stavka[0]
@@ -1876,7 +1868,7 @@ def prikazi_racun(racun_id):
     cursor = db.cursor(MySQLdb.cursors.DictCursor)
 
     try:
-        # Glavni podaci o računu
+       
         cursor.execute("""
             SELECT 
                 r.id AS racun_id,
@@ -1904,7 +1896,7 @@ def prikazi_racun(racun_id):
         """, (racun_id,))
         racun = cursor.fetchone()
 
-        # Stavke narudžbe
+        
         cursor.execute("""
             SELECT 
                 p.naziv AS proizvod,
@@ -1916,7 +1908,7 @@ def prikazi_racun(racun_id):
         """, (racun['narudzba_id'],))
         stavke = cursor.fetchall()
 
-        # Ako račun nije pronađen
+       
         if not racun:
             flash('Račun nije pronađen!', 'error')
             return redirect(url_for('pregled_racuna'))
@@ -1931,7 +1923,7 @@ def prikazi_racun(racun_id):
         cursor.close()
         db.close()
 
-    # Render predloška s računom
+   
     return render_template('racun_detalji.html', racun=racun)
 
 
@@ -2137,12 +2129,12 @@ def upravljanje_isporukama():
     cursor = db.cursor()
 
     if request.method == 'POST':
-        # Preuzimanje podataka iz forme
+        
         isporuka_id = request.form['isporuka_id']
         novi_status = request.form['status_isporuke']
 
         try:
-            # SQL za ažuriranje statusa isporuke i automatski izračun datuma isporuke
+            
             cursor.execute("""
                 UPDATE pracenje_isporuka pi
                 JOIN narudzbe n ON pi.narudzba_id = n.id
@@ -2161,7 +2153,7 @@ def upravljanje_isporukama():
             flash(f'Greška: {e.args[1]}', 'error')
             db.rollback()
 
-    # Dohvaćanje svih isporuka za prikaz
+   
     cursor.execute("""
         SELECT pi.id, pi.narudzba_id, n.datum_narudzbe, pi.status_isporuke, pi.datum_isporuke
         FROM pracenje_isporuka pi
@@ -2175,13 +2167,13 @@ def upravljanje_isporukama():
 
 @app.route('/azuriraj_isporuku/<int:isp_id>', methods=['POST'])
 def azuriraj_isporuku(isp_id):
-    # Preuzimamo novi status iz forme
+    
     novi_status = request.form['status_isporuke']
 
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     try:
-        # Ažuriranje statusa i datuma isporuke, ako je status "poslano"
+        
         cursor.execute("""
             UPDATE pracenje_isporuka pi
             JOIN narudzbe n ON pi.narudzba_id = n.id
@@ -2212,7 +2204,7 @@ def upravljanje_nacinima_isporuke():
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
 
-    # Dohvaćanje svih načina isporuke
+    
     cursor.execute("SELECT * FROM nacini_isporuke")
     nacini_isporuke = cursor.fetchall()
 
@@ -2280,7 +2272,7 @@ def azuriraj_nacin_isporuke(id):
             db.close()
         return redirect(url_for('upravljanje_nacinima_isporuke'))
 
-    # Dohvaćanje podataka za popunjavanje forme
+    
     cursor.execute("SELECT * FROM nacini_isporuke WHERE id = %s", (id,))
     nacin_isporuke = cursor.fetchone()
     db.close()
@@ -2320,7 +2312,7 @@ def upravljanje_pracenjem():
         novi_status = request.form.get('status_isporuke')
 
         try:
-            # Ažuriranje statusa isporuke
+            
             cursor.execute("""
                 UPDATE pracenje_isporuka
                 SET status_isporuke = %s
@@ -2332,7 +2324,7 @@ def upravljanje_pracenjem():
             db.rollback()
             flash(f'Greška: {e.args[1]}', 'error')
 
-    # Dohvaćanje podataka za prikaz
+    
     cursor.execute("""
         SELECT pi.id, pi.narudzba_id, n.datum_narudzbe, n.status_narudzbe, 
                pi.status_isporuke, pi.datum_isporuke
@@ -2352,7 +2344,7 @@ def azuriraj_pracenje(pracenje_id):
     db = MySQLdb.connect(**db_config)
     cursor = db.cursor()
     try:
-        # Ažuriranje statusa isporuke
+        
         cursor.execute("""
             UPDATE pracenje_isporuka
             SET status_isporuke = %s
