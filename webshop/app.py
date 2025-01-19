@@ -1274,30 +1274,38 @@ def azuriraj_korisnika(korisnik_id):
     cursor = db.cursor()
 
     if request.method == 'GET':
-        print("GET metoda")  # Debugging
         cursor.execute("SELECT id, ime, prezime, email, adresa, grad, telefon, tip_korisnika FROM korisnici WHERE id = %s", (korisnik_id,))
         korisnik = cursor.fetchone()
-        print(f"Dohvaćen korisnik: {korisnik}")  # Debugging
         db.close()
         return render_template('azuriraj_korisnika.html', korisnik=korisnik)
 
     if request.method == 'POST':
-        print("POST metoda")  # Debugging
         data = request.form
-        print(f"Primljeni podaci: {data}")  # Debugging
 
         try:
+            # Pozivanje SQL procedure za ažuriranje korisničkih podataka
+            cursor.callproc('azuriraj_korisnika', (
+                korisnik_id,  # ID korisnika kojeg ažuriramo
+                data['ime'],
+                data['prezime'],
+                data['email'],
+                data['adresa'],
+                data['grad'],
+                data['telefon']
+            ))
+            db.commit()
+            print("Korisnik uspješno ažuriran")  # Debugging
+
             # Pozivanje SQL procedure za ažuriranje tipa korisnika
             cursor.callproc('azuriraj_tip_korisnika', (korisnik_id, data['tip_korisnika']))
             db.commit()
-            print("Tip korisnika uspješno ažuriran")  # Debugging
+            
         except MySQLdb.MySQLError as e:
             print(f"Greška: {e}")  # Debugging
         finally:
             db.close()
 
         return redirect(url_for('upravljanje_korisnicima'))
-
 
 
 @app.route('/obrisi_korisnika/<int:korisnik_id>', methods=['POST'])
