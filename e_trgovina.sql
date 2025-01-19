@@ -3189,28 +3189,72 @@ END //
 
 DELIMITER ;
 
--- Procedura: Povrat proizvoda unutar 15 dana
+-- Procedura za unos povrata proizvoda (fran)
 DELIMITER //
-
-CREATE PROCEDURE PovratProizvoda (
-    IN p_stavka_id INT,  
-    IN p_razlog TEXT     
+CREATE PROCEDURE DodajPovratProizvoda (
+    IN p_id_narudzbe INT,
+    IN p_datum_povrata DATE,
+    IN p_razlog_povrata TEXT,
+    IN p_status_povrata VARCHAR(50)
 )
 BEGIN
-    DECLARE v_datum_narudzbe DATE;
+    INSERT INTO povrati_proizvoda (id_narudzbe, datum_povrata, razlog_povrata, status_povrata)
+    VALUES (p_id_narudzbe, p_datum_povrata, p_razlog_povrata, p_status_povrata);
+END //
+DELIMITER ;
 
-    SELECT n.datum_narudzbe
-    INTO v_datum_narudzbe
-    FROM stavke_narudzbe sn
-    JOIN narudzbe n ON sn.narudzba_id = n.id
-    WHERE sn.id = p_stavka_id;
+-- Procedura za praćenje isporuke (fran)
+DELIMITER //
+CREATE PROCEDURE DodajStanjeIsporuke (
+    IN p_id_narudzbe INT,
+    IN p_stanje_narudzbe VARCHAR(50),
+    IN p_datum_narudzbe DATE,
+    IN p_nacin_isporuke INT
+)
+BEGIN
+    DECLARE trajanje_dostave INT;
+    DECLARE izracunati_datum DATE;
+    SELECT trajanje_u_danima
+    INTO trajanje_dostave
+    FROM vrste_dostave
+    WHERE id_vrste_dostave = p_nacin_isporuke;
+    SET izracunati_datum = DATE_ADD(p_datum_narudzbe, INTERVAL trajanje_dostave DAY);
+    INSERT INTO stanje_isporuke (id_narudzbe, stanje_narudzbe, datum_azuriranja, predvideni_datum_isporuke)
+    VALUES (p_id_narudzbe, p_stanje_narudzbe, NOW(), izracunati_datum);
+END //
+DELIMITER ;
 
-    IF DATEDIFF(CURDATE(), v_datum_narudzbe) <= 15 THEN
-                INSERT INTO povrati_proizvoda (stavka_id, datum_povrata, razlog, status_povrata)
-        VALUES (p_stavka_id, CURDATE(), p_razlog, 'u obradi');
-    ELSE
-        SIGNAL SQLSTATE '45400' SET MESSAGE_TEXT = 'Povrat nije moguć jer je prošlo više od 15 dana.';
-    END IF;
+-- Procedura za korisnike (fran)
+DELIMITER //
+CREATE PROCEDURE DodajKorisnika (
+    IN p_ime VARCHAR(50),
+    IN p_prezime VARCHAR(50),
+    IN p_email VARCHAR(100),
+    IN p_telefon VARCHAR(20)
+)
+BEGIN
+    INSERT INTO korisnici (ime, prezime, email, telefon)
+    VALUES (p_ime, p_prezime, p_email, p_telefon);
 END //
 
+CREATE PROCEDURE AzurirajKorisnika (
+    IN p_id_korisnika INT,
+    IN p_ime VARCHAR(50),
+    IN p_prezime VARCHAR(50),
+    IN p_email VARCHAR(100),
+    IN p_telefon VARCHAR(20)
+)
+BEGIN
+    UPDATE korisnici
+    SET ime = p_ime, prezime = p_prezime, email = p_email, telefon = p_telefon
+    WHERE id_korisnika = p_id_korisnika;
+END //
+
+CREATE PROCEDURE ObrisiKorisnika (
+    IN p_id_korisnika INT
+)
+BEGIN
+    DELETE FROM korisnici
+    WHERE id_korisnika = p_id_korisnika;
+END //
 DELIMITER ;
