@@ -683,7 +683,6 @@ def kreiraj_upit():
 
         return render_template('podrska.html', message=message)  
 
-    # Ako je GET metoda, samo prikazujemo formu
     return render_template('podrska.html', message=message)  
 
 
@@ -1030,6 +1029,7 @@ def azuriraj_profil():
     cursor = db.cursor()
 
     try:
+       
         cursor.callproc('azuriraj_korisnika', (
             korisnik_id,
             data['ime'],
@@ -1040,10 +1040,27 @@ def azuriraj_profil():
             data['telefon']
         ))
         db.commit()
+
+        
+        cursor.execute("SELECT ime, prezime, email, adresa, grad, telefon FROM korisnici WHERE id = %s", (korisnik_id,))
+        updated_user = cursor.fetchone()
+
+
+        return jsonify({
+            'message': 'Profil uspješno ažuriran!',
+            'ime': updated_user[0],
+            'prezime': updated_user[1],
+            'email': updated_user[2],
+            'adresa': updated_user[3],
+            'grad': updated_user[4],
+            'telefon': updated_user[5]
+        })
+    except MySQLdb.MySQLError as e:
+        db.rollback()
+        return jsonify({'message': f'Greška pri ažuriranju profila: {str(e)}'}), 500
     finally:
         db.close()
 
-    return jsonify({'message': 'Profil uspešno ažuriran!'})
 
 
 @app.route('/profil/obrisi', methods=['POST'])
