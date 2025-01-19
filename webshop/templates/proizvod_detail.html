@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <title>{{ proizvod[1] }}</title> <!-- naziv proizvoda -->
+    <title>{{ proizvod[1] }}</title> 
     <link rel="stylesheet" href="/static/styles.css">
 
 </head>
@@ -14,18 +14,17 @@
 
     <main>
         <div id="proizvod-container">
-            <h2>{{ proizvod[1] }}</h2> <!-- naziv proizvoda -->
-            <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p> <!-- cijena -->
-            <p><strong>Opis:</strong> {{ proizvod[2] }}</p> <!-- opis -->
-            <p><strong>Kategorija ID:</strong> {{ proizvod[4] }}</p> <!-- kategorija_id -->
-            <p><strong>Količina na skladištu:</strong> {{ proizvod[5] }}</p> <!-- kolicina_na_skladistu -->
-            <p><strong>Specifikacije:</strong> {{ proizvod[7] }}</p> <!-- specifikacije -->
-            <p><strong>Datum kreiranja:</strong> {{ proizvod[8] }}</p> <!-- datum_kreiranja -->
+            <h2>{{ proizvod[1] }}</h2> 
+            <p><strong>Cijena:</strong> {{ proizvod[3] }} HRK</p> 
+            <p><strong>Opis:</strong> {{ proizvod[2] }}</p> 
+            <p><strong>Kategorija ID:</strong> {{ proizvod[4] }}</p> 
+            <p><strong>Količina na skladištu:</strong> {{ proizvod[5] }}</p> 
+            <p><strong>Specifikacije:</strong> {{ proizvod[7] }}</p> 
+            <p><strong>Datum kreiranja:</strong> {{ proizvod[8] }}</p> 
             <img src="{{ proizvod[6] }}" alt="{{ proizvod[1] }}" class="proizvod-slika">
             <button class="btn-green" onclick="dodajUKosaricu({{ proizvod[0] }})">Dodaj u košaricu</button>
         </div>
 
-        <!-- Prikaz recenzija -->
         <form method="POST" action="/dodaj_recenziju/{{ proizvod[0] }}">
             <div class="form-group">
                 <label for="ocjena">Ocjena (1-5):</label>
@@ -76,7 +75,7 @@
         }
 
         function posaljiRecenziju() {
-            const proizvodId = document.getElementById('proizvod_id').value; // Automatski iz hidden inputa
+            const proizvodId = document.getElementById('proizvod_id').value;
             const ocjena = document.getElementById('ocjena').value;
             const komentar = document.getElementById('komentar').value;
         
@@ -95,7 +94,7 @@
             .then(data => {
                 alert(data.message);
                 if (data.success) {
-                    location.reload(); // Osvježavanje stranice nakon uspješne recenzije
+                    location.reload(); 
                 }
             })
             .catch((error) => {
