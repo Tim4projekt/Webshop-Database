@@ -61,19 +61,19 @@ function obrisiKorisnika(korisnikId) {
         fetch(`/obrisi_korisnika/${korisnikId}`, {
             method: 'POST'
         })
-        .then(response => response.json())  // Dohvatimo JSON odgovor
+        .then(response => response.json()) 
         .then(data => {
-            // Provjeravamo status odgovora
+            
             if (data.status === 'success') {
-                alert(data.message);  // Ako je uspješno, prikaži poruku
-                location.reload();  // Osvježavanje stranice
+                alert(data.message);  
+                location.reload();  
             } else {
-                alert(data.message);  // Ako je došlo do greške, prikaži poruku
+                alert(data.message);  
             }
         })
         .catch(error => {
             console.error('Greška:', error);
-            alert('Došlo je do greške pri brisanju korisnika.');
+            alert('Došlo je do greške prilikom brisanja korisnika.');
         });
     }
 }
