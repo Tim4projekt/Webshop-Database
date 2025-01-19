@@ -61,15 +61,12 @@
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            // Kreiranje objekta iz forme
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            // Logovanje podataka za proveru
             console.log('Slanje podataka:', data);
 
             try {
-                // Slanje POST zahteva na server
                 const response = await fetch('/registracija', {
                     method: 'POST',
                     headers: {
@@ -81,15 +78,14 @@
                 const result = await response.json();
                 console.log('Odgovor sa servera:', result);
 
-                // Obrada odgovora
                 if (response.ok) {
                     alert(result.message);
-                    window.location.href = '/home'; // Redirekcija nakon uspešne registracije
+                    window.location.href = '/home'; 
                 } else {
                     alert(result.message || 'Došlo je do greške.');
                 }
             } catch (error) {
-                console.error('Greška prilikom slanja zahteva:', error);
+                console.error('Greška prilikom slanja zahtjeva:', error);
                 alert('Došlo je do greške prilikom registracije.');
             }
         });
