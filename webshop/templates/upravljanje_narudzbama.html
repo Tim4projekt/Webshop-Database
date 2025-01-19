@@ -8,7 +8,7 @@
         let currentOrderId = null;
 
         function otvoriModal(narudzbaId) {
-            currentOrderId = narudzbaId; // Postavi ID narudžbe za koju menjamo status
+            currentOrderId = narudzbaId; 
             document.getElementById('statusModal').style.display = 'block';
         }
 
@@ -30,15 +30,15 @@
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert("Status uspešno promenjen!");
-                        location.reload(); // Osvježavanje stranice
+                        alert("Status uspješno promjenjen!");
+                        location.reload(); 
                     } else {
                         alert("Došlo je do greške prilikom promjeni statusa.");
                     }
                 })
                 .catch(error => {
                     console.error("Greška:", error);
-                    alert("Došlo je do greške prilikom slanju zahteva.");
+                    alert("Došlo je do greške prilikom slanju zahtjeva.");
                 })
                 .finally(() => zatvoriModal());
             }
@@ -81,7 +81,7 @@
         </table>
     </main>
 
-    <!-- Modal za promenu statusa -->
+
     <div id="statusModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Promjena Statusa</h2>
