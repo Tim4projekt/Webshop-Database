@@ -72,7 +72,7 @@
         }
 
         document.getElementById('confirmWishlist').addEventListener('click', function () {
-            const grupa = document.getElementById('modal-grupa').value; // Dohvat izabrane grupe
+            const grupa = document.getElementById('modal-grupa').value; 
 
             fetch('/wishlist/dodaj', {
                 method: 'POST',
