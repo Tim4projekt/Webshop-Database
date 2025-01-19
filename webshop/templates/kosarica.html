@@ -29,16 +29,16 @@
                 <tbody>
                     {% for stavka in stavke %}
                     <tr>
-                        <td>{{ stavka[1] }}</td> <!-- naziv proizvoda -->
-                        <td>{{ stavka[2] }} HRK</td> <!-- cijena -->
+                        <td>{{ stavka[1] }}</td> 
+                        <td>{{ stavka[2] }} HRK</td> 
                         <td>
                             <form class="update-cart-form" action="/api/kosarica/uredi" method="post">
                                 <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
                                 <input type="number" name="kolicina" value="{{ stavka[3] }}" min="1" required>
                                 <button type="submit">Ažuriraj</button>
                             </form>
-                        </td> <!-- količina -->
-                        <td>{{ stavka[2] * stavka[3] }} HRK</td> <!-- ukupno -->
+                        </td> 
+                        <td>{{ stavka[2] * stavka[3] }} HRK</td> 
                         <td>
                             <form class="delete-item-form" action="/api/kosarica/izbrisi" method="post">
                                 <input type="hidden" name="proizvodId" value="{{ stavka[0] }}">
@@ -63,17 +63,17 @@
     <script>
         $(document).ready(function() {
             $('.update-cart-form').on('submit', function(event) {
-                event.preventDefault(); // Spriječava ponovno učitavanje stranice
+                event.preventDefault(); 
     
-                var form = $(this); // Referenca na trenutnu formu
+                var form = $(this); 
     
                 $.ajax({
                     url: form.attr('action'),
                     type: 'POST',
                     data: form.serialize(),
                     success: function(response) {
-                        alert(response.message); // Prikazuje poruku o uspjehu
-                        // Osvježite košaricu
+                        alert(response.message); 
+                        
                         location.reload();
                     },
                     error: function(xhr) {
@@ -84,10 +84,10 @@
     
             function refreshCart() {
                 $.ajax({
-                    url: '/kosarica', // URL za osvježavanje košarice
+                    url: '/kosarica',
                     type: 'GET',
                     success: function(data) {
-                        $('#cart-container').html(data); // Osvježava sadržaj košarice
+                        $('#cart-container').html(data); 
                     },
                     error: function(xhr) {
                         alert('Greška prilikom osvježavanja košarice: ' + xhr.responseText);
@@ -99,29 +99,29 @@
     <script>
         document.querySelectorAll('.delete-item-form').forEach(form => {
             form.addEventListener('submit', function(event) {
-                event.preventDefault(); // Sprječava ponovno učitavanje stranice
+                event.preventDefault(); 
         
-                const proizvodId = form.querySelector('input[name="proizvodId"]').value; // Dohvaćanje ID-a proizvoda
+                const proizvodId = form.querySelector('input[name="proizvodId"]').value; 
                 
-                console.log('Brisanje proizvoda ID:', proizvodId); // Ispis ID-a proizvoda
+                console.log('Brisanje proizvoda ID:', proizvodId); 
                 
                 fetch('/api/kosarica/izbrisi', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // Ovdje postavite Content-Type na application/json
+                        'Content-Type': 'application/json' 
                     },
-                    body: JSON.stringify({ proizvodId }) // Pretvaranje podataka u JSON
+                    body: JSON.stringify({ proizvodId }) 
                 })
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
                     if (data.success) {
-                        alert(data.message); // Prikazuje poruku o uspjehu
+                        alert(data.message); 
                         location.reload();
-                        // Uklonite stavku iz DOM-a
+     
                         const stavkaElement = document.getElementById(`stavka-${proizvodId}`);
                         if (stavkaElement) {
-                            stavkaElement.remove(); // Uklanja stavku iz DOM-a
+                            stavkaElement.remove(); 
                         }
                     } else {
                         alert('Greška: ' + data.message);
@@ -139,14 +139,10 @@
         </script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Provjera postoji li korisnički ID u sesiji
-                let userId = {{ session.get('user_id', 1) }};  // Ako je 1, korisnik nije prijavljen
-                
+                let userId = {{ session.get('user_id', 1) }};  
                 if (userId === 1) {
-                    // Ako korisnik nije prijavljen, sakrij gumb za odjavu
                     document.getElementById('logoutButton').style.display = 'none';
                 } else {
-                    // Ako korisnik nije odjavljen, sakrij gumbe za prijavu/registraciju
                     document.getElementById('loginButton').style.display = 'none';
                     document.getElementById('registerButton').style.display = 'none';
                 }
