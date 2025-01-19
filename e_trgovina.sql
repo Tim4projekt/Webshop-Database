@@ -1556,7 +1556,6 @@ DELIMITER //
 
 CREATE PROCEDURE dodaj_u_wishlist(korisnik_id INT, proizvod_id INT, grupa VARCHAR(255))
 BEGIN
-    -- Dodavanje proizvoda u wishlist (pretpostavljamo da je provjera duplikata već obavljena kroz triger)
     INSERT INTO wishlist (korisnik_id, proizvod_id, grupa)
     VALUES (korisnik_id, proizvod_id, grupa);
 END//
@@ -1691,7 +1690,7 @@ FROM proizvodi p
 LEFT JOIN wishlist w ON p.id = w.proizvod_id
 GROUP BY p.id, p.naziv
 ORDER BY broj_dodavanja DESC
-LIMIT 3; -- Dohvata prvih 3 proizvoda
+LIMIT 5; -- Dohvata prvih 5 proizvoda
 
 -- Upit: Provjera korisnika sa najviše narudžbi (Leo)
 SELECT 
@@ -1716,7 +1715,6 @@ JOIN narudzbe n ON k.id = n.korisnik_id
 GROUP BY k.id, k.ime, k.prezime
 ORDER BY ukupna_zarada DESC;
 
-SELECT * FROM popularni_proizvodi;
 SHOW TRIGGERS;
 SHOW WARNINGS;
 
