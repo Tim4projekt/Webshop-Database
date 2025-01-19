@@ -1,4 +1,4 @@
-Webshop Informatičke Opreme
+#Webshop Informatičke Opreme
 Ovaj projekt implementira backend i frontend rješenje za webshop specijaliziran za prodaju informatičke opreme. Sustav omogućava registraciju i prijavu korisnika, upravljanje proizvodima, kategorijama, popustima, narudžbama, načinima isporuke i korisničkom podrškom.
 
 Sadržaj
