@@ -1184,15 +1184,47 @@ VALUES
  (29, 23, 129, 2),
  (30, 9, 130, 7);
 
+INSERT INTO kuponi (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja) VALUES
+('WELCOME10', 10.00, '2025-01-01', '2025-06-30', 100),
+('SPRING15', 15.00, '2025-03-01', '2025-05-31', 50),
+('SUMMER20', 20.00, '2025-06-01', '2025-08-31', 75),
+('AUTUMN25', 25.00, '2025-09-01', '2025-11-30', 50),
+('WINTER30', 30.00, '2025-12-01', '2026-02-28', 30),
+('FREESHIP', 0.00, '2025-01-01', '2025-12-31', 200),
+('BLACKFRIDAY50', 50.00, '2025-11-20', '2025-11-30', 100),
+('CYBERMONDAY40', 40.00, '2025-11-28', '2025-12-05', 75),
+('NEWYEAR25', 25.00, '2025-12-25', '2026-01-05', 60),
+('HOLIDAY15', 15.00, '2025-12-01', '2025-12-31', 150),
+('VIPCUSTOMER', 20.00, '2025-01-01', '2025-12-31', 50),
+('WELCOME2025', 10.00, '2025-01-01', '2025-03-31', 300),
+('DISCOUNT5', 5.00, '2025-01-01', '2025-12-31', 500),
+('EXCLUSIVE35', 35.00, '2025-02-01', '2025-04-30', 20),
+('STUDENT10', 10.00, '2025-09-01', '2026-06-30', 100),
+('TEACHER20', 20.00, '2025-09-01', '2026-06-30', 50),
+('REFERFRIEND', 15.00, '2025-01-01', '2025-12-31', 100),
+('LOYALTY50', 50.00, '2025-01-01', '2025-12-31', 20),
+('WEEKEND20', 20.00, '2025-01-01', '2025-12-31', 100),
+('FIRSTPURCHASE', 30.00, '2025-01-01', '2025-12-31', 50),
+('SPECIAL30', 30.00, '2025-03-01', '2025-03-15', 30),
+('WINTERCLEAR', 25.00, '2025-01-01', '2025-01-31', 80),
+('SUMMERSALE', 20.00, '2025-06-15', '2025-07-15', 50),
+('BACKTOSCHOOL', 15.00, '2025-08-01', '2025-09-15', 60),
+('HALLOWEEN30', 30.00, '2025-10-20', '2025-10-31', 40),
+('CHRISTMAS40', 40.00, '2025-12-01', '2025-12-25', 50),
+('CLEARANCE50', 50.00, '2025-01-01', '2025-01-15', 30),
+('BULKBUY10', 10.00, '2025-01-01', '2025-12-31', 100),
+('FAMILY15', 15.00, '2025-01-01', '2025-12-31', 50),
+('BIRTHDAY25', 25.00, '2025-01-01', '2025-12-31', 20);
+
     
 INSERT INTO narudzbe (id, korisnik_id, datum_narudzbe, status_narudzbe, ukupna_cijena, nacin_isporuke_id, kupon_id)
 VALUES
-(1, 1, '2025-01-01', 'u obradi', 250.75, 1, NULL),
-(2, 2, '2025-01-02', 'dostavljeno', 180.00, 2, NULL),
-(3, 3, '2025-01-03', 'poslano', 0.00, 3, NULL),
-(4, 4, '2025-01-04', 'u obradi', 320.50, 4, NULL),
-(5, 5, '2025-01-05', 'dostavljeno', 150.00, 2, NULL),
-(6, 16, '2025-01-06', 'u obradi', 200.25, 2, NULL),
+(1, 1, '2025-01-01', 'u obradi', 250.75, 1, 1),
+(2, 2, '2025-01-02', 'dostavljeno', 180.00, 2, 2),
+(3, 3, '2025-01-03', 'poslano', 0.00, 3, 3),
+(4, 4, '2025-01-04', 'u obradi', 320.50, 4, 4),
+(5, 5, '2025-01-05', 'dostavljeno', 150.00, 2, 5),
+(6, 16, '2025-01-06', 'u obradi', 200.25, 2, 6),
 (7, 27, '2025-01-07', 'dostavljeno', 420.00, 1, NULL),
 (8, 25, '2025-01-08', 'poslano', 0.00, 3, NULL),
 (9, 24, '2025-01-09', 'u obradi', 280.75, 4, NULL),
@@ -1260,37 +1292,7 @@ VALUES
 (30, 138, 6);
 
 
-INSERT INTO kuponi (kod, postotak_popusta, datum_pocetka, datum_zavrsetka, max_iskoristenja) VALUES
-('WELCOME10', 10.00, '2025-01-01', '2025-06-30', 100),
-('SPRING15', 15.00, '2025-03-01', '2025-05-31', 50),
-('SUMMER20', 20.00, '2025-06-01', '2025-08-31', 75),
-('AUTUMN25', 25.00, '2025-09-01', '2025-11-30', 50),
-('WINTER30', 30.00, '2025-12-01', '2026-02-28', 30),
-('FREESHIP', 0.00, '2025-01-01', '2025-12-31', 200),
-('BLACKFRIDAY50', 50.00, '2025-11-20', '2025-11-30', 100),
-('CYBERMONDAY40', 40.00, '2025-11-28', '2025-12-05', 75),
-('NEWYEAR25', 25.00, '2025-12-25', '2026-01-05', 60),
-('HOLIDAY15', 15.00, '2025-12-01', '2025-12-31', 150),
-('VIPCUSTOMER', 20.00, '2025-01-01', '2025-12-31', 50),
-('WELCOME2025', 10.00, '2025-01-01', '2025-03-31', 300),
-('DISCOUNT5', 5.00, '2025-01-01', '2025-12-31', 500),
-('EXCLUSIVE35', 35.00, '2025-02-01', '2025-04-30', 20),
-('STUDENT10', 10.00, '2025-09-01', '2026-06-30', 100),
-('TEACHER20', 20.00, '2025-09-01', '2026-06-30', 50),
-('REFERFRIEND', 15.00, '2025-01-01', '2025-12-31', 100),
-('LOYALTY50', 50.00, '2025-01-01', '2025-12-31', 20),
-('WEEKEND20', 20.00, '2025-01-01', '2025-12-31', 100),
-('FIRSTPURCHASE', 30.00, '2025-01-01', '2025-12-31', 50),
-('SPECIAL30', 30.00, '2025-03-01', '2025-03-15', 30),
-('WINTERCLEAR', 25.00, '2025-01-01', '2025-01-31', 80),
-('SUMMERSALE', 20.00, '2025-06-15', '2025-07-15', 50),
-('BACKTOSCHOOL', 15.00, '2025-08-01', '2025-09-15', 60),
-('HALLOWEEN30', 30.00, '2025-10-20', '2025-10-31', 40),
-('CHRISTMAS40', 40.00, '2025-12-01', '2025-12-25', 50),
-('CLEARANCE50', 50.00, '2025-01-01', '2025-01-15', 30),
-('BULKBUY10', 10.00, '2025-01-01', '2025-12-31', 100),
-('FAMILY15', 15.00, '2025-01-01', '2025-12-31', 50),
-('BIRTHDAY25', 25.00, '2025-01-01', '2025-12-31', 20);
+
 
 INSERT INTO placanja (narudzba_id, nacin_placanja, iznos, datum_placanja) VALUES
 (1, 'kartica', 250.50, '2025-01-02'),
@@ -3241,6 +3243,34 @@ BEGIN
 END //
 DELIMITER ;
 
+-- Josip: Upit popusta za svaku narudžbu
+SELECT 
+    n.id AS narudzba_id,
+    r.id AS racun_id,
+    k.kod AS kupon_kod,
+    k.postotak_popusta AS popust_u_postotcima,
+    r.iznos AS iznos_racuna,
+    (r.iznos * (k.postotak_popusta / 100)) AS ukupni_popust,
+    (r.iznos - (r.iznos * (k.postotak_popusta / 100))) AS iznos_sa_popustom
+FROM racuni r
+LEFT JOIN narudzbe n ON r.narudzba_id = n.id
+LEFT JOIN kuponi k ON n.kupon_id = k.id
+ORDER BY n.id;
+
+-- Josip: Upit uplata po narudžbama
+SELECT 
+    n.id AS narudzba_id,
+    COUNT(p.id) AS broj_placanja,
+    SUM(p.iznos) AS ukupno_placeno,
+    r.iznos AS iznos_racuna,
+    (r.iznos - SUM(p.iznos)) AS preostalo_za_placanje
+FROM narudzbe n
+LEFT JOIN racuni r ON n.id = r.narudzba_id
+LEFT JOIN placanja p ON n.id = p.narudzba_id
+GROUP BY n.id, r.iznos
+ORDER BY n.id;
+
+
 -- Josip: Pogled za pregled računa s kuponima
 CREATE VIEW racuni_sa_kuponima AS
 SELECT 
@@ -3352,4 +3382,5 @@ BEGIN
     VALUES (p_kod, p_postotak_popusta, p_datum_pocetka, p_datum_zavrsetka, p_max_iskoristenja);
 END //
 DELIMITER ;
+
 
