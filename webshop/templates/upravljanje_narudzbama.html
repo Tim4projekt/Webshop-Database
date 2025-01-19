@@ -33,12 +33,12 @@
                         alert("Status uspešno promenjen!");
                         location.reload(); // Osvježavanje stranice
                     } else {
-                        alert("Došlo je do greške pri promeni statusa.");
+                        alert("Došlo je do greške prilikom promjeni statusa.");
                     }
                 })
                 .catch(error => {
                     console.error("Greška:", error);
-                    alert("Došlo je do greške pri slanju zahteva.");
+                    alert("Došlo je do greške prilikom slanju zahteva.");
                 })
                 .finally(() => zatvoriModal());
             }
