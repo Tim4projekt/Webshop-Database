@@ -1733,6 +1733,11 @@ DROP FOREIGN KEY racuni_ibfk_2;
 
 ALTER TABLE racuni
 ADD CONSTRAINT racuni_ibfk_2 FOREIGN KEY (korisnik_id) REFERENCES korisnici(id) ON DELETE CASCADE;
+ALTER TABLE pracenje_isporuka
+DROP FOREIGN KEY pracenje_isporuka_ibfk_1;
+
+ALTER TABLE pracenje_isporuka
+ADD CONSTRAINT pracenje_isporuka_ibfk_1 FOREIGN KEY (narudzba_id) REFERENCES narudzbe(id) ON DELETE CASCADE;
 
 
 ######## Loren ###########
